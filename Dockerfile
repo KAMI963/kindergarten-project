@@ -19,6 +19,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
 
+# Применяем миграции
+RUN python manage.py migrate --noinput
+
+# Собираем статические файлы
 RUN python manage.py collectstatic --noinput
 
-CMD gunicorn kindergarten_project.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3
+EXPOSE $PORT
+
+CMD gunicorn kindergarten_project.wsgi:application --bind 0.0.0.0:$PORT --workers 3
