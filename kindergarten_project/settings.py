@@ -350,6 +350,25 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-# ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ CSRF - ПРИНУДИТЕЛЬНОЕ ДОБАВЛЕНИЕ АДРЕСОВ
-# ВРЕМЕННО (только для тестирования)
-CSRF_TRUSTED_ORIGINS = ['*']
+# ========== ПРИНУДИТЕЛЬНЫЕ НАСТРОЙКИ ДЛЯ CSRF И СЕССИЙ НА RAILWAY ==========
+# Отключаем проверку реферера для CSRF
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Настройки сессий
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# Разрешаем любые источники (временно)
+CSRF_TRUSTED_ORIGINS = [
+    'https://kindergarten-project-production.up.railway.app',
+    'https://kindergarten-project.up.railway.app',
+    'http://kindergarten-project-production.up.railway.app',
+    'http://kindergarten-project.up.railway.app',
+]
+
+# ВАЖНО: Явно указываем, откуда брать CSRF-токен
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+CSRF_COOKIE_NAME = 'csrftoken'
