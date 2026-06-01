@@ -7,12 +7,10 @@ from celery.schedules import crontab
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ========== ОПРЕДЕЛЕНИЕ ОКРУЖЕНИЯ (RAILWAY vs LOCAL) ==========
-# Определяем, запущены ли мы на Railway
 IS_RAILWAY = os.environ.get('RAILWAY_ENVIRONMENT', False) or os.environ.get('RAILWAY_PUBLIC_DOMAIN', False)
 
 # ========== НАСТРОЙКИ ДЛЯ RAILWAY (ПРОДАКШЕН) ==========
 if IS_RAILWAY:
-    # Security
     SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
     if not SECRET_KEY:
         raise ValueError("DJANGO_SECRET_KEY must be set on Railway")
@@ -21,30 +19,7 @@ if IS_RAILWAY:
     ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '.railway.app,localhost,127.0.0.1').split(',')
     BASE_URL = os.environ.get('BASE_URL', 'https://your-project.up.railway.app')
     
-    # ========== CSRF TRUSTED ORIGINS - ИСПРАВЛЕННЫЙ БЛОК ==========
-    # Базовые адреса Railway
-    railway_origins = [
-        'https://kindergarten-project.up.railway.app',
-        'https://kindergarten-project-production.up.railway.app',
-        'http://kindergarten-project.up.railway.app',
-        'http://kindergarten-project-production.up.railway.app',
-    ]
-    
-    # Пытаемся прочитать переменную окружения
-    csrf_origins_env = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
-    if csrf_origins_env:
-        # Если переменная есть, добавляем её адреса
-        env_origins = [origin.strip() for origin in csrf_origins_env.split(',') if origin.strip()]
-        CSRF_TRUSTED_ORIGINS = list(set(railway_origins + env_origins))
-    else:
-        # Если переменной нет, используем адреса Railway
-        CSRF_TRUSTED_ORIGINS = railway_origins
-    
-    # Выводим в лог для проверки
-    print(f"=== CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS} ===")
-    # ============================================================
-    
-    # Database - PostgreSQL (автоматически подставляется Railway)
+    # Database - PostgreSQL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -56,7 +31,7 @@ if IS_RAILWAY:
         }
     }
     
-    # Email settings из переменных окружения
+    # Email settings
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.mail.ru')
     EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 465))
@@ -66,7 +41,7 @@ if IS_RAILWAY:
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
     DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
     
-    # Celery настройки для Railway (если есть Redis)
+    # Celery
     if os.environ.get('REDIS_URL'):
         CELERY_BROKER_URL = os.environ.get('REDIS_URL')
         CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL')
@@ -78,7 +53,6 @@ if IS_RAILWAY:
         CELERY_BROKER_URL = None
         CELERY_RESULT_BACKEND = None
     
-    # Celery Beat периодические задачи
     CELERY_BEAT_SCHEDULE = {
         'generate-monthly-payments': {
             'task': 'payments.tasks.generate_monthly_payments',
@@ -96,13 +70,11 @@ if IS_RAILWAY:
 
 # ========== НАСТРОЙКИ ДЛЯ ЛОКАЛЬНОЙ РАЗРАБОТКИ ==========
 else:
-    # Security
     SECRET_KEY = config('SECRET_KEY', default='django-insecure-key-change-in-production')
     DEBUG = config('DEBUG', default=True, cast=bool)
     ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
     BASE_URL = config('BASE_URL', default='http://localhost:8000')
     
-    # Database - локальная PostgreSQL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -114,7 +86,6 @@ else:
         }
     }
     
-    # Email настройки для локальной разработки
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = 'smtp.mail.ru'
     EMAIL_PORT = 465
@@ -123,16 +94,14 @@ else:
     EMAIL_HOST_PASSWORD = 'KAz4tlI2dCl1fqOeYTYD'
     DEFAULT_FROM_EMAIL = 'dou_ryabinushka_karabash@internet.ru'
     
-    # Celery отключен для локальной разработки
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_TASK_EAGER_PROPAGATES = True
     CELERY_BROKER_URL = None
     CELERY_RESULT_BACKEND = None
     CELERY_BEAT_SCHEDULE = {}
 
-# ========== ОБЩИЕ НАСТРОЙКИ (РАБОТАЮТ ВЕЗДЕ) ==========
+# ========== ОБЩИЕ НАСТРОЙКИ ==========
 
-# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -141,19 +110,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    
-    # Allauth
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    
-    # Сторонние приложения
     'crispy_forms',
     'crispy_bootstrap5',
     'django_cleanup',
     'celery',
-    
-    # Мои приложения
     'accounts',
     'applications',
     'children',
@@ -161,7 +124,7 @@ INSTALLED_APPS = [
     'attendance',
     'staff',
     'staff.templatetags',
-    'orders',  
+    'orders',
     'communication',
     'nutrition',
     'lessons',
@@ -169,12 +132,13 @@ INSTALLED_APPS = [
     'notifications',
 ]
 
+# ========== MIDDLEWARE С ПОЛНЫМ ОТКЛЮЧЕНИЕМ CSRF ==========
 MIDDLEWARE = [
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ВАЖНО: должен быть первым!
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',  # ПОЛНОСТЬЮ УДАЛЕНО
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -204,171 +168,79 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'kindergarten_project.wsgi.application'
 
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# WhiteNoise для статических файлов в продакшене
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files (загружаемые пользователями файлы)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-# Custom User Model
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
-# Login/Logout URLs
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'home'
 LOGIN_URL = 'home'
 
-# Site ID for allauth
 SITE_ID = 1
 
-# Allauth settings
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
-ACCOUNT_RATE_LIMITS = {
-    'login_failed': (5, 300),  # 5 попыток за 300 секунд
-}
+ACCOUNT_RATE_LIMITS = {'login_failed': (5, 300)}
 ACCOUNT_LOGOUT_ON_GET = True
 ACCOUNT_LOGOUT_REDIRECT_URL = 'home'
 ACCOUNT_SESSION_REMEMBER = True
 
-# Настройки для разных провайдеров email
 EMAIL_CONFIGS = {
-    'gmail.com': {
-        'host': 'smtp.gmail.com',
-        'port': 587,
-        'use_tls': True,
-    },
-    'mail.ru': {
-        'host': 'smtp.mail.ru',
-        'port': 465,
-        'use_tls': False,
-        'use_ssl': True,
-    },
-    'yandex.ru': {
-        'host': 'smtp.yandex.ru',
-        'port': 465,
-        'use_tls': False,
-        'use_ssl': True,
-    },
-    'yandex.by': {
-        'host': 'smtp.yandex.ru',
-        'port': 465,
-        'use_tls': False,
-        'use_ssl': True,
-    },
-    'yandex.kz': {
-        'host': 'smtp.yandex.ru',
-        'port': 465,
-        'use_tls': False,
-        'use_ssl': True,
-    },
-    'rambler.ru': {
-        'host': 'smtp.rambler.ru',
-        'port': 465,
-        'use_tls': False,
-        'use_ssl': True,
-    },
-    'icloud.com': {
-        'host': 'smtp.mail.me.com',
-        'port': 587,
-        'use_tls': True,
-    },
-    'me.com': {
-        'host': 'smtp.mail.me.com',
-        'port': 587,
-        'use_tls': True,
-    },
-    'mac.com': {
-        'host': 'smtp.mail.me.com',
-        'port': 587,
-        'use_tls': True,
-    },
-    'outlook.com': {
-        'host': 'smtp-mail.outlook.com',
-        'port': 587,
-        'use_tls': True,
-    },
-    'hotmail.com': {
-        'host': 'smtp-mail.outlook.com',
-        'port': 587,
-        'use_tls': True,
-    },
-    'live.com': {
-        'host': 'smtp-mail.outlook.com',
-        'port': 587,
-        'use_tls': True,
-    },
-    'yahoo.com': {
-        'host': 'smtp.mail.yahoo.com',
-        'port': 465,
-        'use_tls': False,
-        'use_ssl': True,
-    },
+    'gmail.com': {'host': 'smtp.gmail.com', 'port': 587, 'use_tls': True},
+    'mail.ru': {'host': 'smtp.mail.ru', 'port': 465, 'use_tls': False, 'use_ssl': True},
+    'yandex.ru': {'host': 'smtp.yandex.ru', 'port': 465, 'use_tls': False, 'use_ssl': True},
+    'yandex.by': {'host': 'smtp.yandex.ru', 'port': 465, 'use_tls': False, 'use_ssl': True},
+    'yandex.kz': {'host': 'smtp.yandex.ru', 'port': 465, 'use_tls': False, 'use_ssl': True},
+    'rambler.ru': {'host': 'smtp.rambler.ru', 'port': 465, 'use_tls': False, 'use_ssl': True},
+    'icloud.com': {'host': 'smtp.mail.me.com', 'port': 587, 'use_tls': True},
+    'me.com': {'host': 'smtp.mail.me.com', 'port': 587, 'use_tls': True},
+    'mac.com': {'host': 'smtp.mail.me.com', 'port': 587, 'use_tls': True},
+    'outlook.com': {'host': 'smtp-mail.outlook.com', 'port': 587, 'use_tls': True},
+    'hotmail.com': {'host': 'smtp-mail.outlook.com', 'port': 587, 'use_tls': True},
+    'live.com': {'host': 'smtp-mail.outlook.com', 'port': 587, 'use_tls': True},
+    'yahoo.com': {'host': 'smtp.mail.yahoo.com', 'port': 465, 'use_tls': False, 'use_ssl': True},
 }
 
-# Animate.css для анимаций
 ANIMATE_CSS_VERSION = '4.1.1'
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-# ========== ПРИНУДИТЕЛЬНЫЕ НАСТРОЙКИ ДЛЯ CSRF И СЕССИЙ НА RAILWAY ==========
-# Отключаем проверку реферера для CSRF
-CSRF_COOKIE_SECURE = True
+# ========== ПОЛНОЕ ОТКЛЮЧЕНИЕ CSRF ==========
+# Эти настройки отключают CSRF-защиту полностью
+CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = 'Lax'
-
-# Настройки сессий
-SESSION_COOKIE_SECURE = True
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
-
-# Разрешаем любые источники (временно)
-CSRF_TRUSTED_ORIGINS = [
-    'https://kindergarten-project-production.up.railway.app',
-    'https://kindergarten-project.up.railway.app',
-    'http://kindergarten-project-production.up.railway.app',
-    'http://kindergarten-project.up.railway.app',
-]
-
-# ВАЖНО: Явно указываем, откуда брать CSRF-токен
-CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+CSRF_COOKIE_SAMESITE = None
+CSRF_USE_SESSIONS = False
 CSRF_COOKIE_NAME = 'csrftoken'
+
+# Разрешаем источник
+CSRF_TRUSTED_ORIGINS = ['https://kindergarten-project-production.up.railway.app']
+
+print("=== CSRF ПОЛНОСТЬЮ ОТКЛЮЧЕН (временно) ===")
