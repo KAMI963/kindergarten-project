@@ -21,17 +21,28 @@ if IS_RAILWAY:
     ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '.railway.app,localhost,127.0.0.1').split(',')
     BASE_URL = os.environ.get('BASE_URL', 'https://your-project.up.railway.app')
     
-    # CSRF Trusted Origins
-    CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
-    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS if origin.strip()]
+    # ========== CSRF TRUSTED ORIGINS - ИСПРАВЛЕННЫЙ БЛОК ==========
+    # Базовые адреса Railway
+    railway_origins = [
+        'https://kindergarten-project.up.railway.app',
+        'https://kindergarten-project-production.up.railway.app',
+        'http://kindergarten-project.up.railway.app',
+        'http://kindergarten-project-production.up.railway.app',
+    ]
     
-    if not CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS = [
-            'https://kindergarten-project.up.railway.app',
-            'https://kindergarten-project-production.up.railway.app',
-            'http://kindergarten-project.up.railway.app',
-            'http://kindergarten-project-production.up.railway.app',
-        ]
+    # Пытаемся прочитать переменную окружения
+    csrf_origins_env = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+    if csrf_origins_env:
+        # Если переменная есть, добавляем её адреса
+        env_origins = [origin.strip() for origin in csrf_origins_env.split(',') if origin.strip()]
+        CSRF_TRUSTED_ORIGINS = list(set(railway_origins + env_origins))
+    else:
+        # Если переменной нет, используем адреса Railway
+        CSRF_TRUSTED_ORIGINS = railway_origins
+    
+    # Выводим в лог для проверки
+    print(f"=== CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS} ===")
+    # ============================================================
     
     # Database - PostgreSQL (автоматически подставляется Railway)
     DATABASES = {
