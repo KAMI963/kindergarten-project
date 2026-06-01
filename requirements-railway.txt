@@ -68,3 +68,4 @@ prompt_toolkit==3.0.52
 wcwidth==0.2.14
 tzlocal==5.3.1
 uritools==6.0.1
+reportlab
