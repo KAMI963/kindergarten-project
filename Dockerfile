@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
     libcairo2 \
+    libcairo2-dev \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libgdk-pixbuf-2.0-0 \
@@ -25,6 +26,7 @@ RUN apt-get update && apt-get install -y \
     fonts-liberation \
     curl \
     wget \
+    pkg-config \
     && fc-cache -fv \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
