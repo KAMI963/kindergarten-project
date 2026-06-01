@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
 
-# Применяем миграции
+# Применяем миграции (ВАЖНО!)
 RUN python manage.py migrate --noinput
 
 # Собираем статические файлы
