@@ -346,7 +346,9 @@ EMAIL_CONFIGS = {
 # Animate.css для анимаций
 ANIMATE_CSS_VERSION = '4.1.1'
 
-# Authentication backends
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+# ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ CSRF - ПРИНУДИТЕЛЬНОЕ ДОБАВЛЕНИЕ АДРЕСОВ
+CSRF_TRUSTED_ORIGINS = ['https://kindergarten-project-production.up.railway.app', 'https://kindergarten-project.up.railway.app']
