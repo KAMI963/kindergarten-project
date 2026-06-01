@@ -21,6 +21,18 @@ if IS_RAILWAY:
     ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '.railway.app,localhost,127.0.0.1').split(',')
     BASE_URL = os.environ.get('BASE_URL', 'https://your-project.up.railway.app')
     
+    # CSRF Trusted Origins
+    CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS if origin.strip()]
+    
+    if not CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS = [
+            'https://kindergarten-project.up.railway.app',
+            'https://kindergarten-project-production.up.railway.app',
+            'http://kindergarten-project.up.railway.app',
+            'http://kindergarten-project-production.up.railway.app',
+        ]
+    
     # Database - PostgreSQL (автоматически подставляется Railway)
     DATABASES = {
         'default': {
