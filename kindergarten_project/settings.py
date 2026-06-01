@@ -351,4 +351,5 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ CSRF - ПРИНУДИТЕЛЬНОЕ ДОБАВЛЕНИЕ АДРЕСОВ
-CSRF_TRUSTED_ORIGINS = ['https://kindergarten-project-production.up.railway.app', 'https://kindergarten-project.up.railway.app']
+# ВРЕМЕННО (только для тестирования)
+CSRF_TRUSTED_ORIGINS = ['*']
