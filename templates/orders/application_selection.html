@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Выбор заявлений для зачисления - Детский сад "Рябинушка"{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок страницы -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-clipboard-list text-success"></i>
+                        Выбор заявлений для зачисления
+                    </h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Главная</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'orders:orders_list' %}">Приказы</a></li>
+                            <li class="breadcrumb-item active">Выбор заявлений</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{% url 'orders:orders_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Назад к списку
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Информация о доступных заявлениях -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle"></i> Информация
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-0">
+                        <h6 class="alert-heading">Как это работает?</h6>
+                        <ul class="mb-0">
+                            <li>Выберите одобренные заявления для создания приказов о зачислении</li>
+                            <li>При выборе одного заявления будет создан индивидуальный приказ</li>
+                            <li>При выборе нескольких заявлений будет создано массовое зачисление</li>
+                            <li>Для каждого ребенка автоматически создается учетная запись в системе</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Форма выбора заявлений -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list-check"></i> Доступные заявления
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if form.applications.field.queryset %}
+                    <form method="post" id="applicationForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="50" class="text-center">
+                                            <input type="checkbox" id="selectAll">
+                                        </th>
+                                        <th width="120">Номер заявления</th>
+                                        <th>ФИО ребенка</th>
+                                        <th width="100">Дата рождения</th>
+                                        <th width="80">Возраст</th>
+                                        <th>Адрес</th>
+                                        <th width="120">Дата подачи</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for application in form.applications.field.queryset %}
+                                    <tr>
+                                        <td class="text-center">
+                                            <input type="checkbox" name="applications" value="{{ application.id }}" 
+                                                   class="application-checkbox" id="app_{{ application.id }}">
+                                        </td>
+                                        <td>
+                                            <strong class="text-primary">{{ application.application_number }}</strong>
+                                        </td>
+                                        <td>
+                                            <label for="app_{{ application.id }}" class="mb-0 cursor-pointer">
+                                                <strong>{{ application.child_full_name }}</strong>
+                                            </label>
+                                            <br>
+                                            <small class="text-muted">
+                                                {{ application.get_child_gender_display }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ application.child_birth_date|date:"d.m.Y" }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">
+                                                {{ application.child_age }} лет
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted" title="{{ application.actual_address }}">
+                                                {{ application.actual_address|truncatewords:5 }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ application.submission_date|date:"d.m.Y" }}</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span id="selectedCount" class="badge bg-primary">0</span>
+                                    <span class="text-muted ms-2">заявлений выбрано</span>
+                                </div>
+                                <div class="btn-group">
+                                    <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                                        <i class="fas fa-arrow-right"></i> Продолжить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-clipboard-check fa-4x text-muted"></i>
+                        </div>
+                        <h4 class="text-muted">Нет доступных заявлений</h4>
+                        <p class="text-muted mb-4">Все одобренные заявления уже обработаны или ожидают одобрения</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="{% url 'applications:application_list' %}" class="btn btn-primary">
+                                <i class="fas fa-clipboard-list"></i> Перейти к заявлениям
+                            </a>
+                            <a href="{% url 'orders:orders_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Назад к приказам
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+$(document).ready(function() {
+    // Выделить все заявления
+    $('#selectAll').change(function() {
+        $('.application-checkbox').prop('checked', this.checked);
+        updateSelectedCount();
+    });
+
+    // Обновление счетчика выбранных заявлений
+    function updateSelectedCount() {
+        const selectedCount = $('.application-checkbox:checked').length;
+        $('#selectedCount').text(selectedCount);
+        
+        if (selectedCount > 0) {
+            $('#submitBtn').prop('disabled', false);
+        } else {
+            $('#submitBtn').prop('disabled', true);
+        }
+    }
+
+    // Слушаем изменения чекбоксов
+    $('.application-checkbox').change(updateSelectedCount);
+
+    // Инициализация счетчика при загрузке
+    updateSelectedCount();
+
+    // Подтверждение отправки формы
+    $('#applicationForm').submit(function(e) {
+        const selectedCount = $('.application-checkbox:checked').length;
+        
+        if (selectedCount === 0) {
+            e.preventDefault();
+            alert('Пожалуйста, выберите хотя бы одно заявление');
+            return false;
+        }
+
+        if (selectedCount === 1) {
+            return confirm('Создать индивидуальный приказ для выбранного заявления?');
+        } else {
+            return confirm(`Создать массовое зачисление для ${selectedCount} заявлений?`);
+        }
+    });
+});
+
+// Стили для кликабельных строк
+document.addEventListener('DOMContentLoaded', function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .cursor-pointer { cursor: pointer; }
+        tr:hover { background-color: #f8f9fa !important; }
+        .application-checkbox:checked + label { font-weight: bold; }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+
+<style>
+.card {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    border: 1px solid #e3e6f0;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #6e707e;
+    background-color: #f8f9fc;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.table-responsive {
+    border-radius: 0.35rem;
+}
+
+/* Анимации */
+.card {
+    transition: all 0.3s ease;
+}
+
+.btn {
+    transition: all 0.15s ease;
+}
+
+tr {
+    transition: background-color 0.15s ease;
+}
+</style>
+{% endblock %}

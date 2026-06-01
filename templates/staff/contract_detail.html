@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Договор №{{ contract.contract_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contract-card {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+    .info-row {
+        display: flex;
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    .info-label {
+        font-weight: 600;
+        width: 200px;
+        color: #495057;
+    }
+    .info-value {
+        flex: 1;
+        color: #212529;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 text-gray-800">Трудовой договор №{{ contract.contract_number }}</h1>
+            <p class="text-muted">
+                <a href="{% url 'staff:employee_detail' contract.employee.id %}" class="text-decoration-none">
+                    {{ contract.employee.full_name }}
+                </a>
+            </p>
+        </div>
+        <div class="action-buttons">
+            <a href="{% url 'staff:contract_word' contract.id %}" class="btn btn-success">
+                <i class="fas fa-file-word me-2"></i>Скачать Word
+            </a>
+            <a href="{% url 'staff:contract_edit' contract.id %}" class="btn btn-warning">
+                <i class="fas fa-edit me-2"></i>Редактировать
+            </a>
+            <a href="{% url 'staff:employee_contracts' contract.employee.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Назад
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Основная информация -->
+            <div class="card contract-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Информация о договоре</h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-row">
+                        <div class="info-label">Номер договора:</div>
+                        <div class="info-value"><strong>{{ contract.contract_number }}</strong></div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Тип договора:</div>
+                        <div class="info-value">
+                            {% if contract.contract_type == 'indefinite' %}
+                                <span class="badge bg-success">Бессрочный</span>
+                            {% else %}
+                                <span class="badge bg-warning">Срочный</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Дата начала:</div>
+                        <div class="info-value">{{ contract.start_date|date:"d.m.Y" }}</div>
+                    </div>
+                    
+                    {% if contract.end_date %}
+                    <div class="info-row">
+                        <div class="info-label">Дата окончания:</div>
+                        <div class="info-value">{{ contract.end_date|date:"d.m.Y" }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="info-row">
+                        <div class="info-label">Статус:</div>
+                        <div class="info-value">
+                            {% if contract.is_active %}
+                                <span class="badge bg-success">Действует</span>
+                            {% else %}
+                                <span class="badge bg-danger">Расторгнут</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if contract.probation_period > 0 %}
+                    <div class="info-row">
+                        <div class="info-label">Испытательный срок:</div>
+                        <div class="info-value">{{ contract.probation_period }} месяцев</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Информация о расторжении -->
+            {% if not contract.is_active %}
+            <div class="card contract-card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-times-circle me-2"></i>Расторжение договора</h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-row">
+                        <div class="info-label">Дата расторжения:</div>
+                        <div class="info-value">{{ contract.termination_date|date:"d.m.Y" }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Причина:</div>
+                        <div class="info-value">{{ contract.termination_reason|default:"—" }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Информация о сотруднике -->
+            <div class="card contract-card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Сотрудник</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ contract.employee.full_name }}</h6>
+                    <p class="text-muted mb-2">{{ contract.employee.position }}</p>
+                    <p class="mb-1"><i class="fas fa-phone me-2"></i>{{ contract.employee.phone }}</p>
+                    <p class="mb-1"><i class="fas fa-envelope me-2"></i>{{ contract.employee.email }}</p>
+                    <hr>
+                    <p class="mb-0"><small>Дата приема: {{ contract.employee.hire_date|date:"d.m.Y" }}</small></p>
+                </div>
+            </div>
+            
+            <!-- Дополнительные соглашения -->
+            <div class="card contract-card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-signature me-2"></i>Доп. соглашения</h5>
+                </div>
+                <div class="card-body">
+                    {% if additional_agreements %}
+                        <div class="list-group">
+                        {% for agreement in additional_agreements %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <strong>№{{ agreement.agreement_number }}</strong>
+                                        <br><small>{{ agreement.agreement_date|date:"d.m.Y" }}</small>
+                                    </div>
+                                    {% if agreement.file %}
+                                    <a href="{{ agreement.file.url }}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center mb-0">Нет доп. соглашений</p>
+                    {% endif %}
+                    <a href="{% url 'staff:agreement_add' contract.id %}" class="btn btn-outline-primary w-100 mt-3">
+                        <i class="fas fa-plus-circle me-2"></i>Добавить
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

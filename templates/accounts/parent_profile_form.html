@@ -1,0 +1,860 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Анкета родителя - Детский сад{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Стили для вкладок */
+    .profile-tabs {
+        margin-bottom: 20px;
+        border-bottom: 2px solid #e0e0e0;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    
+    .tab-button {
+        background: none;
+        border: none;
+        padding: 12px 24px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s;
+        color: #666;
+        position: relative;
+    }
+    
+    .tab-button.active {
+        color: #007bff;
+        font-weight: 600;
+    }
+    
+    .tab-button.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: #007bff;
+    }
+    
+    .tab-button.completed {
+        color: #28a745;
+    }
+    
+    .tab-button.completed::before {
+        content: '✓';
+        margin-right: 5px;
+    }
+    
+    .tab-pane {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .tab-pane.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Стили для переключателя */
+    .toggle-switch {
+        width: 50px;
+        height: 26px;
+        background-color: #ccc;
+        border-radius: 13px;
+        position: relative;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .toggle-switch.active {
+        background-color: #007bff;
+    }
+    
+    .toggle-switch::after {
+        content: '';
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        background-color: white;
+        border-radius: 50%;
+        top: 2px;
+        left: 2px;
+        transition: transform 0.3s;
+    }
+    
+    .toggle-switch.active::after {
+        transform: translateX(24px);
+    }
+    
+    /* Маскировка паспортных данных */
+    .passport-masked {
+        font-family: monospace;
+        letter-spacing: 2px;
+    }
+    
+    /* Прогресс-бар */
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+    
+    /* Стили для полей */
+    .form-group.required label:after {
+        content: ' *';
+        color: red;
+    }
+    
+    .address-input {
+        font-size: 14px;
+    }
+    
+    .phone-mask {
+        font-family: monospace;
+    }
+    
+    /* Стили для фото */
+    .photo-upload-container {
+        text-align: center;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 12px;
+    }
+    
+    .photo-preview {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #007bff;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 15px;
+        background: #f8f9fa;
+    }
+    
+    .photo-placeholder {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        border: 4px solid #fff;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .photo-placeholder i {
+        font-size: 60px;
+        color: rgba(255,255,255,0.9);
+    }
+    
+    .photo-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    
+    .btn-photo {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+    }
+    
+    .btn-photo-upload {
+        background: #007bff;
+        color: white;
+    }
+    
+    .btn-photo-upload:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+    }
+    
+    .btn-photo-delete {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-photo-delete:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+    }
+    
+    /* Стили для автодополнения */
+    .suggestions-list {
+        position: relative;
+        z-index: 1000;
+    }
+    .suggestions-list .list-group-item {
+        cursor: pointer;
+    }
+    .suggestions-list .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    .is-invalid {
+        border-color: #dc3545;
+    }
+    .invalid-feedback {
+        display: block;
+    }
+    
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .tab-button {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        .photo-preview, .photo-placeholder {
+            width: 120px;
+            height: 120px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">
+                {% if is_initial_profile %}
+                    <i class="fas fa-user-plus"></i> Добро пожаловать! Заполните анкету
+                {% else %}
+                    <i class="fas fa-user-edit"></i> Анкета родителя
+                {% endif %}
+            </h3>
+            <small>
+                {% if is_initial_profile %}
+                    Для продолжения работы необходимо заполнить все обязательные поля
+                {% else %}
+                    Вы можете отредактировать свои данные
+                {% endif %}
+            </small>
+        </div>
+        <div class="card-body">
+            {% if is_initial_profile %}
+            <div class="alert alert-warning mb-4">
+                <i class="fas fa-info-circle"></i> 
+                <strong>Внимание!</strong> Это ваша первая авторизация. Пожалуйста, заполните анкету родителя.
+                Без заполнения анкеты вы не сможете пользоваться системой.
+            </div>
+            {% endif %}
+            
+            <!-- Прогресс заполнения -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Заполнено {{ completed_tabs_count }} из {{ total_tabs }} вкладок</span>
+                    <span class="text-muted">{{ completed_tabs_count }}/{{ total_tabs }}</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-success" 
+                         role="progressbar" 
+                         style="width: {% widthratio completed_tabs_count total_tabs 100 %}%"
+                         aria-valuenow="{% widthratio completed_tabs_count total_tabs 100 %}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Фото родителя -->
+            <div class="photo-upload-container">
+                <div id="photoPreviewContainer">
+                    {% if profile.photo and profile.photo.url %}
+                        <img src="{{ profile.photo.url }}" alt="Фото родителя" class="photo-preview" id="parentPhoto">
+                    {% else %}
+                        <div class="photo-placeholder" id="parentPhotoPlaceholder">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="photo-actions">
+                    <label class="btn-photo btn-photo-upload">
+                        <i class="fas fa-camera"></i> Загрузить фото
+                        <input type="file" id="photoUpload" accept="image/*" style="display: none;">
+                    </label>
+                    <button type="button" class="btn-photo btn-photo-delete" id="deletePhotoBtn" {% if not profile.photo %}style="display:none;"{% endif %}>
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
+                </div>
+                <small class="text-muted">Рекомендуемый размер: 300x300 пикселей. Форматы: JPG, PNG (до 5MB)</small>
+            </div>
+            
+            <!-- Переключатель "Основной родитель" -->
+            <div class="alert alert-info mb-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <strong><i class="fas fa-user-check"></i> Основной родитель</strong>
+                        <p class="mb-0 small text-muted">
+                            {% if is_primary_parent %}
+                            Вы указаны как основной родитель (главное контактное лицо)
+                            {% else %}
+                            Включите, если вы являетесь основным родителем
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <div class="toggle-switch {% if is_primary_parent %}active{% endif %}" 
+                             id="primaryParentToggle"></div>
+                    </div>
+                </div>
+                <div id="primaryParentNameField" class="mt-3" style="display: {% if not is_primary_parent %}block{% else %}none{% endif %}">
+                    <label for="primary_parent_name" class="form-label">ФИО основного родителя</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="primary_parent_name" 
+                           name="primary_parent_name"
+                           value="{{ profile.primary_parent_full_name }}"
+                           placeholder="Введите ФИО основного родителя">
+                    <small class="text-muted">Укажите ФИО родителя, который будет главным контактным лицом</small>
+                </div>
+            </div>
+            
+            <!-- Вкладки -->
+            <div class="profile-tabs">
+                <button class="tab-button {% if 1 in completed_tabs %}completed{% endif %}" data-tab="1">
+                    Основные сведения
+                </button>
+                <button class="tab-button {% if 2 in completed_tabs %}completed{% endif %}" data-tab="2">
+                    Паспортные данные
+                </button>
+                <button class="tab-button {% if 3 in completed_tabs %}completed{% endif %}" data-tab="3">
+                    Социальные условия
+                </button>
+                <button class="tab-button {% if 4 in completed_tabs %}completed{% endif %}" data-tab="4">
+                    Телефоны
+                </button>
+                <button class="tab-button {% if 5 in completed_tabs %}completed{% endif %}" data-tab="5">
+                    Место работы
+                </button>
+                <button class="tab-button" data-tab="6">
+                    Дети
+                </button>
+            </div>
+            
+            <!-- Форма -->
+            <form method="post" id="parentProfileForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Вкладка 1: Основные сведения -->
+                <div class="tab-pane" data-tab="1">
+                    <h4 class="mb-3">Основные сведения</h4>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.full_name|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.birth_date|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_nationality" class="form-label requiredField">Национальность</label>
+                            <input type="text" 
+                                   name="nationality" 
+                                   id="id_nationality" 
+                                   class="form-control nationality-input"
+                                   value="{{ form.nationality.value|default:'' }}"
+                                   placeholder="Начните вводить национальность..."
+                                   autocomplete="off"
+                                   required>
+                            <div id="nationalitySuggestions" class="suggestions-list"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка 2: Паспортные данные -->
+                <div class="tab-pane" data-tab="2">
+                    <h4 class="mb-3">Паспортные данные</h4>
+                    <div class="alert alert-secondary">
+                        <small><i class="fas fa-shield-alt"></i> Данные будут отображаться только последние 4 цифры после сохранения</small>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            {{ form.passport_series|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            {{ form.passport_number|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.passport_issue_date|as_crispy_field }}
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            {{ form.passport_issued_by|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка 3: Социальные условия -->
+                <div class="tab-pane" data-tab="3">
+                    <h4 class="mb-3">Социальные условия</h4>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.registration_address|as_crispy_field }}
+                            <small class="text-muted">Пример: 123456, г. Москва, ул. Примерная, д. 1, кв. 1</small>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check mb-2">
+                                {{ form.address_same_as_registration }}
+                                <label class="form-check-label" for="{{ form.address_same_as_registration.id_for_label }}">
+                                    {{ form.address_same_as_registration.label }}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-3" id="actualAddressField">
+                            {{ form.actual_address|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка 4: Телефоны -->
+                <div class="tab-pane" data-tab="4">
+                    <h4 class="mb-3">Контактные телефоны</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.mobile_phone|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.home_phone|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.work_phone|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка 5: Место работы -->
+                <div class="tab-pane" data-tab="5">
+                    <h4 class="mb-3">Сведения о месте работы</h4>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check mb-3">
+                                {{ form.not_working }}
+                                <label class="form-check-label" for="{{ form.not_working.id_for_label }}">
+                                    {{ form.not_working.label }}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-8 mb-3" id="workplaceField">
+                            {{ form.workplace|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4 mb-3" id="positionField">
+                            {{ form.position|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка 6: Дети -->
+                <div class="tab-pane" data-tab="6">
+                    <h4 class="mb-3">Сведения о детях</h4>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        Информация о детях будет добавлена после подачи заявления. 
+                        Вы можете подать заявление на поступление ребенка через раздел "Заявления".
+                    </div>
+                    <a href="{% url 'applications:application_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Подать заявление на ребенка
+                    </a>
+                </div>
+                
+                <!-- Кнопки управления -->
+                <div class="mt-4 d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary" id="prevTabBtn" disabled>
+                        <i class="fas fa-chevron-left"></i> Назад
+                    </button>
+                    <button type="button" class="btn btn-primary" id="nextTabBtn">
+                        Далее <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button type="submit" class="btn btn-success" id="saveBtn" style="display: none;">
+                        <i class="fas fa-save"></i> Сохранить анкету
+                    </button>
+                </div>
+                
+                <!-- Кнопка "Сохранить и продолжить позже" -->
+                <div class="mt-3 text-center">
+                    <button type="submit" name="save_draft" class="btn btn-outline-secondary">
+                        <i class="fas fa-clock"></i> Сохранить и продолжить позже
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Переменные для работы с вкладками
+    let currentTab = 1;
+    const totalTabs = 6;
+    let completedTabs = {{ completed_tabs|safe }};
+    
+    // Инициализация
+    $(document).ready(function() {
+        // Показываем первую вкладку
+        showTab(currentTab);
+        updateNavigationButtons();
+        
+        // Инициализация загрузки фото
+        initPhotoUpload();
+        
+        // Маска для телефона
+        $('.phone-mask').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            if (value.length > 0) {
+                if (value.startsWith('7') || value.startsWith('8')) {
+                    value = value.substring(1);
+                }
+                let formatted = '+7(';
+                if (value.length > 0) formatted += value.substring(0, Math.min(3, value.length));
+                if (value.length > 3) formatted += ')' + value.substring(3, Math.min(6, value.length));
+                if (value.length > 6) formatted += '-' + value.substring(6, Math.min(8, value.length));
+                if (value.length > 8) formatted += '-' + value.substring(8, Math.min(10, value.length));
+                $(this).val(formatted);
+            }
+        });
+        
+        // Автодополнение национальности
+        const nationalities = {{ nationalities|safe }};
+        $('#id_nationality').on('input', function() {
+            const query = $(this).val().toLowerCase();
+            const suggestions = nationalities.filter(n => n.toLowerCase().includes(query));
+            
+            if (suggestions.length > 0 && query.length > 0) {
+                let html = '<div class="list-group mt-1">';
+                suggestions.slice(0, 5).forEach(s => {
+                    html += `<a href="#" class="list-group-item list-group-item-action suggestion-item">${s}</a>`;
+                });
+                html += '</div>';
+                $('#nationalitySuggestions').html(html);
+                
+                $('.suggestion-item').on('click', function(e) {
+                    e.preventDefault();
+                    $('#id_nationality').val($(this).text());
+                    $('#nationalitySuggestions').empty();
+                });
+            } else {
+                $('#nationalitySuggestions').empty();
+            }
+        });
+        
+        // Скрытие/показ полей при "Не работаю"
+        $('#id_not_working').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#workplaceField, #positionField').hide();
+                $('#id_workplace, #id_position').val('').prop('required', false);
+            } else {
+                $('#workplaceField, #positionField').show();
+                $('#id_workplace, #id_position').prop('required', true);
+            }
+        }).trigger('change');
+        
+        // Копирование адреса
+        $('#id_address_same_as_registration').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#actualAddressField').hide();
+                $('#id_actual_address').val($('#id_registration_address').val());
+            } else {
+                $('#actualAddressField').show();
+            }
+        }).trigger('change');
+        
+        $('#id_registration_address').on('input', function() {
+            if ($('#id_address_same_as_registration').is(':checked')) {
+                $('#id_actual_address').val($(this).val());
+            }
+        });
+        
+        // Переключение основного родителя
+        $('#primaryParentToggle').on('click', function() {
+            const isActive = $(this).hasClass('active');
+            const newState = !isActive;
+            
+            $.ajax({
+                url: window.location.href,
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                data: JSON.stringify({
+                    is_primary: newState,
+                    primary_parent_name: $('#primary_parent_name').val()
+                }),
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.success) {
+                        if (newState) {
+                            $('#primaryParentToggle').addClass('active');
+                            $('#primaryParentNameField').hide();
+                        } else {
+                            $('#primaryParentToggle').removeClass('active');
+                            $('#primaryParentNameField').show();
+                        }
+                        showNotification(response.message, 'success');
+                    }
+                },
+                error: function() {
+                    showNotification('Ошибка при сохранении', 'danger');
+                }
+            });
+        });
+        
+        // Сохранение имени основного родителя при изменении
+        $('#primary_parent_name').on('change', function() {
+            if (!$('#primaryParentToggle').hasClass('active')) {
+                $.ajax({
+                    url: window.location.href,
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    data: JSON.stringify({
+                        is_primary: false,
+                        primary_parent_name: $(this).val()
+                    }),
+                    contentType: 'application/json'
+                });
+            }
+        });
+    });
+    
+    // Инициализация загрузки фото
+    function initPhotoUpload() {
+        const photoInput = document.getElementById('photoUpload');
+        const deleteBtn = document.getElementById('deletePhotoBtn');
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        if (!photoInput) return;
+        
+        photoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                showNotification('Пожалуйста, выберите изображение (JPG, PNG)', 'danger');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('Размер файла не должен превышать 5MB', 'danger');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('photo', file);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            
+            showNotification('Загрузка фото...', 'info');
+            
+            fetch('/accounts/upload-parent-photo/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const previewContainer = document.getElementById('photoPreviewContainer');
+                    previewContainer.innerHTML = `<img src="${data.photo_url}?t=${Date.now()}" alt="Фото родителя" class="photo-preview" id="parentPhoto">`;
+                    if (deleteBtn) deleteBtn.style.display = 'block';
+                    showNotification('Фото успешно загружено!', 'success');
+                } else {
+                    showNotification(data.error || 'Ошибка при загрузке фото', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Ошибка сети при загрузке фото', 'danger');
+            });
+        });
+        
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function() {
+                if (!confirm('Вы уверены, что хотите удалить фото?')) return;
+                
+                fetch('/accounts/upload-parent-photo/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ delete: true })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const previewContainer = document.getElementById('photoPreviewContainer');
+                        previewContainer.innerHTML = `<div class="photo-placeholder" id="parentPhotoPlaceholder"><i class="fas fa-user-circle"></i></div>`;
+                        deleteBtn.style.display = 'none';
+                        showNotification('Фото удалено', 'success');
+                    } else {
+                        showNotification(data.error || 'Ошибка при удалении', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Ошибка сети при удалении фото', 'danger');
+                });
+            });
+        }
+    }
+    
+    // Показ вкладки
+    function showTab(tabNumber) {
+        $('.tab-pane').removeClass('active');
+        $(`.tab-pane[data-tab="${tabNumber}"]`).addClass('active');
+        
+        $('.tab-button').removeClass('active');
+        $(`.tab-button[data-tab="${tabNumber}"]`).addClass('active');
+        
+        currentTab = tabNumber;
+    }
+    
+    // Валидация текущей вкладки
+    function validateCurrentTab() {
+        const currentPane = $(`.tab-pane[data-tab="${currentTab}"]`);
+        let isValid = true;
+        
+        // Проверяем обязательные поля в текущей вкладке
+        currentPane.find('input[required], select[required], textarea[required]').each(function() {
+            const $field = $(this);
+            if (!$field.val() || $field.val().trim() === '') {
+                $field.addClass('is-invalid');
+                isValid = false;
+                
+                let $errorDiv = $field.next('.invalid-feedback');
+                if ($errorDiv.length === 0) {
+                    $errorDiv = $('<div class="invalid-feedback">Это поле обязательно для заполнения</div>');
+                    $field.after($errorDiv);
+                }
+            } else {
+                $field.removeClass('is-invalid');
+                $field.next('.invalid-feedback').remove();
+            }
+        });
+        
+        // Дополнительная валидация для телефона
+        if (currentTab === 4) {
+            const mobilePhone = $('#id_mobile_phone').val();
+            if (!mobilePhone || mobilePhone === '+7()--') {
+                $('#id_mobile_phone').addClass('is-invalid');
+                isValid = false;
+            }
+        }
+        
+        // Валидация паспортных данных
+        if (currentTab === 2) {
+            const series = $('#id_passport_series').val();
+            const number = $('#id_passport_number').val();
+            
+            if (series && !/^\d{4}$/.test(series)) {
+                $('#id_passport_series').addClass('is-invalid');
+                isValid = false;
+            }
+            if (number && !/^\d{6}$/.test(number)) {
+                $('#id_passport_number').addClass('is-invalid');
+                isValid = false;
+            }
+        }
+        
+        if (!isValid) {
+            showNotification('Пожалуйста, заполните все обязательные поля', 'danger');
+        }
+        
+        return isValid;
+    }
+    
+    // Переход на следующую вкладку
+    $('#nextTabBtn').on('click', function() {
+        if (validateCurrentTab()) {
+            if (currentTab < totalTabs) {
+                if (!completedTabs.includes(currentTab)) {
+                    completedTabs.push(currentTab);
+                    $(`.tab-button[data-tab="${currentTab}"]`).addClass('completed');
+                }
+                
+                currentTab++;
+                showTab(currentTab);
+                updateNavigationButtons();
+                updateProgress();
+            }
+            
+            if (currentTab === totalTabs) {
+                $('#nextTabBtn').hide();
+                $('#saveBtn').show();
+            }
+        }
+    });
+    
+    // Переход на предыдущую вкладку
+    $('#prevTabBtn').on('click', function() {
+        if (currentTab > 1) {
+            currentTab--;
+            showTab(currentTab);
+            updateNavigationButtons();
+            
+            $('#nextTabBtn').show();
+            $('#saveBtn').hide();
+        }
+    });
+    
+    // Обновление состояния кнопок навигации
+    function updateNavigationButtons() {
+        $('#prevTabBtn').prop('disabled', currentTab === 1);
+        $('#nextTabBtn').prop('disabled', false);
+    }
+    
+    // Обновление прогресс-бара
+    function updateProgress() {
+        const completedCount = completedTabs.length;
+        const percentage = (completedCount / totalTabs) * 100;
+        $('.progress-bar').css('width', percentage + '%').attr('aria-valuenow', percentage);
+        $('.progress-bar').parent().prev().find('span:first').text(`Заполнено ${completedCount} из ${totalTabs} вкладок`);
+    }
+    
+    // Уведомления
+    function showNotification(message, type) {
+        const alertDiv = $(`
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        $('.card-body').prepend(alertDiv);
+        setTimeout(() => {
+            alertDiv.alert('close');
+        }, 5000);
+    }
+    
+    // Обработка клика по вкладке
+    $('.tab-button').on('click', function() {
+        const tabNumber = parseInt($(this).data('tab'));
+        if (validateCurrentTab()) {
+            currentTab = tabNumber;
+            showTab(currentTab);
+            updateNavigationButtons();
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

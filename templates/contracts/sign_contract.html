@@ -1,0 +1,500 @@
+<!-- templates/contracts/sign_contract.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Подписание договора №{{ contract.contract_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== MODERN VARIABLES ===== */
+    :root {
+        --primary: #5b21b6;
+        --primary-light: #7c3aed;
+        --primary-dark: #4c1d95;
+        --secondary: #0ea5e9;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --dark: #1e293b;
+        --gray: #64748b;
+        --light: #f1f5f9;
+        --white: #ffffff;
+        --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+        --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .page-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== HEADER ===== */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1.5rem 2rem;
+        background: var(--white);
+        border-radius: 24px;
+        box-shadow: var(--shadow-medium);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--bg-gradient);
+    }
+
+    .page-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: var(--bg-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
+    .back-btn {
+        padding: 0.75rem 1.5rem;
+        background: var(--white);
+        border-radius: 16px;
+        color: var(--gray);
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+        border: 2px solid var(--light);
+    }
+
+    .back-btn:hover {
+        color: var(--primary);
+        border-color: var(--primary-light);
+        transform: translateX(-5px);
+    }
+
+    /* ===== SIGNATURE CARD ===== */
+    .signature-card {
+        background: var(--white);
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: var(--shadow-large);
+        animation: slideUp 0.5s ease-out;
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .signature-header {
+        background: var(--bg-gradient);
+        padding: 2rem;
+        text-align: center;
+        color: white;
+    }
+
+    .signature-header i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    .signature-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .signature-header p {
+        opacity: 0.9;
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .signature-body {
+        padding: 2.5rem;
+    }
+
+    /* ===== CONTRACT INFO ===== */
+    .contract-info {
+        background: linear-gradient(145deg, #f8fafc 0%, #ffffff 100%);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 2px dashed var(--light);
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--light);
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: var(--gray);
+        font-weight: 500;
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    /* ===== SIGNATURE STATUS ===== */
+    .signature-status {
+        display: flex;
+        justify-content: space-between;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .status-item {
+        flex: 1;
+        padding: 1.5rem;
+        border-radius: 20px;
+        text-align: center;
+        border: 2px solid transparent;
+        transition: var(--transition);
+    }
+
+    .status-item.signed {
+        background: rgba(16, 185, 129, 0.1);
+        border-color: var(--success);
+    }
+
+    .status-item.pending {
+        background: rgba(245, 158, 11, 0.1);
+        border-color: var(--warning);
+    }
+
+    .status-item i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .status-item.signed i {
+        color: var(--success);
+    }
+
+    .status-item.pending i {
+        color: var(--warning);
+    }
+
+    .status-item h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem 0;
+        color: var(--dark);
+    }
+
+    .status-item p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--gray);
+    }
+
+    /* ===== SIGNATURE FORM ===== */
+    .signature-form {
+        text-align: center;
+    }
+
+    .signature-checkbox {
+        margin: 2rem 0;
+    }
+
+    .checkbox-container {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--dark);
+    }
+
+    .checkbox-container input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(--success);
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn {
+        padding: 1rem 2.5rem;
+        border-radius: 16px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: var(--transition);
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        border: none;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-success:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-success:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-secondary {
+        background: var(--light);
+        color: var(--gray);
+    }
+
+    .btn-secondary:hover {
+        background: var(--gray);
+        color: white;
+        transform: translateY(-3px);
+    }
+
+    /* ===== ALERT ===== */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+        border-left: 4px solid var(--warning);
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+        border-left: 4px solid var(--success);
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+        border-left: 4px solid var(--secondary);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 640px) {
+        .signature-status {
+            flex-direction: column;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1>Подписание договора</h1>
+        <a href="{% url 'contracts:contract_detail' contract.pk %}" class="back-btn">
+            <i class="bi bi-arrow-left"></i>
+            Назад к договору
+        </a>
+    </div>
+
+    <!-- Signature Card -->
+    <div class="signature-card">
+        <div class="signature-header">
+            <i class="bi bi-pencil-square"></i>
+            <h2>Договор №{{ contract.contract_number }}</h2>
+            <p>от {{ contract.registration_date|date:"d.m.Y" }}</p>
+        </div>
+        
+        <div class="signature-body">
+            <!-- Contract Info -->
+            <div class="contract-info">
+                <div class="info-row">
+                    <span class="info-label">Ребенок:</span>
+                    <span class="info-value">{{ contract.child_full_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Родитель:</span>
+                    <span class="info-value">{{ contract.parent_full_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Группа:</span>
+                    <span class="info-value">{{ contract.group_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Дата зачисления:</span>
+                    <span class="info-value">{{ contract.enrollment_date|date:"d.m.Y" }}</span>
+                </div>
+            </div>
+
+            <!-- Signature Status -->
+            <div class="signature-status">
+                <div class="status-item {% if contract.director_signed_at %}signed{% else %}pending{% endif %}">
+                    <i class="bi {% if contract.director_signed_at %}bi-check-circle-fill{% else %}bi-clock{% endif %}"></i>
+                    <h4>Заведующая</h4>
+                    {% if contract.director_signed_at %}
+                        <p>Подписано: {{ contract.director_signed_at|date:"d.m.Y H:i" }}</p>
+                    {% else %}
+                        <p>Ожидает подписания</p>
+                    {% endif %}
+                </div>
+                
+                <div class="status-item {% if contract.parent_signed_at %}signed{% else %}pending{% endif %}">
+                    <i class="bi {% if contract.parent_signed_at %}bi-check-circle-fill{% else %}bi-clock{% endif %}"></i>
+                    <h4>Родитель</h4>
+                    {% if contract.parent_signed_at %}
+                        <p>Подписано: {{ contract.parent_signed_at|date:"d.m.Y H:i" }}</p>
+                    {% else %}
+                        <p>Ожидает подписания</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Already Signed Alert -->
+            {% if request.user.role == 'director' and contract.director_signed_at %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill"></i>
+                    Вы уже подписали этот договор.
+                </div>
+            {% elif request.user.role == 'parent' and contract.parent_signed_at %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill"></i>
+                    Вы уже подписали этот договор.
+                </div>
+            {% endif %}
+
+            <!-- Signature Form -->
+            {% if not contract.director_signed_at or not contract.parent_signed_at %}
+                <form method="post" class="signature-form" onsubmit="return validateForm()">
+                    {% csrf_token %}
+                    
+                    <div class="signature-checkbox">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="confirmCheckbox" required>
+                            <span>Я подтверждаю, что ознакомлен(а) с условиями договора и согласен(на) с ними</span>
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{% url 'contracts:contract_detail' contract.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-x-lg"></i>
+                            Отмена
+                        </a>
+                        <button type="submit" class="btn btn-success" id="signButton" disabled>
+                            <i class="bi bi-pencil-fill"></i>
+                            {% if request.user.role == 'director' %}
+                                Подписать как заведующая
+                            {% else %}
+                                Подписать как родитель
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="alert alert-success" style="text-align: center;">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Договор полностью подписан обеими сторонами!
+                </div>
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <a href="{% url 'contracts:contract_detail' contract.pk %}" class="btn btn-success">
+                        <i class="bi bi-arrow-left"></i>
+                        Вернуться к договору
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Активация кнопки подписания при установке чекбокса
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkbox = document.getElementById('confirmCheckbox');
+        const signButton = document.getElementById('signButton');
+        
+        if (checkbox && signButton) {
+            checkbox.addEventListener('change', function() {
+                signButton.disabled = !this.checked;
+            });
+        }
+    });
+
+    // Валидация формы
+    function validateForm() {
+        const checkbox = document.getElementById('confirmCheckbox');
+        if (!checkbox.checked) {
+            alert('Пожалуйста, подтвердите ознакомление с договором');
+            return false;
+        }
+        return true;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,133 @@
+<!-- lessons/templates/lessons/schedule_edit.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Редактирование расписания - Детский сад{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4>Редактирование расписания</h4>
+                        <a href="{% url 'lessons:schedule_view' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i> Назад к расписанию
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Форма добавления -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Добавить элемент расписания</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        {{ form.day_of_week|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ form.start_time|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ form.end_time|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        {{ form.activity_type|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="fas fa-plus me-1"></i> Добавить
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        {{ form.description|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-check form-switch">
+                                            {{ form.is_regular }}
+                                            <label class="form-check-label" for="{{ form.is_regular.id_for_label }}">
+                                                Регулярное занятие
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Существующее расписание -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Текущее расписание</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            {% if schedule %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>День недели</th>
+                                                <th>Время</th>
+                                                <th>Вид деятельности</th>
+                                                <th>Описание</th>
+                                                <th>Тип</th>
+                                                <th>Действия</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in schedule %}
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ item.get_day_of_week_display }}</strong>
+                                                </td>
+                                                <td>
+                                                    {{ item.start_time|time:"H:i" }} - {{ item.end_time|time:"H:i" }}
+                                                </td>
+                                                <td>{{ item.activity_type }}</td>
+                                                <td>
+                                                    <small class="text-muted">{{ item.description|default:"-"|truncatewords:5 }}</small>
+                                                </td>
+                                                <td>
+                                                    {% if item.is_regular %}
+                                                        <span class="badge bg-success">Регулярное</span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning">Разовое</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <form method="post" action="{% url 'lessons:schedule_delete' item.id %}" class="d-inline">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                                                onclick="return confirm('Удалить этот элемент расписания?')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-calendar-plus fa-2x text-muted mb-3"></i>
+                                    <p class="text-muted mb-0">Расписание пока пустое</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

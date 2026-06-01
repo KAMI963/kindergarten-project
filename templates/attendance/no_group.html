@@ -1,0 +1,30 @@
+<!-- attendance/no_group.html -->
+{% extends 'base.html' %}
+
+{% block title %}Нет группы{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-lg border-0 rounded-lg mt-5">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="text-center mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Группа не назначена
+                    </h4>
+                </div>
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-users fa-5x text-muted mb-4"></i>
+                    <h3 class="text-muted mb-3">Вам не назначена группа</h3>
+                    <p class="text-muted mb-4">
+                        Для работы с посещаемостью необходимо, чтобы заведующая назначила вас воспитателем группы.
+                    </p>
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-arrow-left me-2"></i>Вернуться на главную
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

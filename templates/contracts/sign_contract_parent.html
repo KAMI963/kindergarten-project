@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Подписание договора{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contract-info {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .signature-box {
+        border: 2px dashed #667eea;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        background: #f8fafc;
+        margin-bottom: 20px;
+    }
+    
+    .btn-sign {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 14px 40px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 40px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 20px;
+    }
+    
+    .btn-sign:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(16,185,129,0.3);
+    }
+    
+    .btn-download {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 10px 24px;
+        border-radius: 40px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-download:hover {
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .info-text {
+        background: #e0e7ff;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 0.85rem;
+        color: #4338ca;
+        margin: 15px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Подписание договора об образовании</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-7">
+                    <div class="contract-info">
+                        <h5 class="mb-3">Договор №{{ contract.contract_number }} от {{ contract.registration_date|date:"d.m.Y" }}</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Ребенок:</strong></p>
+                                <p>{{ contract.child_full_name }}<br>
+                                {{ contract.child_birth_date|date:"d.m.Y" }} г.р.</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Группа:</strong></p>
+                                <p>{{ contract.group_name }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Родительская плата:</strong></p>
+                                <p class="h5 text-primary">{{ contract.parent_fee }} ₽/месяц</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Статус подписания:</strong></p>
+                                <p>
+                                    {% if contract.director_signed_at %}
+                                        <span class="text-success">✓ Заведующая подписала</span><br>
+                                        <small>{{ contract.director_signed_at|date:"d.m.Y H:i" }}</small>
+                                    {% else %}
+                                        <span class="text-warning">⏳ Ожидает подписи заведующей</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if contract.generated_contract %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'contracts:download_contract' contract.pk %}" class="btn-download">
+                            <i class="fas fa-file-word"></i> Предварительный просмотр договора
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-5">
+                    <div class="signature-box">
+                        <i class="fas fa-file-signature fa-4x text-primary mb-3"></i>
+                        <h5>Электронная подпись родителя</h5>
+                        <p class="text-muted small">Нажимая кнопку "Ознакомлен и согласен", вы подтверждаете, что:</p>
+                        <ul class="text-start small">
+                            <li>Ознакомлены с условиями договора</li>
+                            <li>Согласны с размером родительской платы</li>
+                            <li>Принимаете правила внутреннего распорядка</li>
+                            <li>Подтверждаете достоверность предоставленных данных</li>
+                        </ul>
+                        <div class="info-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Данное действие является простой электронной подписью и имеет юридическую силу.
+                        </div>
+                        
+                        {% if contract.parent_signed_at %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i> Договор уже подписан!<br>
+                                <small>Дата подписания: {{ contract.parent_signed_at|date:"d.m.Y H:i" }}</small>
+                            </div>
+                        {% else %}
+                            <form method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-sign">
+                                    <i class="fas fa-check-circle me-2"></i> Ознакомлен и согласен
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

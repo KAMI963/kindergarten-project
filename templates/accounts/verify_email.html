@@ -1,0 +1,769 @@
+{% load static %}
+{% load crispy_forms_tags %}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Подтверждение email</title>
+    
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <style>
+        /* ГЛОБАЛЬНЫЕ СБРОСЫ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            margin: 0;
+            line-height: 1.4;
+            min-height: 100vh;
+            min-width: 280px;
+        }
+        
+        .verification-container {
+            width: 100%;
+            max-width: 380px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .verification-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
+            padding: 24px 24px;
+            width: 100%;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .email-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            animation: pulse 2s infinite;
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.25);
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 12px rgba(102, 126, 234, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+        }
+        
+        .email-icon i {
+            font-size: 28px;
+            color: white;
+        }
+        
+        .verification-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 8px;
+            text-align: center;
+            letter-spacing: -0.3px;
+        }
+        
+        .verification-subtitle {
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .email-highlight {
+            background: #f7fafc;
+            padding: 10px 14px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+            word-break: break-all;
+        }
+        
+        .email-highlight strong {
+            color: #667eea;
+            word-break: break-all;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .code-input-container {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 13px;
+        }
+        
+        #id_code {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 20px !important;
+            letter-spacing: 0.3em;
+            text-align: center;
+            font-weight: 700;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            transition: all 0.3s;
+            background: #ffffff;
+            color: #1a202c;
+            font-family: 'Courier New', monospace;
+            outline: none;
+            box-sizing: border-box;
+        }
+        
+        #id_code:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+        
+        #id_code::placeholder {
+            font-size: 13px;
+            letter-spacing: normal;
+            color: #a0aec0;
+            font-weight: 400;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        .text-danger {
+            color: #e53e3e;
+            margin-top: 6px;
+            font-size: 12px;
+        }
+        
+        .text-danger small {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .text-muted {
+            display: block;
+            margin-top: 8px;
+            color: #718096;
+            font-size: 11px;
+        }
+        
+        .timer-container {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.06) 0%, rgba(118, 75, 162, 0.06) 100%);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .timer-label {
+            color: #4a5568;
+            margin-bottom: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .timer {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2d3748;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+        
+        .timer-warning {
+            color: #e53e3e;
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 18px;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 3px 5px rgba(50, 50, 93, 0.1);
+            box-sizing: border-box;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+        
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .resend-section {
+            text-align: center;
+            border-top: 1px solid #edf2f7;
+            padding-top: 18px;
+        }
+        
+        .resend-text {
+            color: #4a5568;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+        
+        .resend-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 7px 20px;
+            border: 2px solid #667eea;
+            border-radius: 30px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: transparent;
+            font-size: 13px;
+        }
+        
+        .resend-link:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-color: transparent;
+        }
+        
+        .resend-link.disabled {
+            color: #a0aec0;
+            border-color: #e2e8f0;
+            pointer-events: none;
+            opacity: 0.6;
+            background: transparent;
+        }
+        
+        .alert {
+            padding: 10px 14px;
+            border-radius: 12px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            animation: fadeIn 0.4s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+        
+        .alert-info {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+        
+        .alert i {
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            left: auto;
+            min-width: 240px;
+            max-width: 320px;
+            width: calc(100% - 32px);
+            background: white;
+            border-radius: 12px;
+            padding: 10px 14px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 9999;
+            border-left: 4px solid;
+            animation: slideInRight 0.35s;
+            box-sizing: border-box;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .notification.success {
+            border-left-color: #48bb78;
+            background: #f0fff4;
+        }
+        
+        .notification.error {
+            border-left-color: #f56565;
+            background: #fff5f5;
+        }
+        
+        .notification i {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .notification.success i {
+            color: #48bb78;
+        }
+        
+        .notification.error i {
+            color: #f56565;
+        }
+        
+        .notification-content {
+            flex: 1;
+            font-size: 12px;
+            color: #2d3748;
+            font-weight: 500;
+        }
+        
+        /* АДАПТИВНОСТЬ */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .verification-container {
+                max-width: 340px;
+            }
+            
+            .verification-card {
+                padding: 18px 20px;
+            }
+            
+            .verification-title {
+                font-size: 18px;
+            }
+            
+            .verification-subtitle {
+                font-size: 12px;
+            }
+            
+            .email-icon {
+                width: 48px;
+                height: 48px;
+                margin-bottom: 12px;
+            }
+            
+            .email-icon i {
+                font-size: 24px;
+            }
+            
+            .email-highlight {
+                padding: 8px 12px;
+                margin-bottom: 16px;
+            }
+            
+            .email-highlight strong {
+                font-size: 12px;
+            }
+            
+            #id_code {
+                padding: 8px 12px;
+                font-size: 18px !important;
+                letter-spacing: 0.25em;
+            }
+            
+            .timer {
+                font-size: 20px;
+            }
+            
+            .btn-submit {
+                padding: 8px 16px;
+                font-size: 13px;
+                margin-bottom: 16px;
+            }
+            
+            .resend-section {
+                padding-top: 16px;
+            }
+            
+            .resend-link {
+                padding: 6px 18px;
+                font-size: 12px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .verification-container {
+                max-width: 300px;
+            }
+            
+            .verification-card {
+                padding: 16px 16px;
+            }
+            
+            .verification-title {
+                font-size: 17px;
+            }
+            
+            #id_code {
+                font-size: 16px !important;
+                padding: 8px 10px;
+                letter-spacing: 0.2em;
+            }
+        }
+        
+        @media (max-height: 500px) and (orientation: landscape) {
+            body {
+                padding: 10px;
+                align-items: flex-start;
+            }
+            
+            .verification-card {
+                padding: 14px 20px;
+            }
+            
+            .email-icon {
+                width: 40px;
+                height: 40px;
+                margin-bottom: 8px;
+            }
+            
+            .email-icon i {
+                font-size: 20px;
+            }
+            
+            .verification-title {
+                font-size: 16px;
+                margin-bottom: 4px;
+            }
+            
+            .verification-subtitle {
+                font-size: 11px;
+                margin-bottom: 10px;
+            }
+            
+            .email-highlight {
+                padding: 6px 10px;
+                margin-bottom: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="verification-container">
+        <div class="verification-card animate__animated animate__fadeIn">
+            <!-- Иконка -->
+            <div class="email-icon animate__animated animate__bounceIn">
+                <i class="fas fa-envelope"></i>
+            </div>
+            
+            <!-- Заголовок -->
+            <h1 class="verification-title">Подтверждение email</h1>
+            
+            <!-- Описание -->
+            <p class="verification-subtitle">
+                Мы отправили код подтверждения на ваш email
+            </p>
+            
+            <!-- Email пользователя -->
+            <div class="email-highlight">
+                <strong>{{ email }}</strong>
+            </div>
+            
+            <!-- Сообщения -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Форма подтверждения -->
+            <form method="post" id="verificationForm">
+                {% csrf_token %}
+                
+                <div class="code-input-container">
+                    <label for="id_code" class="form-label">
+                        <i class="fas fa-key me-2"></i>Код подтверждения
+                    </label>
+                    {{ form.code }}
+                    {% if form.code.errors %}
+                        <div class="text-danger">
+                            {% for error in form.code.errors %}
+                                <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>Введите 6-значный код из письма
+                    </small>
+                </div>
+                
+                <!-- Таймер -->
+                <div class="timer-container">
+                    <div class="timer-label">
+                        <i class="fas fa-clock"></i>
+                        Код действителен
+                    </div>
+                    <div class="timer" id="timer">
+                        <span id="minutes">{{ expires_in|default:"15" }}</span>:<span id="seconds">00</span>
+                    </div>
+                </div>
+                
+                <!-- Кнопка подтверждения -->
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-check-circle"></i>
+                    Подтвердить
+                </button>
+            </form>
+            
+            <!-- Повторная отправка -->
+            <div class="resend-section">
+                <p class="resend-text">
+                    <i class="fas fa-envelope-open-text"></i>
+                    Не получили код?
+                </p>
+                <a href="#" class="resend-link" id="resendCode">
+                    <i class="fas fa-redo-alt"></i>
+                    Отправить повторно
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Таймер
+        let minutes = parseInt('{{ expires_in|default:"15" }}');
+        let seconds = 0;
+        const timerElement = document.getElementById('timer');
+        let minutesElement = document.getElementById('minutes');
+        let secondsElement = document.getElementById('seconds');
+        const resendLink = document.getElementById('resendCode');
+        
+        function updateTimer() {
+            if (minutes === 0 && seconds === 0) {
+                timerElement.innerHTML = '<span class="timer-warning"><i class="fas fa-exclamation-triangle"></i> Срок действия кода истек</span>';
+                if (resendLink) resendLink.classList.remove('disabled');
+                return;
+            }
+            
+            if (seconds === 0) {
+                minutes--;
+                seconds = 59;
+            } else {
+                seconds--;
+            }
+            
+            if (minutesElement) minutesElement.textContent = minutes.toString().padStart(2, '0');
+            if (secondsElement) secondsElement.textContent = seconds.toString().padStart(2, '0');
+            
+            if (minutes < 2 && timerElement) {
+                timerElement.classList.add('timer-warning');
+            }
+        }
+        
+        const timerInterval = setInterval(updateTimer, 1000);
+        
+        window.addEventListener('beforeunload', function() {
+            clearInterval(timerInterval);
+        });
+        
+        if (resendLink) {
+            resendLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                if (resendLink.classList.contains('disabled')) {
+                    return;
+                }
+                
+                resendLink.classList.add('disabled');
+                const originalText = resendLink.innerHTML;
+                resendLink.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+                
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+                if (!csrfToken) {
+                    showNotification('error', 'CSRF токен не найден. Обновите страницу.');
+                    resendLink.classList.remove('disabled');
+                    resendLink.innerHTML = originalText;
+                    return;
+                }
+                
+                fetch('/accounts/resend-verification/ajax/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken.value
+                    },
+                    body: JSON.stringify({
+                        email: '{{ email }}'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('success', data.message || 'Код отправлен повторно');
+                        
+                        minutes = 15;
+                        seconds = 0;
+                        if (minutesElement) minutesElement.textContent = '15';
+                        if (secondsElement) secondsElement.textContent = '00';
+                        if (timerElement) {
+                            timerElement.classList.remove('timer-warning');
+                            timerElement.innerHTML = '<span id="minutes">15</span>:<span id="seconds">00</span>';
+                        }
+                        
+                        minutesElement = document.getElementById('minutes');
+                        secondsElement = document.getElementById('seconds');
+                        
+                        setTimeout(() => {
+                            resendLink.classList.remove('disabled');
+                            resendLink.innerHTML = originalText;
+                        }, 60000);
+                    } else {
+                        showNotification('error', data.error || 'Произошла ошибка при отправке кода');
+                        resendLink.classList.remove('disabled');
+                        resendLink.innerHTML = originalText;
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    showNotification('error', 'Не удалось отправить запрос. Проверьте подключение к интернету.');
+                    resendLink.classList.remove('disabled');
+                    resendLink.innerHTML = originalText;
+                });
+            });
+        }
+        
+        function showNotification(type, message) {
+            const oldNotifications = document.querySelectorAll('.notification');
+            oldNotifications.forEach(notification => notification.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = document.createElement('i');
+            icon.className = `fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}`;
+            
+            const content = document.createElement('span');
+            content.className = 'notification-content';
+            content.textContent = message;
+            
+            notification.appendChild(icon);
+            notification.appendChild(content);
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideInRight 0.35s reverse';
+                setTimeout(() => {
+                    if (notification.remove) notification.remove();
+                }, 350);
+            }, 3500);
+        }
+        
+        const codeInput = document.getElementById('id_code');
+        if (codeInput) {
+            codeInput.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6);
+            });
+            
+            setTimeout(() => {
+                codeInput.focus();
+            }, 100);
+        }
+    });
+    </script>
+</body>
+</html>

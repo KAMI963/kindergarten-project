@@ -1,0 +1,236 @@
+{% extends 'staff/base_staff.html' %}
+{% load static %}
+
+{% block title %}Приказ №{{ order.order_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .order-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px 0;
+        border-radius: 0 0 30px 30px;
+        margin-bottom: 30px;
+    }
+    
+    .order-card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        margin-bottom: 25px;
+    }
+    
+    .order-number {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    
+    .order-date {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    .info-table {
+        width: 100%;
+    }
+    
+    .info-table tr {
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .info-table td {
+        padding: 15px 10px;
+    }
+    
+    .info-table td:first-child {
+        font-weight: 600;
+        color: #2c3e50;
+        width: 40%;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .status-draft {
+        background: #ffeaa7;
+        color: #d35400;
+    }
+    
+    .status-issued {
+        background: #d4edda;
+        color: #27ae60;
+    }
+    
+    .status-cancelled {
+        background: #f8d7da;
+        color: #c0392b;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .action-buttons .btn {
+        padding: 12px 25px;
+        font-size: 1rem;
+        flex: 1;
+        min-width: 200px;
+    }
+</style>
+{% endblock %}
+
+{% block staff_content %}
+<div class="order-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="order-number">Приказ №{{ order.order_number }}</h1>
+                <p class="order-date">от {{ order.order_date|date:"d.m.Y" }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <span class="status-badge {% if order.status == 'draft' %}status-draft{% elif order.status == 'issued' %}status-issued{% else %}status-cancelled{% endif %}">
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Основная информация -->
+            <div class="order-card">
+                <h4 class="mb-4">Информация о сотруднике</h4>
+                <table class="info-table">
+                    <tr>
+                        <td>Сотрудник:</td>
+                        <td><strong>{{ order.employee.full_name }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Должность:</td>
+                        <td><strong>{{ order.position }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Подразделение:</td>
+                        <td>{{ order.department }}</td>
+                    </tr>
+                    <tr>
+                        <td>Дата приема:</td>
+                        <td>{{ order.hire_date|date:"d.m.Y" }}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- Условия труда -->
+            <div class="order-card">
+                <h4 class="mb-4">Условия труда</h4>
+                <table class="info-table">
+                    <tr>
+                        <td>Условия приема:</td>
+                        <td><strong>{{ order.get_employment_condition_display }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Тарифная ставка:</td>
+                        <td><strong>{{ order.tariff_rate|floatformat:2 }} руб.</strong></td>
+                    </tr>
+                    {% if order.has_bonus %}
+                    <tr>
+                        <td>Надбавки:</td>
+                        <td>{{ order.bonus_description }} - {{ order.bonus_amount|floatformat:2 }} руб.</td>
+                    </tr>
+                    {% endif %}
+                    {% if order.probation_period > 0 %}
+                    <tr>
+                        <td>Испытательный срок:</td>
+                        <td>{{ order.probation_period }} мес.</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+            
+            <!-- Основание -->
+            <div class="order-card">
+                <h4 class="mb-4">Основание</h4>
+                <p>{{ order.basis_documents|linebreaks }}</p>
+            </div>
+            
+            <!-- Ознакомление -->
+            <div class="order-card">
+                <h4 class="mb-4">Ознакомление с приказом</h4>
+                <table class="info-table">
+                    <tr>
+                        <td>Статус ознакомления:</td>
+                        <td>
+                            {% if order.employee_acquainted %}
+                            <span class="badge bg-success">Ознакомлен</span>
+                            {% else %}
+                            <span class="badge bg-warning">Не ознакомлен</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if order.employee_acquainted and order.acquainted_date %}
+                    <tr>
+                        <td>Дата ознакомления:</td>
+                        <td>{{ order.acquainted_date|date:"d.m.Y" }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+            
+            <!-- Кнопки действий -->
+            <div class="action-buttons">
+                <a href="{% url 'staff:hire_order_generate_pdf' order.id %}" class="btn btn-success">
+                    <i class="fas fa-file-pdf"></i> Скачать PDF (Т-1)
+                </a>
+                <a href="{% url 'staff:hire_order_print' order.id %}" class="btn btn-info" target="_blank">
+                    <i class="fas fa-print"></i> Печатная форма
+                </a>
+                <a href="{% url 'staff:employee_detail' order.employee.id %}" class="btn btn-secondary">
+                    <i class="fas fa-user"></i> Карточка сотрудника
+                </a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Информация о документе -->
+            <div class="order-card">
+                <h4 class="mb-4">Информация о документе</h4>
+                <table class="info-table">
+                    <tr>
+                        <td>Создан:</td>
+                        <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Автор:</td>
+                        <td>{{ order.created_by.get_full_name|default:"—" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Обновлен:</td>
+                        <td>{{ order.updated_at|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- Файл приказа -->
+            {% if order.order_file %}
+            <div class="order-card">
+                <h4 class="mb-4">Файл приказа</h4>
+                <a href="{{ order.order_file.url }}" class="btn btn-outline-primary w-100" target="_blank">
+                    <i class="fas fa-file-pdf"></i> Открыть файл
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

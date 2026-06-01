@@ -1,0 +1,41 @@
+<!-- templates/personalfiles/partials/completion_stats.html -->
+{% load static %}
+<div class="completion-card">
+    <div class="row align-items-center">
+        <div class="col-md-3 text-center">
+            <div class="completion-circle">
+                <div class="completion-inner">
+                    {{ completion }}%
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <h4 class="mb-3">Статус личного дела</h4>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="status-badge" style="background: {{ file_status.color }}; color: white; padding: 0.5rem 1rem; border-radius: 25px;">
+                    <i class="fas {{ file_status.icon }} me-2"></i>{{ file_status.text }}
+                </span>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="stats-mini">
+                        <div class="stats-mini-number">{{ uploaded_docs }}/{{ total_docs }}</div>
+                        <div class="text-muted small">Документов загружено</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-mini">
+                        <div class="stats-mini-number text-danger">{{ expired_docs }}</div>
+                        <div class="text-muted small">Просроченных</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-mini">
+                        <div class="stats-mini-number text-warning">{{ near_expiry_docs }}</div>
+                        <div class="text-muted small">Скоро истекают</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

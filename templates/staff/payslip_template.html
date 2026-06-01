@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расчетный листок</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+            @frame footer {
+                -pdf-frame-content: footerContent;
+                bottom: 0cm;
+                margin-left: 1.5cm;
+                margin-right: 1.5cm;
+                height: 1cm;
+            }
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #4a6fa5;
+            padding-bottom: 10px;
+        }
+        
+        .header h1 {
+            color: #4a6fa5;
+            font-size: 24px;
+            margin: 5px 0;
+        }
+        
+        .header h2 {
+            font-size: 18px;
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        .company-info {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            font-size: 11px;
+        }
+        
+        .employee-info {
+            margin-bottom: 25px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
+        }
+        
+        .employee-info table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .employee-info td {
+            padding: 5px;
+            width: 33%;
+        }
+        
+        .employee-info .label {
+            font-weight: bold;
+            color: #4a6fa5;
+        }
+        
+        .period {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 15px 0;
+            text-transform: uppercase;
+        }
+        
+        .salary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .salary-table th {
+            background: linear-gradient(135deg, #4a6fa5 0%, #6b8cbc 100%);
+            color: white;
+            padding: 10px;
+            font-weight: bold;
+            text-align: left;
+            border: 1px solid #3a5a8c;
+        }
+        
+        .salary-table td {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+        }
+        
+        .salary-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .salary-table .total-row {
+            background: linear-gradient(135deg, #e8f4f8 0%, #d4e9f0 100%);
+            font-weight: bold;
+        }
+        
+        .salary-table .amount {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .summary-box {
+            background: linear-gradient(135deg, #e8f4f8 0%, #d4e9f0 100%);
+            border: 2px solid #4a6fa5;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 25px 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .summary-box table {
+            width: 100%;
+        }
+        
+        .summary-box td {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        
+        .summary-box .label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .summary-box .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #27ae60;
+            text-align: right;
+        }
+        
+        .signatures {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .signature-box {
+            width: 45%;
+        }
+        
+        .signature-line {
+            border-bottom: 1px solid #333;
+            margin: 5px 0 10px 0;
+            height: 30px;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            font-size: 10px;
+            color: #7f8c8d;
+            text-align: center;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        
+        .watermark {
+            position: absolute;
+            opacity: 0.1;
+            font-size: 60px;
+            transform: rotate(-45deg);
+            color: #4a6fa5;
+            top: 50%;
+            left: 25%;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .badge-success {
+            background-color: #27ae60;
+            color: white;
+        }
+        
+        .badge-warning {
+            background-color: #f39c12;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="watermark">РАСЧЕТНЫЙ ЛИСТОК</div>
+    
+    <div class="header">
+        <h1>{{ company_name }}</h1>
+        <h2>Расчетный листок</h2>
+    </div>
+    
+    <div class="company-info">
+        <strong>Адрес:</strong> {{ company_address }}<br>
+        <strong>ИНН/КПП:</strong> {{ company_inn }} / {{ company_kpp }}
+    </div>
+    
+    <div class="employee-info">
+        <table>
+            <tr>
+                <td><span class="label">Сотрудник:</span> {{ employee.full_name }}</td>
+                <td><span class="label">Должность:</span> {{ employee.position }}</td>
+                <td><span class="label">Таб. номер:</span> {{ employee.id|stringformat:"04d" }}</td>
+            </tr>
+            <tr>
+                <td><span class="label">Дата приема:</span> {{ employee.hire_date|date:"d.m.Y" }}</td>
+                <td><span class="label">Стаж:</span> {{ employee.experience }} лет</td>
+                <td><span class="label">Категория:</span> {{ employee.get_employee_type_display }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="period">
+        Расчет за {{ month_name }} {{ year }} года
+    </div>
+    
+    <table class="salary-table">
+        <thead>
+            <tr>
+                <th>Начислено</th>
+                <th>Период</th>
+                <th>Дни/Часы</th>
+                <th class="amount">Сумма (руб.)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Оклад/Тариф</strong></td>
+                <td>{{ month_name }} {{ year }}</td>
+                <td>{{ calculation.worked_hours|floatformat:1 }} / {{ calculation.standard_hours|floatformat:1 }} ч.</td>
+                <td class="amount">{{ calculation.base_salary|floatformat:2 }}</td>
+            </tr>
+            
+            {% if calculation.overtime_payment > 0 %}
+            <tr>
+                <td>Сверхурочная работа</td>
+                <td>{{ month_name }} {{ year }}</td>
+                <td>{{ calculation.overtime_hours|floatformat:1 }} ч.</td>
+                <td class="amount">{{ calculation.overtime_payment|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            
+            {% if calculation.night_payment > 0 %}
+            <tr>
+                <td>Ночные часы</td>
+                <td>{{ month_name }} {{ year }}</td>
+                <td>{{ calculation.night_hours|floatformat:1 }} ч.</td>
+                <td class="amount">{{ calculation.night_payment|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            
+            {% if calculation.holiday_payment > 0 %}
+            <tr>
+                <td>Работа в праздничные дни</td>
+                <td>{{ month_name }} {{ year }}</td>
+                <td>{{ calculation.holiday_hours|floatformat:1 }} ч.</td>
+                <td class="amount">{{ calculation.holiday_payment|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            
+            {% if calculation.stimulating_payments > 0 %}
+            <tr>
+                <td>Стимулирующие выплаты</td>
+                <td>{{ month_name }} {{ year }}</td>
+                <td>-</td>
+                <td class="amount">{{ calculation.stimulating_payments|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            
+            {% if calculation.sick_leave > 0 %}
+            <tr>
+                <td>Больничный лист</td>
+                <td>{{ month_name }} {{ year }}</td>
+                <td>-</td>
+                <td class="amount">{{ calculation.sick_leave|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            
+            {% if calculation.vacation_pay > 0 %}
+            <tr>
+                <td>Отпускные</td>
+                <td>{{ month_name }} {{ year }}</td>
+                <td>-</td>
+                <td class="amount">{{ calculation.vacation_pay|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            
+            {% for component in components %}
+            <tr>
+                <td>{{ component.name }}</td>
+                <td>{{ month_name }} {{ year }}</td>
+                <td>-</td>
+                <td class="amount">{{ component.amount|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+            
+            <tr class="total-row">
+                <td colspan="3"><strong>ИТОГО НАЧИСЛЕНО</strong></td>
+                <td class="amount"><strong>{{ calculation.total_accrued|floatformat:2 }}</strong></td>
+            </tr>
+            
+            <tr style="background-color: #f2dede;">
+                <td colspan="3"><strong>Удержано (НДФЛ 13%)</strong></td>
+                <td class="amount" style="color: #c0392b;">- {{ calculation.income_tax|floatformat:2 }}</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="summary-box">
+        <table>
+            <tr>
+                <td class="label">Начислено всего:</td>
+                <td class="value">{{ calculation.total_accrued|floatformat:2 }} руб.</td>
+            </tr>
+            <tr>
+                <td class="label">Удержано:</td>
+                <td class="value" style="color: #c0392b;">{{ calculation.income_tax|floatformat:2 }} руб.</td>
+            </tr>
+            <tr>
+                <td class="label" style="font-size: 16px;">К ВЫПЛАТЕ:</td>
+                <td class="value" style="font-size: 22px; color: #27ae60;">{{ calculation.total_payable|floatformat:2 }} руб.</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="signatures">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <strong>Главный бухгалтер</strong>
+            <div style="font-size: 11px; margin-top: 5px;">___________________ /Петрова Е.И./</div>
+        </div>
+        
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <strong>Заведующая МБДОУ</strong>
+            <div style="font-size: 11px; margin-top: 5px;">___________________ /Михайлова Н.В./</div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 30px; text-align: center; font-size: 11px;">
+        <span class="badge badge-success">Выплачено: {{ calculation.payment_date|date:"d.m.Y"|default:"не выплачено" }}</span>
+        <span class="badge badge-warning" style="margin-left: 10px;">Дата формирования: {{ today|date:"d.m.Y" }}</span>
+    </div>
+    
+    <div class="footer" id="footerContent">
+        Расчетный листок сформирован автоматически. В случае обнаружения ошибок обращайтесь в бухгалтерию.
+    </div>
+</body>
+</html>

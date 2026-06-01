@@ -1,0 +1,1027 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Личное дело: {{ child.full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pf-detail {
+        padding: 10px 12px;
+        max-width: 100%;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px 10px 0 0;
+        padding: 16px 20px;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    
+    .avatar-wrapper {
+        width: 70px;
+        height: 70px;
+        flex-shrink: 0;
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .child-avatar {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(255,255,255,0.9);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    .avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.4rem;
+        font-weight: 700;
+        border: 3px solid rgba(255,255,255,0.9);
+    }
+    
+    .child-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+    
+    .child-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    .badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 10px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+    
+    .progress-card {
+        background: rgba(255,255,255,0.1);
+        border-radius: 8px;
+        padding: 8px 12px;
+        min-width: 120px;
+    }
+    
+    .progress-label {
+        font-size: 0.6rem;
+        opacity: 0.8;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .progress-track {
+        height: 6px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 4px;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: white;
+        border-radius: 10px;
+        transition: width 0.4s ease;
+    }
+    
+    .tabs-wrapper {
+        background: white;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        margin-bottom: 12px;
+    }
+    
+    .tabs-nav {
+        display: flex;
+        gap: 2px;
+        padding: 8px 8px 0;
+        border-bottom: 1px solid #e2e8f0;
+        overflow-x: auto;
+    }
+    
+    .tab-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: transparent;
+        border: none;
+        border-radius: 6px 6px 0 0;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #64748b;
+        cursor: pointer;
+        white-space: nowrap;
+        position: relative;
+        transition: all 0.2s;
+    }
+    
+    .tab-btn:hover {
+        color: #667eea;
+        background: #f8fafc;
+    }
+    
+    .tab-btn.active {
+        color: #667eea;
+        font-weight: 600;
+        background: #f0f4ff;
+    }
+    
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: #667eea;
+    }
+    
+    .tab-content {
+        display: none;
+        padding: 16px 20px;
+        animation: fadeIn 0.25s ease;
+    }
+    
+    .tab-content.active { display: block; }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .info-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+    }
+    
+    .card-header-custom {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .card-header-custom i {
+        color: #667eea;
+    }
+    
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .data-table tr {
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .data-table tr:last-child { border-bottom: none; }
+    
+    .data-table td {
+        padding: 6px 0;
+        vertical-align: top;
+    }
+    
+    .data-label {
+        width: 40%;
+        font-weight: 500;
+        color: #64748b;
+        font-size: 0.75rem;
+    }
+    
+    .data-value {
+        color: #1e293b;
+        font-size: 0.85rem;
+    }
+    
+    .data-value.empty { color: #94a3b8; font-style: italic; }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+    
+    .status-badge.active { background: rgba(16,185,129,0.1); color: #10b981; }
+    .status-badge.warning { background: rgba(245,158,11,0.1); color: #f59e0b; }
+    .status-badge.expired { background: rgba(239,68,68,0.1); color: #ef4444; }
+    
+    .parent-card {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        border-left: 3px solid #667eea;
+    }
+    
+    .parent-name {
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .parent-contacts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+    
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        background: #f8fafc;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .file-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .file-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        flex-shrink: 0;
+    }
+    
+    .file-icon.pdf { background: #fee2e2; color: #dc2626; }
+    .file-icon.img { background: #fef3c7; color: #d97706; }
+    .file-icon.doc { background: #dbeafe; color: #2563eb; }
+    
+    .file-name {
+        font-weight: 500;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .file-meta {
+        font-size: 0.65rem;
+        color: #94a3b8;
+    }
+    
+    .file-actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+    
+    .file-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-size: 0.7rem;
+        text-decoration: none;
+    }
+    
+    .file-btn.view { background: rgba(59,130,246,0.1); color: #3b82f6; }
+    .file-btn.download { background: rgba(16,185,129,0.1); color: #10b981; }
+    
+    .file-btn:hover { transform: translateY(-1px); }
+    .file-btn.view:hover { background: #3b82f6; color: white; }
+    .file-btn.download:hover { background: #10b981; color: white; }
+    
+    .docs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 8px;
+    }
+    
+    .order-item, .contract-item, .application-item {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .consent-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .consent-item:last-child { border-bottom: none; }
+    
+    .consent-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+    }
+    
+    .consent-icon.yes { background: rgba(16,185,129,0.1); color: #10b981; }
+    .consent-icon.no { background: rgba(239,68,68,0.1); color: #ef4444; }
+    
+    .consent-label {
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+    
+    .action-bar {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        padding: 12px 16px 16px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-custom {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.75rem;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(102,126,234,0.2);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+    }
+    
+    .btn-outline {
+        background: transparent;
+        color: #1e293b;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .btn-outline:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+    
+    /* Модальное окно */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.85);
+        z-index: 100000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        backdrop-filter: blur(8px);
+    }
+    
+    .modal-overlay.show { display: flex; }
+    
+    .modal-content {
+        background: white;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 900px;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .modal-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .modal-close {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    
+    .modal-close:hover { background: rgba(255,255,255,0.3); }
+    
+    .modal-body {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        text-align: center;
+        background: #f8fafc;
+    }
+    
+    @media (max-width: 768px) {
+        .profile-header {
+            flex-direction: column;
+            text-align: center;
+            padding: 16px;
+        }
+        .avatar-wrapper { margin: 0 auto; }
+        .progress-card { width: 100%; }
+        .data-label { width: 35%; }
+        .docs-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pf-detail">
+    <!-- Шапка профиля -->
+    <div class="profile-header">
+        <div class="avatar-wrapper">
+            {% if child.photo and child.photo.url %}
+                <img src="{{ child.photo.url }}" alt="{{ child.full_name }}" class="child-avatar">
+            {% elif child_photo and child_photo.url %}
+                <img src="{{ child_photo.url }}" alt="{{ child.full_name }}" class="child-avatar">
+            {% else %}
+                <div class="avatar-placeholder">{{ child.full_name|first|upper }}</div>
+            {% endif %}
+        </div>
+        
+        <div style="flex:1; min-width:0;">
+            <div class="child-name">{{ child.full_name }}</div>
+            <div class="child-badges">
+                <span class="badge-pill"><i class="fas fa-cake-candles"></i> {{ child.birth_date|date:"d.m.Y" }} ({{ child.get_age }} лет)</span>
+                {% if child.group %}<span class="badge-pill"><i class="fas fa-users"></i> {{ child.group.name }}</span>{% endif %}
+                <span class="badge-pill"><i class="fas fa-map-marker-alt"></i> {{ child.registration_address|truncatechars:25|default:"—" }}</span>
+            </div>
+        </div>
+        
+        <div class="progress-card">
+            <div class="progress-label">
+                <span>Заполнение</span>
+                <strong>{{ completion_percentage|default:"0" }}%</strong>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" style="width:{{ completion_percentage|default:"0" }}%;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Вкладки -->
+    <div class="tabs-wrapper">
+        <div class="tabs-nav">
+            <button class="tab-btn active" data-tab="basic"><i class="fas fa-user"></i> Основное</button>
+            <button class="tab-btn" data-tab="parents"><i class="fas fa-users"></i> Родители ({{ parents|length }})</button>
+            <button class="tab-btn" data-tab="documents"><i class="fas fa-folder-open"></i> Документы</button>
+            <button class="tab-btn" data-tab="medical"><i class="fas fa-heartbeat"></i> Медицина</button>
+            <button class="tab-btn" data-tab="consents"><i class="fas fa-file-signature"></i> Согласия</button>
+            <button class="tab-btn" data-tab="applications"><i class="fas fa-clipboard-list"></i> Заявления ({{ applications|length }})</button>
+            {% if user.role == 'director' or user.is_superuser %}
+            <button class="tab-btn" data-tab="orders"><i class="fas fa-file-pen"></i> Приказы ({{ orders|length }})</button>
+            <button class="tab-btn" data-tab="contracts"><i class="fas fa-file-contract"></i> Договоры ({{ contracts|length }})</button>
+            {% endif %}
+        </div>
+        
+        <!-- Вкладка 1: Основное -->
+        <div class="tab-content active" id="tab-basic">
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <div class="card-header-custom"><i class="fas fa-info-circle"></i> Основные данные</div>
+                        <table class="data-table">
+                            <tr><td class="data-label">ФИО</td><td class="data-value">{{ child.full_name }}</td></tr>
+                            <tr><td class="data-label">Дата рождения</td><td class="data-value">{{ child.birth_date|date:"d.m.Y" }} ({{ child.get_age }} лет)</td></tr>
+                            <tr><td class="data-label">Пол</td><td class="data-value">{{ child.get_gender_display }}</td></tr>
+                            <tr><td class="data-label">СНИЛС</td><td class="data-value">{{ child.snils|default:"<span class='empty'>Не указан</span>" }}</td></tr>
+                            <tr><td class="data-label">Группа</td><td class="data-value">{{ child.group.name|default:"<span class='empty'>Не назначена</span>" }}</td></tr>
+                            <tr><td class="data-label">Дата зачисления</td><td class="data-value">{{ child.enrollment_date|date:"d.m.Y"|default:"<span class='empty'>Не указано</span>" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <div class="card-header-custom"><i class="fas fa-map-marker-alt"></i> Адреса</div>
+                        <table class="data-table">
+                            <tr><td class="data-label">Адрес регистрации</td><td class="data-value">{{ child.registration_address|default:"<span class='empty'>Не указан</span>" }}</td></tr>
+                            <tr><td class="data-label">Фактический адрес</td><td class="data-value">{{ child.actual_address|default:"<span class='empty'>Не указан</span>" }}</td></tr>
+                        </table>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-header-custom"><i class="fas fa-id-card"></i> Свидетельство о рождении</div>
+                        <table class="data-table">
+                            <tr><td class="data-label">Серия/номер</td><td class="data-value">{{ child.birth_certificate|default:"<span class='empty'>—</span>" }}</td></tr>
+                            <tr><td class="data-label">Кем выдано</td><td class="data-value">{{ child.birth_certificate_issued_by|default:"<span class='empty'>—</span>" }}</td></tr>
+                            <tr><td class="data-label">Дата выдачи</td><td class="data-value">{{ child.birth_certificate_issue_date|date:"d.m.Y"|default:"<span class='empty'>—</span>" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Вкладка 2: Родители (оба родителя) -->
+        <div class="tab-content" id="tab-parents">
+            {% for parent in parents %}
+            <div class="parent-card">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <span class="parent-name">{{ parent.full_name }}</span>
+                        <span class="badge-pill ms-2" style="background:#e2e8f0; color:#475569;">{{ parent.relation }}</span>
+                    </div>
+                    {% if parent.is_primary %}<span class="badge-pill" style="background:#dbeafe; color:#2563eb;">Основной</span>{% endif %}
+                </div>
+                <div class="parent-contacts mt-2">
+                    <span class="contact-item"><i class="fas fa-phone"></i> {{ parent.phone|default:"—" }}</span>
+                    <span class="contact-item"><i class="fas fa-envelope"></i> {{ parent.email|default:"—" }}</span>
+                </div>
+                {% if user.role == 'director' or user.is_superuser %}
+                <div class="mt-1 small text-muted">
+                    <i class="fas fa-passport"></i> Паспорт: {{ parent.passport_series|default:"—" }} {{ parent.passport_number|default:"" }}
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-users fa-2x mb-2 opacity-25"></i>
+                <p class="mb-0 small">Родители не указаны</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Вкладка 3: Документы (с модальным окном) -->
+        <div class="tab-content" id="tab-documents">
+            <div class="docs-grid">
+                <!-- Свидетельство о рождении -->
+                <div class="file-item">
+                    <div class="file-info">
+                        <div class="file-icon pdf"><i class="fas fa-file-pdf"></i></div>
+                        <div>
+                            <div class="file-name">Свидетельство о рождении</div>
+                            <div class="file-meta">{{ child.birth_certificate|default:"—" }}</div>
+                        </div>
+                    </div>
+                    {% if child.birth_certificate_file %}
+                    <div class="file-actions">
+                        <button class="file-btn view" onclick="showDocument('{{ child.birth_certificate_file.url }}', 'Свидетельство о рождении')"><i class="fas fa-eye"></i></button>
+                        <a href="{{ child.birth_certificate_file.url }}" download class="file-btn download"><i class="fas fa-download"></i></a>
+                    </div>
+                    {% else %}
+                    <div class="file-actions"><span class="text-muted small">Не загружен</span></div>
+                    {% endif %}
+                </div>
+                
+                <!-- СНИЛС -->
+                <div class="file-item">
+                    <div class="file-info">
+                        <div class="file-icon img"><i class="fas fa-id-card"></i></div>
+                        <div>
+                            <div class="file-name">СНИЛС</div>
+                            <div class="file-meta">{{ child.snils|default:"—" }}</div>
+                        </div>
+                    </div>
+                    {% if child.snils_file %}
+                    <div class="file-actions">
+                        <button class="file-btn view" onclick="showDocument('{{ child.snils_file.url }}', 'СНИЛС')"><i class="fas fa-eye"></i></button>
+                        <a href="{{ child.snils_file.url }}" download class="file-btn download"><i class="fas fa-download"></i></a>
+                    </div>
+                    {% else %}
+                    <div class="file-actions"><span class="text-muted small">Не загружен</span></div>
+                    {% endif %}
+                </div>
+                
+                <!-- Полис ОМС -->
+                <div class="file-item">
+                    <div class="file-info">
+                        <div class="file-icon pdf"><i class="fas fa-file-medical"></i></div>
+                        <div>
+                            <div class="file-name">Полис ОМС</div>
+                            <div class="file-meta">{{ child.policy_oms_number|default:"—" }}</div>
+                        </div>
+                    </div>
+                    {% if child.insurance_policy_file %}
+                    <div class="file-actions">
+                        <button class="file-btn view" onclick="showDocument('{{ child.insurance_policy_file.url }}', 'Полис ОМС')"><i class="fas fa-eye"></i></button>
+                        <a href="{{ child.insurance_policy_file.url }}" download class="file-btn download"><i class="fas fa-download"></i></a>
+                    </div>
+                    {% else %}
+                    <div class="file-actions"><span class="text-muted small">Не загружен</span></div>
+                    {% endif %}
+                </div>
+                
+                <!-- Прививочный сертификат -->
+                <div class="file-item">
+                    <div class="file-info">
+                        <div class="file-icon img"><i class="fas fa-syringe"></i></div>
+                        <div>
+                            <div class="file-name">Прививочный сертификат</div>
+                            <div class="file-meta">Форма №063/у</div>
+                        </div>
+                    </div>
+                    {% if child.vaccination_certificate_file %}
+                    <div class="file-actions">
+                        <button class="file-btn view" onclick="showDocument('{{ child.vaccination_certificate_file.url }}', 'Прививочный сертификат')"><i class="fas fa-eye"></i></button>
+                        <a href="{{ child.vaccination_certificate_file.url }}" download class="file-btn download"><i class="fas fa-download"></i></a>
+                    </div>
+                    {% else %}
+                    <div class="file-actions"><span class="text-muted small">Не загружен</span></div>
+                    {% endif %}
+                </div>
+                
+                <!-- Медицинская карта -->
+                <div class="file-item">
+                    <div class="file-info">
+                        <div class="file-icon pdf"><i class="fas fa-heart-pulse"></i></div>
+                        <div>
+                            <div class="file-name">Медицинская карта</div>
+                            <div class="file-meta">Форма №026/у</div>
+                        </div>
+                    </div>
+                    {% if child.medical_card_file %}
+                    <div class="file-actions">
+                        <button class="file-btn view" onclick="showDocument('{{ child.medical_card_file.url }}', 'Медицинская карта')"><i class="fas fa-eye"></i></button>
+                        <a href="{{ child.medical_card_file.url }}" download class="file-btn download"><i class="fas fa-download"></i></a>
+                    </div>
+                    {% else %}
+                    <div class="file-actions"><span class="text-muted small">Не загружен</span></div>
+                    {% endif %}
+                </div>
+                
+                <!-- Справка о регистрации -->
+                <div class="file-item">
+                    <div class="file-info">
+                        <div class="file-icon pdf"><i class="fas fa-home"></i></div>
+                        <div>
+                            <div class="file-name">Справка о регистрации</div>
+                            <div class="file-meta">Форма №9</div>
+                        </div>
+                    </div>
+                    {% if child.registration_certificate %}
+                    <div class="file-actions">
+                        <button class="file-btn view" onclick="showDocument('{{ child.registration_certificate.url }}', 'Справка о регистрации')"><i class="fas fa-eye"></i></button>
+                        <a href="{{ child.registration_certificate.url }}" download class="file-btn download"><i class="fas fa-download"></i></a>
+                    </div>
+                    {% else %}
+                    <div class="file-actions"><span class="text-muted small">Не загружен</span></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Вкладка 4: Медицина -->
+        <div class="tab-content" id="tab-medical">
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <div class="card-header-custom"><i class="fas fa-stethoscope"></i> Медицинские данные</div>
+                        <table class="data-table">
+                            <tr><td class="data-label">Группа крови</td><td class="data-value">{{ child.blood_type|default:"<span class='empty'>—</span>" }}</td></tr>
+                            <tr><td class="data-label">Аллергии</td><td class="data-value">{{ child.allergies|default:"<span class='empty'>Нет</span>" }}</td></tr>
+                            <tr><td class="data-label">Хронические заболевания</td><td class="data-value">{{ child.chronic_diseases|default:"<span class='empty'>Нет</span>" }}</td></tr>
+                            <tr><td class="data-label">Особые потребности</td><td class="data-value">{{ child.special_needs|default:"<span class='empty'>Нет</span>" }}</td></tr>
+                            <tr><td class="data-label">Прививки</td><td class="data-value">{{ child.has_vaccinations|yesno:"Есть,Нет,Неизвестно" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <div class="card-header-custom"><i class="fas fa-wheelchair"></i> Дополнительно</div>
+                        <table class="data-table">
+                            <tr><td class="data-label">Инвалидность</td><td class="data-value">{{ child.disability_certificate|default:"<span class='empty'>Нет</span>" }}</td></tr>
+                            <tr><td class="data-label">Заключение ПМПК</td><td class="data-value">{{ child.pmpk_conclusion|yesno:"Предоставлено,Не предоставлено" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Вкладка 5: Согласия -->
+        <div class="tab-content" id="tab-consents">
+            <div class="info-card">
+                <div class="card-header-custom"><i class="fas fa-shield-check"></i> Электронные согласия</div>
+                
+                <div class="consent-item">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="consent-icon {% if child.consent_data_processing %}yes{% else %}no{% endif %}">
+                            <i class="fas {% if child.consent_data_processing %}fa-check{% else %}fa-times{% endif %}"></i>
+                        </div>
+                        <span class="consent-label">Согласие на обработку персональных данных</span>
+                    </div>
+                    <div>
+                        {% if child.consent_data_processing %}
+                        <span class="status-badge active"><i class="fas fa-check-circle"></i> Действует</span>
+                        {% else %}
+                        <span class="status-badge expired"><i class="fas fa-times-circle"></i> Не подписано</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="consent-item">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="consent-icon {% if child.consent_photo_video %}yes{% else %}no{% endif %}">
+                            <i class="fas {% if child.consent_photo_video %}fa-check{% else %}fa-times{% endif %}"></i>
+                        </div>
+                        <span class="consent-label">Согласие на фото- и видеосъемку</span>
+                    </div>
+                    <div>
+                        {% if child.consent_photo_video %}
+                        <span class="status-badge active"><i class="fas fa-check-circle"></i> Действует</span>
+                        {% else %}
+                        <span class="status-badge expired"><i class="fas fa-times-circle"></i> Не подписано</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="consent-item">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="consent-icon {% if child.consent_medical_intervention %}yes{% else %}no{% endif %}">
+                            <i class="fas {% if child.consent_medical_intervention %}fa-check{% else %}fa-times{% endif %}"></i>
+                        </div>
+                        <span class="consent-label">Согласие на медицинское вмешательство</span>
+                    </div>
+                    <div>
+                        {% if child.consent_medical_intervention %}
+                        <span class="status-badge active"><i class="fas fa-check-circle"></i> Действует</span>
+                        {% else %}
+                        <span class="status-badge expired"><i class="fas fa-times-circle"></i> Не подписано</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Вкладка 6: Заявления (только скачивание) -->
+        <div class="tab-content" id="tab-applications">
+            {% for app in applications %}
+            <div class="application-item">
+                <div>
+                    <div><i class="fas fa-file-alt me-2 text-primary"></i> <strong>Заявление от {{ app.created_at|date:"d.m.Y" }}</strong></div>
+                    <div class="small text-muted mt-1">№ {{ app.application_number|slice:"-8" }}</div>
+                </div>
+                <div>
+                    <span class="status-badge {% if app.status == 'enrolled' %}active{% elif app.status == 'queue' %}active{% elif app.status == 'pending' %}warning{% else %}expired{% endif %}">
+                        {{ app.get_status_display_verbose }}
+                    </span>
+                    {% if app.generated_application %}
+                    <a href="{{ app.generated_application.url }}" download class="file-btn download ms-2" style="background:#e2e8f0; color:#475569;">
+                        <i class="fas fa-download"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-clipboard-list fa-2x mb-2 opacity-25"></i>
+                <p class="mb-0 small">Заявления не найдены</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Вкладка 7: Приказы (только для заведующей, только скачивание) -->
+        {% if user.role == 'director' or user.is_superuser %}
+        <div class="tab-content" id="tab-orders">
+            {% for order in orders %}
+            <div class="order-item">
+                <div>
+                    <div><i class="fas fa-file-pen me-2 text-primary"></i> <strong>Приказ №{{ order.order_number }}</strong></div>
+                    <div class="small text-muted">от {{ order.order_date|date:"d.m.Y" }}</div>
+                    <div class="small text-muted">Группа: {{ order.group.name|default:"—" }}</div>
+                </div>
+                <div>
+                    {% if order.file %}
+<a href="{{ order.file.url }}" download class="file-btn download" style="background:#e2e8f0; color:#475569;">
+    <i class="fas fa-download"></i>
+</a>
+{% else %}
+<span class="text-muted small">Файл не загружен</span>
+{% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-file-pen fa-2x mb-2 opacity-25"></i>
+                <p class="mb-0 small">Приказы не найдены</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Вкладка 8: Договоры (только для заведующей, только скачивание) -->
+        <div class="tab-content" id="tab-contracts">
+            {% for contract in contracts %}
+            <div class="contract-item">
+                <div>
+                    <div><i class="fas fa-file-contract me-2 text-primary"></i> <strong>Договор №{{ contract.contract_number }}</strong></div>
+                    <div class="small text-muted">от {{ contract.created_at|date:"d.m.Y" }}</div>
+                    <div class="small text-muted">Статус: {{ contract.get_status_display }}</div>
+                </div>
+                <div>
+                    {% if contract.generated_contract %}
+                    <a href="{{ contract.generated_contract.url }}" download class="file-btn download" style="background:#e2e8f0; color:#475569;">
+                        <i class="fas fa-download"></i>
+                    </a>
+                    {% else %}
+                    <span class="text-muted small">Не сформирован</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-file-contract fa-2x mb-2 opacity-25"></i>
+                <p class="mb-0 small">Договоры не найдены</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Действия -->
+    <div class="action-bar">
+        <button class="btn-custom btn-outline" onclick="window.print()"><i class="fas fa-print"></i> Печать</button>
+        <a href="{% url 'children:personal_files_list' %}" class="btn-custom btn-outline"><i class="fas fa-arrow-left"></i> Назад</a>
+        {% if user.role == 'director' or user.is_superuser %}
+        <a href="{% url 'children:personal_file_edit' child.id %}" class="btn-custom btn-primary"><i class="fas fa-pen-to-square"></i> Редактировать</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Модальное окно для просмотра документов -->
+<div id="documentModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span id="modalTitle" class="modal-title">
+                <i class="fas fa-file-alt me-2"></i>Просмотр документа
+            </span>
+            <button class="modal-close" onclick="closeDocumentModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="modalBody" class="modal-body">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+                <p class="mt-3 text-muted">Загрузка документа...</p>
+            </div>
+        </div>
+        <div style="padding:12px 20px;background:white;border-top:1px solid #edf2f7;display:flex;justify-content:center;gap:12px;">
+            <a id="downloadLink" href="#" class="btn-custom btn-primary" style="background:#10b981; color:white; padding:8px 20px;border-radius:40px;text-decoration:none;">
+                <i class="fas fa-download"></i> Скачать
+            </a>
+            <button onclick="closeDocumentModal()" class="btn-custom btn-outline" style="padding:8px 20px;">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Переключение вкладок
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+        localStorage.setItem('activeTab_personalFile', this.dataset.tab);
+    });
+});
+
+// Восстанавливаем активную вкладку
+document.addEventListener('DOMContentLoaded', function() {
+    const savedTab = localStorage.getItem('activeTab_personalFile');
+    if (savedTab) {
+        const tabBtn = document.querySelector(`.tab-btn[data-tab="${savedTab}"]`);
+        if (tabBtn) tabBtn.click();
+    }
+});
+
+// Функция для открытия документа в модальном окне (как в заявлении)
+function showDocument(url, title) {
+    if (!url || url === 'None') {
+        alert('Документ не загружен');
+        return;
+    }
+    
+    const modal = document.getElementById('documentModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const downloadLink = document.getElementById('downloadLink');
+    
+    modalTitle.innerHTML = '<i class="fas fa-file-alt me-2"></i>' + (title || 'Просмотр документа');
+    downloadLink.href = url;
+    
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    modalBody.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Загрузка документа...</p></div>';
+    
+    const ext = url.split('.').pop().toLowerCase();
+    const fullUrl = url.startsWith('/') ? window.location.origin + url : url;
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+        const img = new Image();
+        img.onload = function() {
+            modalBody.innerHTML = '';
+            img.style.cssText = 'max-width:100%;max-height:55vh;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.1);';
+            modalBody.appendChild(img);
+        };
+        img.onerror = function() {
+            modalBody.innerHTML = '<div class="text-center py-5"><i class="fas fa-image" style="font-size:3rem;color:#cbd5e0;"></i><p class="mt-3" style="color:#6b7280;">Ошибка загрузки изображения</p><a href="'+fullUrl+'" target="_blank" class="btn-custom btn-primary mt-2">Открыть в новой вкладке</a></div>';
+        };
+        img.src = fullUrl;
+    } else if (ext === 'pdf') {
+        modalBody.innerHTML = '<iframe src="'+fullUrl+'" style="width:100%;height:55vh;border:none;border-radius:12px;"></iframe>';
+    } else {
+        modalBody.innerHTML = '<div class="text-center py-5"><i class="fas fa-file-alt" style="font-size:3rem;color:#cbd5e0;"></i><p class="mt-3" style="color:#6b7280;">Предпросмотр недоступен для этого типа файлов</p><a href="'+fullUrl+'" download class="btn-custom btn-primary mt-2">Скачать файл</a></div>';
+    }
+}
+
+function closeDocumentModal() {
+    const modal = document.getElementById('documentModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+    document.getElementById('modalBody').innerHTML = '';
+}
+
+// Закрытие по клику на фон
+document.getElementById('documentModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDocumentModal();
+    }
+});
+
+// Закрытие по Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDocumentModal();
+    }
+});
+</script>
+{% endblock %}

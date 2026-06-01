@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Новый табель{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-container {
+        max-width: 600px;
+        margin: 40px auto;
+        perspective: 1000px;
+    }
+
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+        animation: rotateIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        transform-origin: center top;
+    }
+
+    @keyframes rotateIn {
+        from { opacity: 0; transform: rotateX(-10deg) translateY(20px); }
+        to { opacity: 1; transform: rotateX(0) translateY(0); }
+    }
+
+    .form-icon-header {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: -75px auto 25px;
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+        font-size: 1.8rem;
+    }
+
+    .modern-form .form-label {
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+
+    .modern-form .form-control, 
+    .modern-form .form-select {
+        border-radius: 12px;
+        padding: 12px 15px;
+        border: 2px solid #e2e8f0;
+        background: #f8fafc;
+        transition: all 0.3s ease;
+    }
+
+    .modern-form .form-control:focus, 
+    .modern-form .form-select:focus {
+        background: white;
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    .btn-submit-modern {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 15px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        width: 100%;
+        margin-top: 20px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-submit-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(118, 75, 162, 0.3);
+        color: white;
+    }
+
+    .info-box {
+        background: #ebf8ff;
+        border-left: 4px solid #4299e1;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 30px;
+        font-size: 0.9rem;
+        color: #2b6cb0;
+        display: flex;
+        gap: 15px;
+        align-items: start;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container create-container">
+    <div class="glass-panel">
+        <div class="form-icon-header">
+            <i class="fas fa-calendar-plus"></i>
+        </div>
+        
+        <h2 class="text-center fw-bold mb-1">Новый табель</h2>
+        <p class="text-center text-muted mb-4">Заполните параметры для создания</p>
+
+        <form method="post" class="modern-form">
+            {% csrf_token %}
+            {{ form|crispy }}
+            
+            <button type="submit" class="btn-submit-modern">
+                <i class="fas fa-magic me-2"></i> Сгенерировать табель
+            </button>
+            
+            <div class="text-center mt-3">
+                <a href="{% url 'attendance:attendance_sheet_list' %}" class="text-decoration-none text-muted small hover-link">
+                    <i class="fas fa-arrow-left me-1"></i> Вернуться к списку
+                </a>
+            </div>
+        </form>
+
+        <div class="info-box">
+            <i class="fas fa-info-circle mt-1"></i>
+            <div>
+                <strong>Как это работает:</strong>
+                <div class="mt-1 opacity-75">
+                    Система автоматически создаст список всех детей группы. По умолчанию всем будет проставлен статус "Присутствует" (или "Отсутствует", в зависимости от настроек), который вы сможете изменить на следующем шаге.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

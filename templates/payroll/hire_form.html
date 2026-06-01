@@ -1,0 +1,223 @@
+{% extends 'payroll/base_payroll.html' %}
+{% load static %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'payroll:hire_document_list' %}">Прием на работу</a></li>
+<li class="breadcrumb-item active">Новый прием</li>
+{% endblock %}
+
+{% block page_title %}Прием на работу{% endblock %}
+
+{% block page_content %}
+<div class="card-custom">
+    <div class="card-header">
+        <span><i class="fas fa-user-plus me-2" style="color: #3498db;"></i>Новый сотрудник</span>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" class="form-container">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 style="color: #1a2639; font-weight: 600; margin-bottom: 20px;">
+                        <i class="fas fa-file-signature me-2" style="color: #3498db;"></i>Документ
+                    </h6>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Номер документа *</label>
+                        <input type="text" name="document_number" class="form-control" value="{{ form.document_number.value|default:'' }}" required>
+                        {% if form.document_number.errors %}
+                        <div style="color: #e74c3c; font-size: 13px; margin-top: 5px;">
+                            {{ form.document_number.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Дата документа *</label>
+                        <input type="date" name="document_date" class="form-control" value="{{ form.document_date.value|default:'' }}" required>
+                        {% if form.document_date.errors %}
+                        <div style="color: #e74c3c; font-size: 13px; margin-top: 5px;">
+                            {{ form.document_date.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Сотрудник *</label>
+                        <select name="employee" class="form-select" required>
+                            <option value="">-- Выберите сотрудника --</option>
+                            {% for employee in form.fields.employee.queryset %}
+                            <option value="{{ employee.id }}" {% if form.employee.value == employee.id %}selected{% endif %}>
+                                {{ employee.get_full_name }} ({{ employee.username }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.employee.errors %}
+                        <div style="color: #e74c3c; font-size: 13px; margin-top: 5px;">
+                            {{ form.employee.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6 style="color: #1a2639; font-weight: 600; margin-bottom: 20px;">
+                        <i class="fas fa-briefcase me-2" style="color: #3498db;"></i>Должность и график
+                    </h6>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Дата приема *</label>
+                        <input type="date" name="hire_date" class="form-control" value="{{ form.hire_date.value|default:'' }}" required>
+                        {% if form.hire_date.errors %}
+                        <div style="color: #e74c3c; font-size: 13px; margin-top: 5px;">
+                            {{ form.hire_date.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Должность *</label>
+                        <input type="text" name="position" class="form-control" value="{{ form.position.value|default:'' }}" required>
+                        {% if form.position.errors %}
+                        <div style="color: #e74c3c; font-size: 13px; margin-top: 5px;">
+                            {{ form.position.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Подразделение</label>
+                        <input type="text" name="department" class="form-control" value="{{ form.department.value|default:'' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Вид занятости *</label>
+                        <select name="employment_type" class="form-select" required>
+                            <option value="main" {% if form.employment_type.value == 'main' %}selected{% endif %}>Основное место работы</option>
+                            <option value="internal" {% if form.employment_type.value == 'internal' %}selected{% endif %}>Внутреннее совместительство</option>
+                            <option value="external" {% if form.employment_type.value == 'external' %}selected{% endif %}>Внешнее совместительство</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">График работы</label>
+                        <select name="schedule" class="form-select">
+                            <option value="">-- Не выбрано --</option>
+                            {% for schedule in schedules %}
+                            <option value="{{ schedule.id }}" {% if form.schedule.value == schedule.id %}selected{% endif %}>
+                                {{ schedule.name }} ({{ schedule.hours_per_week }} ч/нед)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Плановые начисления -->
+            <h6 style="color: #1a2639; font-weight: 600; margin: 30px 0 20px;">
+                <i class="fas fa-calculator me-2" style="color: #3498db;"></i>Плановые начисления
+            </h6>
+            
+            <div id="accruals-container">
+                <div class="row accrual-row" style="margin-bottom: 15px; padding: 15px; background: #f8fafd; border-radius: 10px;">
+                    <div class="col-md-4">
+                        <select name="accrual_type[]" class="form-select">
+                            <option value="">-- Выберите начисление --</option>
+                            {% for accrual in accrual_types %}
+                            <option value="{{ accrual.id }}">{{ accrual.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="number" name="value[]" class="form-control" placeholder="Значение" step="0.01">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="is_percent[]" class="form-select">
+                            <option value="false">Сумма</option>
+                            <option value="true">Процент</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger" onclick="removeAccrual(this)" style="background: #e74c3c; border: none; border-radius: 8px; padding: 8px 15px; color: white;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="button" class="btn btn-outline-custom" onclick="addAccrual()" style="margin-bottom: 30px;">
+                <i class="fas fa-plus me-2"></i>Добавить начисление
+            </button>
+
+            <!-- Дополнительные поля -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label class="form-label">Налоговые вычеты (JSON)</label>
+                        <textarea name="tax_deductions" class="form-control" rows="4">{{ form.tax_deductions.value|default:'' }}</textarea>
+                        <small style="color: #6c757d;">Формат: {"children": 2, "disabled": false, "veteran": true}</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Файл документа</label>
+                <input type="file" name="document_file" class="form-control">
+            </div>
+
+            <div class="form-group" style="margin-top: 30px;">
+                <button type="submit" class="btn btn-primary-custom">
+                    <i class="fas fa-save me-2"></i>Сохранить
+                </button>
+                <a href="{% url 'payroll:hire_document_list' %}" class="btn btn-outline-custom ms-2">
+                    <i class="fas fa-times me-2"></i>Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function addAccrual() {
+    const container = document.getElementById('accruals-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'row accrual-row';
+    newRow.style.marginBottom = '15px';
+    newRow.style.padding = '15px';
+    newRow.style.background = '#f8fafd';
+    newRow.style.borderRadius = '10px';
+    
+    newRow.innerHTML = `
+        <div class="col-md-4">
+            <select name="accrual_type[]" class="form-select">
+                <option value="">-- Выберите начисление --</option>
+                {% for accrual in accrual_types %}
+                <option value="{{ accrual.id }}">{{ accrual.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="number" name="value[]" class="form-control" placeholder="Значение" step="0.01">
+        </div>
+        <div class="col-md-2">
+            <select name="is_percent[]" class="form-select">
+                <option value="false">Сумма</option>
+                <option value="true">Процент</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-danger" onclick="removeAccrual(this)" style="background: #e74c3c; border: none; border-radius: 8px; padding: 8px 15px; color: white;">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    container.appendChild(newRow);
+}
+
+function removeAccrual(btn) {
+    btn.closest('.accrual-row').remove();
+}
+</script>
+{% endblock %}

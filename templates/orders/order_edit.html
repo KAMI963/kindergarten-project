@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <h3>{{ title }}</h3>
+                    <p class="text-muted">Демонстрационная версия - редактирование временно недоступно</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning btn-lg mt-3">
+                            <i class="fas fa-save me-2"></i>
+                            {{ submit_text }}
+                        </button>
+                    </form>
+                    
+                    <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-secondary mt-3">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Назад к приказу
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

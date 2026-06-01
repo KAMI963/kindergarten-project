@@ -1,0 +1,513 @@
+<!-- staff/templates/staff/employee_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Сотрудники{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Компактные стили */
+    .staff-list-container {
+        padding: 1rem;
+    }
+    
+    /* Хедер */
+    .list-header {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid #e9ecef;
+    }
+    
+    .list-header h2 {
+        font-size: 1.2rem;
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+    
+    .list-header p {
+        font-size: 0.7rem;
+        color: #64748b;
+        margin: 0.25rem 0 0;
+    }
+    
+    .total-badge {
+        background: #f1f5f9;
+        border-radius: 20px;
+        padding: 0.35rem 0.9rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .total-badge span:first-child {
+        color: #64748b;
+        margin-right: 0.3rem;
+    }
+    
+    .total-badge span:last-child {
+        color: #4f46e5;
+        font-size: 1rem;
+    }
+    
+    .btn-add {
+        background: #4f46e5;
+        color: white;
+        border: none;
+        padding: 0.4rem 1rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .btn-add:hover {
+        background: #4338ca;
+        transform: translateY(-1px);
+    }
+    
+    /* Фильтры */
+    .filters-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.25rem;
+        border: 1px solid #e9ecef;
+    }
+    
+    .filter-input, .filter-select {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.75rem;
+        transition: all 0.2s;
+    }
+    
+    .filter-input:focus, .filter-select:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        outline: none;
+    }
+    
+    .btn-apply {
+        background: #1e293b;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.4rem 1rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        width: 100%;
+        transition: all 0.2s;
+    }
+    
+    .btn-apply:hover {
+        background: #0f172a;
+    }
+    
+    /* Секция */
+    .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .section-header h3 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #334155;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .section-badge {
+        background: #e2e8f0;
+        color: #475569;
+        padding: 0.15rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+    
+    /* Карточка сотрудника */
+    .employee-card {
+        background: white;
+        border-radius: 12px;
+        padding: 0.85rem;
+        transition: all 0.2s;
+        border: 1px solid #e9ecef;
+        cursor: pointer;
+        height: 100%;
+    }
+    
+    .employee-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-color: #cbd5e1;
+    }
+    
+    .status-indicator {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 12px 12px 0 0;
+        background: #10b981;
+    }
+    
+    .status-indicator.inactive {
+        background: #94a3b8;
+    }
+    
+    .card-avatar {
+        position: relative;
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+    }
+    
+    .card-avatar img {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .avatar-placeholder {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .status-dot {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+    
+    .status-dot.active {
+        background: #10b981;
+    }
+    
+    .status-dot.inactive {
+        background: #94a3b8;
+    }
+    
+    .employee-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0 0 0.15rem;
+    }
+    
+    .employee-position {
+        color: #64748b;
+        font-size: 0.7rem;
+        margin: 0;
+    }
+    
+    /* Статистика в карточке */
+    .stat-mini {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 0.3rem;
+        text-align: center;
+    }
+    
+    .stat-mini-label {
+        font-size: 0.6rem;
+        color: #94a3b8;
+        margin: 0;
+    }
+    
+    .stat-mini-value {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #334155;
+        margin: 0;
+    }
+    
+    /* Медицинский статус */
+    .medical-status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 0.5rem 0;
+    }
+    
+    .medical-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: #475569;
+    }
+    
+    .medical-badge {
+        padding: 0.15rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.6rem;
+        font-weight: 600;
+    }
+    
+    .medical-badge.valid {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .medical-badge.expired {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .progress-bar-mini {
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 0.25rem 0;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s;
+    }
+    
+    .progress-fill.danger { background: #ef4444; }
+    .progress-fill.warning { background: #f59e0b; }
+    .progress-fill.success { background: #10b981; }
+    
+    .days-left {
+        font-size: 0.6rem;
+        color: #94a3b8;
+        text-align: right;
+        margin: 0;
+    }
+    
+    .no-document {
+        background: #fef2f2;
+        border-radius: 8px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.6rem;
+        color: #991b1b;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    /* Пустое состояние */
+    .empty-state {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        border: 1px solid #e9ecef;
+    }
+    
+    .empty-state i {
+        font-size: 2rem;
+        color: #cbd5e1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #475569;
+        margin: 0 0 0.25rem;
+    }
+    
+    .empty-state p {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        margin: 0;
+    }
+    
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .staff-list-container {
+            padding: 0.5rem;
+        }
+        
+        .list-header {
+            padding: 0.75rem 1rem;
+        }
+        
+        .list-header h2 {
+            font-size: 1rem;
+        }
+        
+        .employee-card {
+            padding: 0.7rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="staff-list-container">
+    <!-- Хедер -->
+    <div class="list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h2><i class="fas fa-users me-2 text-primary"></i>Сотрудники</h2>
+            <p>Управление персоналом и документами</p>
+        </div>
+        <div class="d-flex gap-2">
+            <div class="total-badge">
+                <span>Всего:</span>
+                <span>{{ total_employees|default:"0" }}</span>
+            </div>
+            <a href="{% url 'staff:employee_create' %}" class="btn-add">
+                <i class="fas fa-plus me-1"></i>Добавить
+            </a>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="filters-card">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0" style="border-radius: 8px 0 0 8px;">
+                        <i class="fas fa-search fa-xs text-muted"></i>
+                    </span>
+                    <input type="text" name="search" class="filter-input form-control" 
+                           placeholder="Поиск..." value="{{ filters.search|default:'' }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="type" class="filter-select form-select">
+                    <option value="">Все отделы</option>
+                    {% for code, name in employee_types %}
+                    <option value="{{ code }}" {% if filters.type == code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="is_active" class="filter-select form-select">
+                    <option value="">Все статусы</option>
+                    <option value="active" {% if filters.is_active == 'active' %}selected{% endif %}>Активные</option>
+                    <option value="inactive" {% if filters.is_active == 'inactive' %}selected{% endif %}>Архив</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn-apply">
+                    <i class="fas fa-filter me-1"></i>Применить
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Список сотрудников -->
+    {% for category_name, employees in grouped_employees.items %}
+    <div class="mb-4">
+        <div class="section-header">
+            <h3>{{ category_name }}</h3>
+            <span class="section-badge">{{ employees|length }}</span>
+        </div>
+        
+        <div class="row g-3">
+            {% for employee in employees %}
+            <div class="col-md-6 col-lg-4 col-xl-3">
+                <div class="employee-card position-relative" onclick="location.href='{% url 'staff:employee_detail' employee.id %}';">
+                    <div class="status-indicator {% if not employee.is_active %}inactive{% endif %}"></div>
+                    
+                    <div class="d-flex gap-2 mb-2">
+                        <div class="card-avatar">
+                            {% if employee.photo %}
+                            <img src="{{ employee.photo.url }}" alt="{{ employee.full_name }}">
+                            {% else %}
+                            <div class="avatar-placeholder">
+                                {{ employee.full_name|first|upper }}
+                            </div>
+                            {% endif %}
+                            <div class="status-dot {% if employee.is_active %}active{% else %}inactive{% endif %}"></div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="employee-name">{{ employee.full_name|truncatechars:22 }}</h6>
+                            <p class="employee-position">{{ employee.position|truncatechars:25 }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <div class="stat-mini">
+                                <p class="stat-mini-label">Стаж</p>
+                                <p class="stat-mini-value">{{ employee.experience|default:"0" }} лет</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-mini">
+                                <p class="stat-mini-label">ID</p>
+                                <p class="stat-mini-value">#{{ employee.id }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="medical-status">
+                        <span class="medical-label">
+                            <i class="fas fa-heartbeat fa-xs"></i> Медосмотр
+                        </span>
+                        {% with latest_med=employee.medicalexamination_set.first %}
+                            {% if latest_med and latest_med.is_valid %}
+                                <span class="medical-badge valid">
+                                    <i class="fas fa-check-circle fa-xs"></i> В норме
+                                </span>
+                            {% else %}
+                                <span class="medical-badge expired">
+                                    <i class="fas fa-exclamation-circle fa-xs"></i> Требуется
+                                </span>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                    
+                    {% with latest_med=employee.medicalexamination_set.first %}
+                        {% if latest_med and latest_med.is_valid %}
+                            {% with days=latest_med.days_until_expiry %}
+                                {% if days %}
+                                    {% widthratio days 365 100 as width_percent %}
+                                    <div class="progress-bar-mini">
+                                        <div class="progress-fill 
+                                            {% if days < 30 %}danger{% elif days < 90 %}warning{% else %}success{% endif %}" 
+                                            style="width: {{ width_percent|default:0 }}%;"></div>
+                                    </div>
+                                    <p class="days-left"><i class="far fa-clock fa-xs me-1"></i>{{ days }} дн.</p>
+                                {% endif %}
+                            {% endwith %}
+                        {% elif not latest_med %}
+                            <div class="no-document">
+                                <i class="fas fa-exclamation-triangle fa-xs"></i> Документ отсутствует
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <i class="fas fa-users"></i>
+        <h4>Список пуст</h4>
+        <p>Нет сотрудников, соответствующих фильтрам</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,1452 @@
+<!-- templates/attendance/sheet_edit.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Редактирование табеля - {{ sheet.group.name }} - {{ month_name }} {{ sheet.year }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ==================== ОСНОВНЫЕ СТИЛИ ==================== */
+.attendance-table {
+    font-size: 14px;
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.attendance-table th,
+.attendance-table td {
+    border: 1px solid #dee2e6;
+    padding: 4px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.attendance-table thead th {
+    background: #f8f9fa;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.attendance-table th.day-header {
+    min-width: 48px;
+    width: 48px;
+    padding: 4px 2px;
+}
+
+.attendance-table th.day-header.holiday {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.attendance-table th.name-col {
+    min-width: 180px;
+    width: 180px;
+    text-align: left;
+    padding-left: 8px;
+    position: sticky;
+    left: 45px;
+    background: #f8f9fa;
+    z-index: 11;
+}
+
+.attendance-table th.num-col {
+    width: 45px;
+    position: sticky;
+    left: 0;
+    background: #f8f9fa;
+    z-index: 11;
+}
+
+.attendance-table th.notes-col {
+    min-width: 300px;
+    width: 300px;
+    position: sticky;
+    right: 0;
+    background: #f8f9fa;
+    z-index: 11;
+}
+
+/* ==================== ФИКСИРОВАННЫЕ КОЛОНКИ ==================== */
+.attendance-table tbody td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    background: #fff;
+    z-index: 5;
+    font-weight: 600;
+}
+
+.attendance-table tbody td:nth-child(2) {
+    position: sticky;
+    left: 45px;
+    background: #fff;
+    z-index: 5;
+}
+
+.attendance-table tbody td.notes-cell {
+    position: sticky;
+    right: 0;
+    background: #fff;
+    z-index: 5;
+}
+
+/* ==================== ПОДСВЕТКА СТРОКИ ==================== */
+.attendance-table tbody tr:hover td {
+    background: #e3f2fd !important;
+}
+
+.attendance-table tbody tr:hover td.status-cell[data-status="present"] {
+    background: #a5d6a7 !important;
+}
+
+.attendance-table tbody tr:hover td.status-cell[data-status="absent_sick"] {
+    background: #ef9a9a !important;
+}
+
+.attendance-table tbody tr:hover td.status-cell[data-status="absent_vacation"] {
+    background: #90caf9 !important;
+}
+
+.attendance-table tbody tr:hover td.status-cell[data-status="absent_unexcused"] {
+    background: #ffcc80 !important;
+}
+
+/* ==================== ИМЯ РЕБЕНКА ==================== */
+.child-name-cell {
+    text-align: left;
+    padding-left: 8px !important;
+}
+
+.child-name {
+    font-weight: 500;
+}
+
+.child-birth {
+    font-size: 11px;
+    color: #888;
+}
+
+/* ==================== ЯЧЕЙКИ СТАТУСА ==================== */
+.status-cell {
+    cursor: pointer;
+    user-select: none;
+    width: 48px;
+    height: 42px;
+    padding: 0 !important;
+    transition: background 0.1s;
+    position: relative;
+}
+
+.status-cell:hover {
+    background: #e3f2fd !important;
+}
+
+.status-cell:focus {
+    outline: 2px solid #2196f3;
+    outline-offset: -2px;
+}
+
+.status-cell.selected {
+    outline: 2px solid #1976d2;
+    outline-offset: -2px;
+}
+
+/* ==================== СТАТУСЫ ==================== */
+.status-cell[data-status="present"] {
+    background: #c8e6c9 !important;
+    color: #2e7d32;
+    font-weight: 700;
+}
+
+.status-cell[data-status="absent_unexcused"] {
+    background: #fff3e0 !important;
+    color: #e65100;
+    font-weight: 700;
+}
+
+.status-cell[data-status="absent_sick"] {
+    background: #ffcdd2 !important;
+    color: #c62828;
+    font-weight: 700;
+}
+
+.status-cell[data-status="absent_vacation"] {
+    background: #bbdefb !important;
+    color: #1565c0;
+    font-weight: 700;
+}
+
+.status-cell.holiday-cell {
+    background: #f5f5f5 !important;
+    color: #9e9e9e;
+    cursor: default;
+}
+
+/* ==================== ИНДИКАТОР ДОКУМЕНТА ==================== */
+.status-cell.has-document {
+    position: relative;
+}
+
+/* Яркая оранжевая точка с пульсацией */
+.status-cell.has-document::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    background: linear-gradient(135deg, #ff5722, #ff9800);
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 6px rgba(255, 87, 34, 0.8);
+    animation: docIndicator 2s ease-in-out infinite;
+    z-index: 5;
+}
+
+/* Полоска снизу для усиления эффекта */
+.status-cell.has-document::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ff5722, #ff9800);
+    z-index: 4;
+}
+
+@keyframes docIndicator {
+    0%, 100% { 
+        transform: scale(1); 
+        box-shadow: 0 0 6px rgba(255, 87, 34, 0.8); 
+    }
+    50% { 
+        transform: scale(1.2); 
+        box-shadow: 0 0 12px rgba(255, 87, 34, 1); 
+    }
+}
+
+/* При наведении - увеличиваем точку */
+.status-cell.has-document:hover::after {
+    transform: scale(1.4);
+    box-shadow: 0 0 14px rgba(255, 87, 34, 1);
+    animation: none;
+}
+
+/* ==================== ПРИМЕЧАНИЯ ==================== */
+.notes-cell {
+    min-width: 300px;
+    vertical-align: top !important;
+    padding: 6px !important;
+}
+
+.notes-textarea {
+    width: 100%;
+    min-height: 36px;
+    padding: 4px 6px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 11px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.notes-textarea:focus {
+    outline: none;
+    border-color: #2196f3;
+}
+
+/* ==================== КНОПКА ПРИКРЕПЛЕНИЯ ==================== */
+.add-doc-btn {
+    font-size: 10px;
+    padding: 3px 8px;
+    margin-top: 4px;
+}
+
+/* ==================== СПИСОК ДОКУМЕНТОВ ==================== */
+.documents-list {
+    margin-top: 6px;
+    font-size: 11px;
+}
+
+.doc-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 6px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #dee2e6;
+}
+
+.doc-item:hover {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    border-color: #90caf9;
+    transform: translateX(2px);
+}
+
+.doc-icon {
+    font-size: 16px;
+}
+
+.doc-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.doc-type {
+    font-weight: 600;
+    color: #1565c0;
+    font-size: 10px;
+}
+
+.doc-dates {
+    font-size: 9px;
+    color: #666;
+}
+
+.doc-actions {
+    display: flex;
+    gap: 2px;
+}
+
+.doc-action-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.doc-action-btn:hover {
+    background: rgba(0,0,0,0.1);
+    transform: scale(1.1);
+}
+
+.doc-action-btn.view-btn:hover {
+    background: #e3f2fd;
+}
+
+.doc-action-btn.delete-btn:hover {
+    background: #ffebee;
+}
+
+/* ==================== ОТМЕТКА "ДОКУМЕНТ ПРИСУТСТВУЕТ" ==================== */
+.doc-present-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    color: #2e7d32;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid #a5d6a7;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.doc-present-badge i {
+    font-size: 14px;
+}
+
+/* ==================== ПАНЕЛЬ ИНСТРУМЕНТОВ ==================== */
+.toolbar {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.quick-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.quick-btn {
+    width: 42px;
+    height: 38px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+}
+
+.quick-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.quick-btn.present { color: #2e7d32; border-color: #a5d6a7; background: #f1f8e9; }
+.quick-btn.present:hover { background: #c8e6c9; }
+.quick-btn.absent_unexcused { color: #e65100; border-color: #ffcc80; background: #fff8e1; }
+.quick-btn.absent_unexcused:hover { background: #ffe0b2; }
+.quick-btn.absent_sick { color: #c62828; border-color: #ef9a9a; background: #ffebee; }
+.quick-btn.absent_sick:hover { background: #ffcdd2; }
+.quick-btn.absent_vacation { color: #1565c0; border-color: #90caf9; background: #e3f2fd; }
+.quick-btn.absent_vacation:hover { background: #bbdefb; }
+.quick-btn.clear { color: #666; }
+.quick-btn.clear:hover { background: #eee; }
+
+/* ==================== ЛЕГЕНДА ==================== */
+.legend-compact {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.legend-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 20px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 10px;
+}
+
+.legend-badge.present { background: #c8e6c9; color: #2e7d32; }
+.legend-badge.absent_unexcused { background: #fff3e0; color: #e65100; }
+.legend-badge.absent_sick { background: #ffcdd2; color: #c62828; }
+.legend-badge.absent_vacation { background: #bbdefb; color: #1565c0; }
+.legend-badge.holiday { background: #f5f5f5; color: #9e9e9e; }
+
+/* Индикатор документа в легенде */
+.legend-badge.doc-indicator {
+    background: #f5f5f5;
+    position: relative;
+    width: 28px;
+}
+
+.doc-dot {
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(135deg, #ff5722, #ff9800);
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 4px rgba(255, 87, 34, 0.6);
+    animation: docIndicator 2s ease-in-out infinite;
+}
+
+/* ==================== ПОДСКАЗКИ ==================== */
+.help-text {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 10px;
+    padding: 6px 12px;
+    background: #fafafa;
+    border-radius: 6px;
+    border-left: 4px solid #2196f3;
+}
+
+.help-text kbd {
+    background: #eee;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 10px;
+    border: 1px solid #ccc;
+}
+
+/* ==================== СКРОЛЛБАР ==================== */
+.table-wrapper {
+    overflow: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    max-height: calc(100vh - 300px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.table-wrapper::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 5px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+/* ==================== СЧЕТЧИК ==================== */
+.counter {
+    font-size: 12px;
+    color: #666;
+    padding: 6px 12px;
+    background: #f8f9fa;
+    border-radius: 20px;
+    border: 1px solid #e0e0e0;
+}
+
+.counter strong {
+    color: #2196f3;
+    font-size: 14px;
+}
+
+/* ==================== TOAST УВЕДОМЛЕНИЯ ==================== */
+.toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1200;
+}
+
+.toast {
+    min-width: 300px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    border-radius: 10px;
+    border: none;
+}
+
+.toast-header.bg-success {
+    background: linear-gradient(135deg, #4caf50, #43a047) !important;
+}
+
+.toast-header.bg-danger {
+    background: linear-gradient(135deg, #f44336, #e53935) !important;
+}
+
+/* ==================== МОДАЛЬНЫЕ ОКНА ==================== */
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #1976d2, #1565c0);
+    color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 14px 20px;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+.modal-footer {
+    border-top: 1px solid #eee;
+    padding: 12px 20px;
+}
+
+/* ==================== ПРОСМОТР ДОКУМЕНТА ==================== */
+#documentViewModal .modal-dialog {
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+#documentViewModal .modal-body {
+    padding: 0;
+    max-height: 80vh;
+    overflow: auto;
+    background: #333;
+}
+
+.document-viewer {
+    width: 100%;
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.document-viewer img {
+    max-width: 100%;
+    max-height: 78vh;
+    object-fit: contain;
+}
+
+.document-viewer iframe {
+    width: 100%;
+    height: 78vh;
+    border: none;
+}
+
+.document-viewer .no-preview {
+    text-align: center;
+    padding: 60px 40px;
+    color: #fff;
+}
+
+.document-viewer .no-preview i {
+    font-size: 64px;
+    color: #aaa;
+    display: block;
+    margin-bottom: 20px;
+}
+
+/* ==================== КНОПКИ ДЕЙСТВИЙ ==================== */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+/* ==================== АНИМАЦИИ ==================== */
+@keyframes flashSuccess {
+    0% { background-color: #c8e6c9; transform: scale(1.02); }
+    100% { background-color: transparent; transform: scale(1); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(20px); }
+}
+
+.flash-success {
+    animation: flashSuccess 0.8s ease;
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease;
+}
+
+.slide-out {
+    animation: slideOut 0.3s ease forwards;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+        <h5 class="mb-0">
+            <i class="bi bi-pencil-square me-2"></i>
+            {{ sheet.group.name }} — {{ month_name }} {{ sheet.year }}
+        </h5>
+        <a href="{% url 'attendance:attendance_sheet_view' sheet.id %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-eye me-1"></i>Просмотр
+        </a>
+    </div>
+
+    <form method="post" id="attendance-form">
+        {% csrf_token %}
+        
+        <!-- Панель инструментов -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <div>
+                    <small class="text-muted d-block mb-1">Быстрый ввод:</small>
+                    <div class="quick-buttons">
+                        <button type="button" class="quick-btn present" data-set-status="present" title="Присутствовал (1)">Я</button>
+                        <button type="button" class="quick-btn absent_unexcused" data-set-status="absent_unexcused" title="Неявка (2)">НЯ</button>
+                        <button type="button" class="quick-btn absent_sick" data-set-status="absent_sick" title="Болезнь (3)">НБ</button>
+                        <button type="button" class="quick-btn absent_vacation" data-set-status="absent_vacation" title="Уваж. причина (4)">НУ</button>
+                        <button type="button" class="quick-btn clear" data-set-status="" title="Очистить (0)">✕</button>
+                    </div>
+                </div>
+                
+                <div class="legend-compact">
+                    <div class="legend-item"><span class="legend-badge present">Я</span> оплач.</div>
+                    <div class="legend-item"><span class="legend-badge absent_unexcused">НЯ</span> оплач.</div>
+                    <div class="legend-item"><span class="legend-badge absent_sick">НБ</span> перерасч.</div>
+                    <div class="legend-item"><span class="legend-badge absent_vacation">НУ</span> перерасч.</div>
+                    <div class="legend-item"><span class="legend-badge holiday">В</span> вых.</div>
+                    <div class="legend-item">
+                        <span class="legend-badge doc-indicator"><span class="doc-dot"></span></span> 
+                        документ
+                    </div>
+                </div>
+            </div>
+            
+            <div class="counter" id="counter">
+                Выбрано: <strong>0</strong>
+            </div>
+        </div>
+
+        <div class="help-text">
+            <kbd>Клик</kbd> выбор | 
+            <kbd>Shift+клик</kbd> диапазон | 
+            <kbd>Ctrl+клик</kbd> добавить | 
+            <kbd>1-4</kbd> статус | 
+            <kbd>0</kbd> очистить | 
+            <kbd>Ctrl+S</kbd> сохранить
+        </div>
+        
+        <!-- Таблица -->
+        <div class="table-wrapper">
+            <table class="attendance-table" id="attendance-table">
+                <thead>
+                    <tr>
+                        <th class="num-col">№</th>
+                        <th class="name-col">ФИО</th>
+                        {% for day in calendar_data %}
+                            <th class="day-header {% if day.is_holiday %}holiday{% endif %}">
+                                {{ day.day }}<br><small>{{ day.weekday_short|default:"" }}</small>
+                            </th>
+                        {% endfor %}
+                        <th class="notes-col">Примечания / Документы</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for child_data in children_data %}
+                    <tr data-record-id="{{ child_data.record_id }}" data-row="{{ forloop.counter0 }}">
+                        <td>{{ forloop.counter }}</td>
+                        <td class="child-name-cell">
+                            <div class="child-name">{{ child_data.child.full_name }}</div>
+                            <div class="child-birth">{{ child_data.child.birth_date|date:"d.m.Y"|default:"" }}</div>
+                        </td>
+                        
+                        {% for day_status in child_data.statuses %}
+                            {% if day_status.is_holiday %}
+                                <td class="status-cell holiday-cell" data-holiday="true">В</td>
+                            {% else %}
+                                <td class="status-cell {% if day_status.has_document %}has-document{% endif %}" 
+                                    tabindex="0"
+                                    data-row="{{ forloop.parentloop.counter0 }}"
+                                    data-col="{{ forloop.counter0 }}"
+                                    data-record-id="{{ child_data.record_id }}"
+                                    data-day="{{ forloop.counter }}"
+                                    data-status="{{ day_status.status }}"
+                                    data-has-document="{{ day_status.has_document|yesno:'true,false' }}">
+                                    {% if day_status.status == "present" %}Я
+                                    {% elif day_status.status == "absent_unexcused" %}НЯ
+                                    {% elif day_status.status == "absent_sick" %}НБ
+                                    {% elif day_status.status == "absent_vacation" %}НУ
+                                    {% else %}—
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <td class="notes-cell" data-record-id="{{ child_data.record_id }}">
+                            <textarea name="notes_{{ child_data.record_id }}" 
+                                      class="notes-textarea"
+                                      placeholder="Примечание...">{{ child_data.notes|default:'' }}</textarea>
+                            
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-primary add-doc-btn w-100"
+                                    data-record-id="{{ child_data.record_id }}"
+                                    data-child-name="{{ child_data.child.full_name }}">
+                                <i class="bi bi-paperclip me-1"></i>Прикрепить документ
+                            </button>
+                            
+                            <!-- Список документов -->
+                            <div class="documents-list" id="docs-{{ child_data.record_id }}">
+                                {% for doc in child_data.documents %}
+                                <div class="doc-item" data-doc-id="{{ doc.id }}">
+                                    <span class="doc-icon">📄</span>
+                                    <div class="doc-info">
+                                        <div class="doc-type">{{ doc.get_document_type_display }}</div>
+                                        <div class="doc-dates">{{ doc.start_date|date:"d.m" }} – {{ doc.end_date|date:"d.m" }}</div>
+                                    </div>
+                                    <div class="doc-actions">
+                                        <button type="button" class="doc-action-btn view-btn" 
+                                                data-file-url="{{ doc.document_file.url }}"
+                                                data-file-name="{{ doc.document_file.name }}"
+                                                title="Просмотреть">👁️</button>
+                                        <button type="button" class="doc-action-btn delete-btn"
+                                                data-doc-id="{{ doc.id }}"
+                                                title="Удалить">🗑️</button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <!-- Отметка "Документ присутствует" -->
+                            <div class="doc-present-badge" id="badge-{{ child_data.record_id }}" 
+                                 {% if not child_data.documents %}style="display:none;"{% endif %}>
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Документ присутствует</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="hidden-inputs"></div>
+
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary" id="save-btn">
+                <i class="bi bi-save me-1"></i>Сохранить изменения
+            </button>
+            <a href="{% url 'attendance:attendance_sheet_view' sheet.id %}" class="btn btn-secondary">
+                <i class="bi bi-x-circle me-1"></i>Отмена
+            </a>
+            <div class="ms-auto">
+                <a href="{% url 'attendance:mark_all_workdays_present' sheet.id %}" 
+                   class="btn btn-outline-success btn-sm"
+                   onclick="return confirm('Отметить все рабочие дни как «Я»?')">
+                    <i class="bi bi-check-all me-1"></i>Все → Я
+                </a>
+                <a href="{% url 'attendance:attendance_sheet_reset' sheet.id %}" 
+                   class="btn btn-outline-danger btn-sm"
+                   onclick="return confirm('Сбросить все отметки?')">
+                    <i class="bi bi-arrow-repeat me-1"></i>Сброс
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Модальное окно для загрузки документа -->
+<div class="modal fade" id="documentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title mb-0" id="uploadModalTitle">
+                    <i class="bi bi-paperclip me-2"></i>Прикрепить документ
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="document-form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="record_id" id="modal_record_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Тип документа <span class="text-danger">*</span></label>
+                        <select name="document_type" class="form-select form-select-sm" required>
+                            <option value="">-- Выберите тип --</option>
+                            <option value="sick_leave">📄 Больничный лист → НБ</option>
+                            <option value="medical_certificate">🩺 Медицинская справка → НБ</option>
+                            <option value="parent_statement">📝 Заявление родителя → НУ</option>
+                            <option value="sanatorium_voucher">🏖️ Путевка в санаторий → НУ</option>
+                            <option value="other">📎 Другое → НУ</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Файл документа <span class="text-danger">*</span></label>
+                        <input type="file" name="document_file" class="form-control form-control-sm" 
+                               accept=".pdf,.jpg,.jpeg,.png,.docx" required>
+                        <small class="text-muted">PDF, JPG, PNG до 5 МБ</small>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold small">Дата начала <span class="text-danger">*</span></label>
+                            <input type="date" name="start_date" id="start_date" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold small">Дата окончания <span class="text-danger">*</span></label>
+                            <input type="date" name="end_date" id="end_date" class="form-control form-control-sm" required>
+                        </div>
+                    </div>
+                    <div class="alert alert-info small py-2 mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        После загрузки документа соответствующие дни будут автоматически отмечены
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="modal-submit-btn">
+                        <i class="bi bi-upload me-1"></i>Загрузить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для просмотра документа -->
+<div class="modal fade" id="documentViewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0" id="viewModalTitle">
+                    <i class="bi bi-file-earmark me-2"></i>Просмотр документа
+                </h6>
+                <div class="ms-auto me-3">
+                    <a href="#" id="downloadDocBtn" class="btn btn-sm btn-outline-light" download>
+                        <i class="bi bi-download me-1"></i>Скачать
+                    </a>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="document-viewer" id="documentViewer">
+                    <!-- Содержимое будет добавлено динамически -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    // ==================== ПЕРЕМЕННЫЕ ====================
+    const table = document.getElementById('attendance-table');
+    const hiddenInputs = document.getElementById('hidden-inputs');
+    const counterEl = document.querySelector('#counter strong');
+    
+    let selectedCells = new Set();
+    let lastClickedCell = null;
+    
+    const STATUS_DISPLAY = { 
+        '': '—', 
+        'present': 'Я', 
+        'absent_unexcused': 'НЯ', 
+        'absent_sick': 'НБ', 
+        'absent_vacation': 'НУ' 
+    };
+    const STATUS_ORDER = ['', 'present', 'absent_unexcused', 'absent_sick', 'absent_vacation'];
+    
+    // ==================== УТИЛИТЫ ====================
+    
+    function formatDays(days) {
+        if (days.length === 0) return '';
+        if (days.length === 1) return `${days[0]}`;
+        days.sort((a, b) => a - b);
+        const ranges = [];
+        let start = days[0], end = days[0];
+        for (let i = 1; i < days.length; i++) {
+            if (days[i] === end + 1) { 
+                end = days[i]; 
+            } else { 
+                ranges.push(start === end ? `${start}` : `${start}-${end}`); 
+                start = days[i]; 
+                end = days[i]; 
+            }
+        }
+        ranges.push(start === end ? `${start}` : `${start}-${end}`);
+        return ranges.join(', ');
+    }
+    
+    function getCookie(name) {
+        let value = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let c of cookies) {
+                c = c.trim();
+                if (c.startsWith(name + '=')) { 
+                    value = decodeURIComponent(c.substring(name.length + 1)); 
+                    break; 
+                }
+            }
+        }
+        return value;
+    }
+    
+    function showNotification(message, type = 'success') {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+        const toastId = 'toast-' + Date.now();
+        const bgClass = type === 'success' ? 'bg-success' : (type === 'danger' ? 'bg-danger' : 'bg-warning');
+        const icon = type === 'success' ? '✅' : (type === 'danger' ? '❌' : '⚠️');
+        const toastHtml = `
+            <div id="${toastId}" class="toast" role="alert" data-bs-autohide="true" data-bs-delay="4000">
+                <div class="toast-header ${bgClass} text-white">
+                    <strong class="me-auto">${icon} ${type === 'success' ? 'Успешно' : 'Ошибка'}</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">${message}</div>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', toastHtml);
+        const toastEl = document.getElementById(toastId);
+        new bootstrap.Toast(toastEl).show();
+        toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+    }
+    
+    // ==================== РАБОТА С ТАБЛИЦЕЙ ====================
+    
+    function getAllCells() { 
+        return table.querySelectorAll('.status-cell:not(.holiday-cell)'); 
+    }
+    
+    function updateCounter() { 
+        counterEl.textContent = selectedCells.size; 
+    }
+    
+    function rebuildNotesForRow(row) {
+        const notesTextarea = row.querySelector('.notes-textarea');
+        if (!notesTextarea) return;
+        
+        const cells = row.querySelectorAll('.status-cell:not(.holiday-cell)');
+        const statusDays = { 'absent_sick': [], 'absent_vacation': [], 'absent_unexcused': [] };
+        
+        cells.forEach(cell => {
+            const day = parseInt(cell.dataset.day);
+            const status = cell.dataset.status || '';
+            if (statusDays[status]) statusDays[status].push(day);
+        });
+        
+        const lines = [];
+        if (statusDays.absent_sick.length > 0) lines.push(`НБ — болезнь (дни: ${formatDays(statusDays.absent_sick)})`);
+        if (statusDays.absent_vacation.length > 0) lines.push(`НУ — уваж. причина (дни: ${formatDays(statusDays.absent_vacation)})`);
+        if (statusDays.absent_unexcused.length > 0) lines.push(`НЯ — неявка (дни: ${formatDays(statusDays.absent_unexcused)})`);
+        notesTextarea.value = lines.join('\n');
+    }
+    
+    function selectCell(cell, add = false) {
+        if (!add) { 
+            selectedCells.forEach(c => c.classList.remove('selected')); 
+            selectedCells.clear(); 
+        }
+        if (cell && !cell.classList.contains('holiday-cell')) {
+            cell.classList.add('selected'); 
+            selectedCells.add(cell); 
+            cell.focus();
+        }
+        updateCounter();
+    }
+    
+    function selectRange(fromCell, toCell) {
+        const [fromRow, fromCol] = [parseInt(fromCell.dataset.row), parseInt(fromCell.dataset.col)];
+        const [toRow, toCol] = [parseInt(toCell.dataset.row), parseInt(toCell.dataset.col)];
+        const [minRow, maxRow] = [Math.min(fromRow, toRow), Math.max(fromRow, toRow)];
+        const [minCol, maxCol] = [Math.min(fromCol, toCol), Math.max(fromCol, toCol)];
+        
+        selectedCells.forEach(c => c.classList.remove('selected')); 
+        selectedCells.clear();
+        
+        getAllCells().forEach(cell => {
+            const [row, col] = [parseInt(cell.dataset.row), parseInt(cell.dataset.col)];
+            if (row >= minRow && row <= maxRow && col >= minCol && col <= maxCol) {
+                cell.classList.add('selected'); 
+                selectedCells.add(cell);
+            }
+        });
+        updateCounter();
+    }
+    
+    function setStatus(cell, status) {
+        if ((cell.dataset.status || '') === status) return;
+        
+        const recordId = cell.dataset.recordId;
+        const day = cell.dataset.day;
+        
+        cell.dataset.status = status;
+        cell.textContent = STATUS_DISPLAY[status];
+        
+        const inputName = `day_${recordId}_${day}`;
+        let input = hiddenInputs.querySelector(`input[name="${inputName}"]`);
+        if (!input) { 
+            input = document.createElement('input'); 
+            input.type = 'hidden'; 
+            input.name = inputName; 
+            hiddenInputs.appendChild(input); 
+        }
+        input.value = status;
+        
+        rebuildNotesForRow(cell.closest('tr'));
+    }
+    
+    function cycleStatus(cell) {
+        const current = cell.dataset.status || '';
+        const idx = STATUS_ORDER.indexOf(current);
+        setStatus(cell, STATUS_ORDER[(idx + 1) % STATUS_ORDER.length]);
+    }
+    
+    function navigate(cell, direction) {
+        let [row, col] = [parseInt(cell.dataset.row), parseInt(cell.dataset.col)];
+        if (direction === 'up') row--; 
+        else if (direction === 'down') row++;
+        else if (direction === 'left') col--; 
+        else if (direction === 'right') col++;
+        
+        const newCell = table.querySelector(`.status-cell[data-row="${row}"][data-col="${col}"]`);
+        if (newCell && !newCell.classList.contains('holiday-cell')) { 
+            selectCell(newCell); 
+            lastClickedCell = newCell; 
+        }
+    }
+    
+    // ==================== ДОКУМЕНТЫ ====================
+    
+    function addDocumentToUI(recordId, docData) {
+        const docsList = document.getElementById(`docs-${recordId}`);
+        const badge = document.getElementById(`badge-${recordId}`);
+        
+        if (docsList) {
+            const docHtml = `
+                <div class="doc-item slide-in" data-doc-id="${docData.id}">
+                    <span class="doc-icon">📄</span>
+                    <div class="doc-info">
+                        <div class="doc-type">${docData.type_display}</div>
+                        <div class="doc-dates">${docData.date_range}</div>
+                    </div>
+                    <div class="doc-actions">
+                        <button type="button" class="doc-action-btn view-btn" 
+                                data-file-url="${docData.file_url}"
+                                data-file-name="${docData.file_name}"
+                                title="Просмотреть">👁️</button>
+                        <button type="button" class="doc-action-btn delete-btn"
+                                data-doc-id="${docData.id}"
+                                title="Удалить">🗑️</button>
+                    </div>
+                </div>
+            `;
+            docsList.insertAdjacentHTML('beforeend', docHtml);
+        }
+        
+        // Показываем отметку "Документ присутствует"
+        if (badge) {
+            badge.style.display = '';
+            badge.classList.add('flash-success');
+            setTimeout(() => badge.classList.remove('flash-success'), 800);
+        }
+    }
+    
+    function removeDocumentFromUI(recordId, docId) {
+        const docItem = document.querySelector(`.doc-item[data-doc-id="${docId}"]`);
+        if (docItem) {
+            docItem.classList.add('slide-out');
+            setTimeout(() => docItem.remove(), 300);
+        }
+        
+        // Проверяем, остались ли документы
+        setTimeout(() => {
+            const docsList = document.getElementById(`docs-${recordId}`);
+            const badge = document.getElementById(`badge-${recordId}`);
+            if (docsList && docsList.children.length === 0 && badge) {
+                badge.style.display = 'none';
+            }
+        }, 350);
+    }
+    
+    function viewDocument(fileUrl, fileName) {
+        const viewer = document.getElementById('documentViewer');
+        const downloadBtn = document.getElementById('downloadDocBtn');
+        const title = document.getElementById('viewModalTitle');
+        
+        downloadBtn.href = fileUrl;
+        const displayName = fileName.split('/').pop();
+        title.innerHTML = `<i class="bi bi-file-earmark me-2"></i>${displayName}`;
+        
+        const ext = fileName.split('.').pop().toLowerCase();
+        
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+            viewer.innerHTML = `<img src="${fileUrl}" alt="Документ">`;
+        } else if (ext === 'pdf') {
+            viewer.innerHTML = `<iframe src="${fileUrl}"></iframe>`;
+        } else {
+            viewer.innerHTML = `
+                <div class="no-preview">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <p>Предпросмотр недоступен для этого типа файла</p>
+                    <a href="${fileUrl}" class="btn btn-primary" download>
+                        <i class="bi bi-download me-1"></i>Скачать файл
+                    </a>
+                </div>
+            `;
+        }
+        
+        new bootstrap.Modal(document.getElementById('documentViewModal')).show();
+    }
+    
+    // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+    
+    function init() {
+        getAllCells().forEach(cell => {
+            const recordId = cell.dataset.recordId;
+            const day = cell.dataset.day;
+            const status = cell.dataset.status || '';
+            const inputName = `day_${recordId}_${day}`;
+            
+            let input = hiddenInputs.querySelector(`input[name="${inputName}"]`);
+            if (!input) { 
+                input = document.createElement('input'); 
+                input.type = 'hidden'; 
+                input.name = inputName; 
+                hiddenInputs.appendChild(input); 
+            }
+            input.value = status;
+        });
+        
+        document.querySelectorAll('.attendance-table tbody tr').forEach(row => rebuildNotesForRow(row));
+    }
+    
+    // ==================== СОБЫТИЯ ТАБЛИЦЫ ====================
+    
+    table.addEventListener('click', function(e) {
+        const cell = e.target.closest('.status-cell');
+        if (!cell || cell.classList.contains('holiday-cell')) return;
+        
+        if (e.shiftKey && lastClickedCell) { 
+            selectRange(lastClickedCell, cell); 
+        } else if (e.ctrlKey || e.metaKey) {
+            if (selectedCells.has(cell)) { 
+                cell.classList.remove('selected'); 
+                selectedCells.delete(cell); 
+            } else { 
+                cell.classList.add('selected'); 
+                selectedCells.add(cell); 
+            }
+            updateCounter();
+        } else {
+            if (selectedCells.size === 1 && selectedCells.has(cell)) { 
+                cycleStatus(cell); 
+            } else { 
+                selectCell(cell); 
+            }
+        }
+        lastClickedCell = cell;
+    });
+    
+    table.addEventListener('dblclick', function(e) {
+        const cell = e.target.closest('.status-cell');
+        if (cell && !cell.classList.contains('holiday-cell')) cycleStatus(cell);
+    });
+    
+    // ==================== КЛАВИАТУРА ====================
+    
+    document.addEventListener('keydown', function(e) {
+        if (selectedCells.size === 0) return;
+        if (['TEXTAREA', 'INPUT', 'SELECT'].includes(e.target.tagName)) return;
+        
+        const activeCell = document.activeElement.closest('.status-cell');
+        
+        switch(e.key) {
+            case '1': e.preventDefault(); selectedCells.forEach(c => setStatus(c, 'present')); break;
+            case '2': e.preventDefault(); selectedCells.forEach(c => setStatus(c, 'absent_unexcused')); break;
+            case '3': e.preventDefault(); selectedCells.forEach(c => setStatus(c, 'absent_sick')); break;
+            case '4': e.preventDefault(); selectedCells.forEach(c => setStatus(c, 'absent_vacation')); break;
+            case '0': case 'Delete': case 'Backspace': 
+                e.preventDefault(); 
+                selectedCells.forEach(c => setStatus(c, '')); 
+                break;
+            case 'ArrowUp': e.preventDefault(); if (activeCell) navigate(activeCell, 'up'); break;
+            case 'ArrowDown': e.preventDefault(); if (activeCell) navigate(activeCell, 'down'); break;
+            case 'ArrowLeft': e.preventDefault(); if (activeCell) navigate(activeCell, 'left'); break;
+            case 'ArrowRight': e.preventDefault(); if (activeCell) navigate(activeCell, 'right'); break;
+            case 'Enter': case ' ': 
+                e.preventDefault(); 
+                if (activeCell) cycleStatus(activeCell); 
+                break;
+            case 'a': 
+                if (e.ctrlKey || e.metaKey) { 
+                    e.preventDefault(); 
+                    getAllCells().forEach(c => { c.classList.add('selected'); selectedCells.add(c); }); 
+                    updateCounter(); 
+                } 
+                break;
+            case 'Escape': 
+                selectedCells.forEach(c => c.classList.remove('selected')); 
+                selectedCells.clear(); 
+                updateCounter(); 
+                break;
+        }
+    });
+    
+    // Быстрые кнопки
+    document.querySelectorAll('[data-set-status]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            selectedCells.forEach(cell => setStatus(cell, this.dataset.setStatus));
+        });
+    });
+    
+    // Ctrl+S для сохранения
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            document.getElementById('attendance-form').submit();
+        }
+    });
+    
+    // ==================== ЗАГРУЗКА ДОКУМЕНТОВ ====================
+    
+    document.querySelectorAll('.add-doc-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const recordId = this.dataset.recordId;
+            const childName = this.dataset.childName;
+            
+            document.getElementById('modal_record_id').value = recordId;
+            document.getElementById('uploadModalTitle').innerHTML = 
+                `<i class="bi bi-paperclip me-2"></i>Документ: ${childName}`;
+            document.getElementById('document-form').reset();
+            
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('start_date').value = today;
+            document.getElementById('end_date').value = today;
+            
+            new bootstrap.Modal(document.getElementById('documentModal')).show();
+        });
+    });
+    
+    document.getElementById('document-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const recordId = document.getElementById('modal_record_id').value;
+        const submitBtn = document.getElementById('modal-submit-btn');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Загрузка...';
+        
+        try {
+            const response = await fetch(`/attendance/document/add/${recordId}/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Закрываем модальное окно
+                bootstrap.Modal.getInstance(document.getElementById('documentModal')).hide();
+                
+                // Показываем уведомление
+                showNotification(data.message || 'Документ успешно загружен!', 'success');
+                
+                // Обновляем статусы ячеек и добавляем индикаторы
+                if (data.marked_days && data.marked_days.length > 0) {
+                    const row = table.querySelector(`tr[data-record-id="${recordId}"]`);
+                    if (row) {
+                        const status = data.status || 'absent_sick';
+                        data.marked_days.forEach(dayStr => {
+                            const day = parseInt(dayStr);
+                            const cell = row.querySelector(`.status-cell[data-day="${day}"]`);
+                            if (cell && !cell.classList.contains('holiday-cell')) {
+                                setStatus(cell, status);
+                                // Добавляем индикатор документа
+                                cell.classList.add('has-document');
+                                cell.dataset.hasDocument = 'true';
+                            }
+                        });
+                    }
+                }
+                
+                // Добавляем документ в UI
+                if (data.document_info) {
+                    addDocumentToUI(recordId, data.document_info);
+                }
+                
+            } else {
+                showNotification(data.error || 'Ошибка при загрузке документа', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            showNotification('Ошибка соединения с сервером', 'danger');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    });
+    
+    // ==================== ПРОСМОТР И УДАЛЕНИЕ ДОКУМЕНТОВ ====================
+    
+    document.addEventListener('click', function(e) {
+        // Просмотр документа
+        const viewBtn = e.target.closest('.view-btn');
+        if (viewBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const fileUrl = viewBtn.dataset.fileUrl;
+            const fileName = viewBtn.dataset.fileName || 'document';
+            viewDocument(fileUrl, fileName);
+            return;
+        }
+        
+        // Удаление документа
+        const deleteBtn = e.target.closest('.delete-btn');
+        if (deleteBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const docId = deleteBtn.dataset.docId;
+            const notesCell = deleteBtn.closest('.notes-cell');
+            const recordId = notesCell ? notesCell.dataset.recordId : null;
+            
+            if (confirm('Удалить этот документ?\n\nОтметки в табеле за соответствующие дни будут очищены.')) {
+                deleteDocument(docId, recordId);
+            }
+        }
+    });
+    
+    async function deleteDocument(docId, recordId) {
+        try {
+            const response = await fetch(`/attendance/document/delete/${docId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('Документ удалён', 'success');
+                removeDocumentFromUI(recordId, docId);
+                
+                // Очищаем индикаторы и статусы в ячейках
+                if (data.cleared_days && recordId) {
+                    const row = table.querySelector(`tr[data-record-id="${recordId}"]`);
+                    if (row) {
+                        data.cleared_days.forEach(dayStr => {
+                            const day = parseInt(dayStr);
+                            const cell = row.querySelector(`.status-cell[data-day="${day}"]`);
+                            if (cell) {
+                                cell.classList.remove('has-document');
+                                cell.dataset.hasDocument = 'false';
+                                setStatus(cell, '');
+                            }
+                        });
+                    }
+                }
+            } else {
+                showNotification(data.error || 'Ошибка при удалении', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            showNotification('Ошибка соединения с сервером', 'danger');
+        }
+    }
+    
+    // Запуск
+    init();
+})();
+</script>
+{% endblock %}

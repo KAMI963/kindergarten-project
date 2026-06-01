@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}График отпусков{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 text-gray-800">График отпусков</h1>
+        <div>
+            <a href="{% url 'staff:leave_schedule_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>Добавить запись
+            </a>
+        </div>
+    </div>
+
+    <!-- Выбор года -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-auto">
+                            <label for="year" class="col-form-label">Год:</label>
+                        </div>
+                        <div class="col-auto">
+                            <select name="year" id="year" class="form-select" onchange="this.form.submit()">
+                                {% for y in years %}
+                                <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- График по месяцам -->
+    {% for month, leaves in by_month.items %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">{{ month }} {{ year }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Сотрудник</th>
+                            <th>Должность</th>
+                            <th>Тип отпуска</th>
+                            <th>Период</th>
+                            <th>Дней</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in leaves %}
+                        <tr>
+                            <td>{{ leave.employee.full_name }}</td>
+                            <td>{{ leave.employee.position }}</td>
+                            <td>{{ leave.get_leave_type_display }}</td>
+                            <td>{{ leave.start_date|date:"d.m.Y" }} - {{ leave.end_date|date:"d.m.Y" }}</td>
+                            <td><span class="badge bg-info">{{ leave.duration }}</span></td>
+                            <td>
+                                {% if leave.status == 'approved' %}
+                                <span class="badge bg-success">Утвержден</span>
+                                {% elif leave.status == 'planned' %}
+                                <span class="badge bg-primary">Запланирован</span>
+                                {% elif leave.status == 'in_progress' %}
+                                <span class="badge bg-warning">В процессе</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ leave.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-5">
+        <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">Нет записей в графике отпусков на {{ year }} год</h5>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добро пожаловать!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #fff;
+            padding: 30px;
+            border: 1px solid #e9ecef;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Добро пожаловать!</h1>
+        </div>
+        <div class="content">
+            <h2>Здравствуйте, {{ user.get_full_name|default:user.username }}!</h2>
+            
+            <p>Вы успешно зарегистрировались в системе электронного детского сада "Рябинушка".</p>
+            
+            <p>Ваш аккаунт активирован и готов к использованию.</p>
+            
+            <div style="text-align: center;">
+                <a href="{{ login_url }}" class="button">Войти в систему</a>
+            </div>
+            
+            <p style="margin-top: 30px;">
+                С уважением,<br>
+                Администрация детского сада "Рябинушка"
+            </p>
+        </div>
+        <div class="footer">
+            <p>© {{ year }} МБДОУ "Рябинушка". Все права защищены.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,216 @@
+{% extends 'staff/base_staff.html' %}
+{% load static %}
+
+{% block title %}Создание приказа о приеме{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    }
+    
+    .form-section h4 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .bonus-fields {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 10px;
+        display: none;
+    }
+    
+    .employee-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .employee-info h3 {
+        margin: 0;
+        font-size: 1.8rem;
+    }
+    
+    .employee-info p {
+        margin: 5px 0 0;
+        opacity: 0.9;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+        padding: 15px;
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}
+
+{% block staff_content %}
+<div class="container py-4">
+    <div class="form-container">
+        <!-- Информация о сотруднике -->
+        <div class="employee-info">
+            <h3>{{ employee.full_name }}</h3>
+            <p>{{ employee.position }} • {{ employee.get_employee_type_display }}</p>
+        </div>
+        
+        <form method="post" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <!-- Основные данные приказа -->
+            <div class="form-section">
+                <h4>Основные данные приказа</h4>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-600">Дата приказа *</label>
+                        {{ form.order_date }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-600">Дата приема *</label>
+                        {{ form.hire_date }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Должность и подразделение -->
+            <div class="form-section">
+                <h4>Должность и подразделение</h4>
+                
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label fw-600">Должность *</label>
+                        {{ form.position }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-600">Подразделение</label>
+                        {{ form.department }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Условия приема -->
+            <div class="form-section">
+                <h4>Условия приема</h4>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-600">Условия приема *</label>
+                        {{ form.employment_condition }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-600">Тарифная ставка (оклад) *</label>
+                        {{ form.tariff_rate }}
+                    </div>
+                </div>
+                
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            {{ form.has_bonus }}
+                            <label class="form-check-label" for="{{ form.has_bonus.id_for_label }}">
+                                Добавить надбавки
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-600">Испытательный срок (мес.)</label>
+                        {{ form.probation_period }}
+                    </div>
+                </div>
+                
+                <!-- Поля для надбавок (скрыты по умолчанию) -->
+                <div class="bonus-fields" id="bonusFields">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-600">Описание надбавок</label>
+                            {{ form.bonus_description }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-600">Сумма надбавок</label>
+                            {{ form.bonus_amount }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Основание -->
+            <div class="form-section">
+                <h4>Основание</h4>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-600">Основание *</label>
+                    {{ form.basis_documents }}
+                </div>
+            </div>
+            
+            <!-- Ознакомление -->
+            <div class="form-section">
+                <h4>Ознакомление с приказом</h4>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            {{ form.employee_acquainted }}
+                            <label class="form-check-label" for="{{ form.employee_acquainted.id_for_label }}">
+                                Сотрудник ознакомлен
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-600">Дата ознакомления</label>
+                        {{ form.acquainted_date }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Кнопки -->
+            <div class="btn-group">
+                <a href="{% url 'staff:employee_detail' employee.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Отмена
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Создать приказ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const hasBonusCheckbox = document.getElementById('{{ form.has_bonus.id_for_label }}');
+    const bonusFields = document.getElementById('bonusFields');
+    
+    if (hasBonusCheckbox) {
+        // Показываем/скрываем поля надбавок
+        function toggleBonusFields() {
+            bonusFields.style.display = hasBonusCheckbox.checked ? 'block' : 'none';
+        }
+        
+        toggleBonusFields();
+        hasBonusCheckbox.addEventListener('change', toggleBonusFields);
+    }
+});
+</script>
+{% endblock %}

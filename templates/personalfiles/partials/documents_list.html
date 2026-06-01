@@ -1,0 +1,45 @@
+<!-- templates/personalfiles/partials/documents_list.html -->
+{% load static %}
+{% for doc_type, doc in documents.items %}
+<div class="col-md-6">
+    <div class="document-card {{ doc.status }}" data-doc-type="{{ doc_type }}" data-doc-label="{{ doc.label }}">
+        <div class="d-flex justify-content-between align-items-start">
+            <div class="d-flex gap-3">
+                <div class="document-icon">
+                    <i class="fas {% if 'application' in doc_type %}fa-file-signature{% elif 'agreement' in doc_type %}fa-file-contract{% elif 'birth' in doc_type %}fa-baby-carriage{% elif 'medical' in doc_type %}fa-file-medical{% elif 'consent' in doc_type %}fa-file-signature{% else %}fa-file-alt{% endif %}"></i>
+                </div>
+                <div>
+                    <h6 class="mb-1">{{ doc.label }}</h6>
+                    {% if doc.document_number %}
+                        <small class="text-muted">№ {{ doc.document_number }}</small>
+                    {% endif %}
+                    {% if doc.expiry_date %}
+                        <div class="mt-1">
+                            <span class="expiry-badge {% if doc.is_expired %}expired{% elif doc.is_near_expiry %}near{% endif %}">
+                                <i class="fas {% if doc.is_expired %}fa-exclamation-circle{% elif doc.is_near_expiry %}fa-clock{% else %}fa-check-circle{% endif %} me-1"></i>
+                                Действует до: {{ doc.expiry_date|date:"d.m.Y" }}
+                            </span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="document-actions">
+                {% if doc.file %}
+                    <button class="btn-icon delete-btn" data-doc-type="{{ doc_type }}" data-doc-label="{{ doc.label }}" title="Удалить">
+                        <i class="fas fa-trash text-danger"></i>
+                    </button>
+                {% else %}
+                    <button class="btn btn-sm btn-purple upload-btn" data-doc-type="{{ doc_type }}" data-doc-label="{{ doc.label }}">
+                        <i class="fas fa-upload me-1"></i>Загрузить
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        {% if doc.notes %}
+            <div class="mt-2 small text-muted">
+                <i class="fas fa-comment"></i> {{ doc.notes|truncatechars:50 }}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}

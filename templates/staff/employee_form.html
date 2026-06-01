@@ -1,0 +1,145 @@
+<!-- staff/templates/staff/employee_form.html -->
+{% extends 'staff/base_staff.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <h1>
+            <i class="fas {% if employee %}fa-user-edit{% else %}fa-user-plus{% endif %}"></i>
+            {{ title }}
+        </h1>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="staff-card">
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <div class="text-center mb-4">
+                                    {% if employee and employee.photo %}
+                                    <img src="{{ employee.photo.url }}" class="rounded-circle" width="120" height="120" style="object-fit: cover;">
+                                    {% else %}
+                                    <div class="staff-avatar staff-avatar-lg mx-auto">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form.full_name|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.employee_type|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.position|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.phone|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.email|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.birth_date|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.birth_place|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.hire_date|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-12">
+                                {{ form.address|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="staff-file-upload" onclick="document.getElementById('id_photo').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p class="mb-1">Нажмите для загрузки фото</p>
+                                    <small class="text-muted">Рекомендуемый размер: 300x300</small>
+                                    {{ form.photo }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body">
+                                        <div class="form-check form-switch mb-3">
+                                            {{ form.is_active }}
+                                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                                Сотрудник работает
+                                            </label>
+                                        </div>
+                                        
+                                        <div id="dismissal-fields" style="display: {% if not form.is_active.value %}block{% else %}none{% endif %};">
+                                            {{ form.dismissal_date|as_crispy_field }}
+                                            {{ form.dismissal_reason|as_crispy_field }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'staff:employee_list' %}" class="btn btn-secondary px-4">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn staff-btn-primary px-5">
+                                <i class="fas fa-save"></i> {{ submit_text }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isActiveCheckbox = document.querySelector('#id_is_active');
+    const dismissalFields = document.querySelector('#dismissal-fields');
+    
+    if (isActiveCheckbox) {
+        isActiveCheckbox.addEventListener('change', function() {
+            dismissalFields.style.display = this.checked ? 'none' : 'block';
+        });
+    }
+    
+    // Превью фото
+    const photoInput = document.getElementById('id_photo');
+    if (photoInput) {
+        photoInput.style.display = 'none';
+        photoInput.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.querySelector('.staff-avatar.staff-avatar-lg');
+                    if (preview) {
+                        preview.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
+                    }
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

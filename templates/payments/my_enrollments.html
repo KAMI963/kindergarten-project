@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load payments_extras %}
+
+{% block title %}Мои заявки на дополнительные услуги{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-clipboard-list me-2"></i>
+            Мои заявки на дополнительные услуги
+        </h1>
+        <a href="{% url 'payments:services_catalog' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Новая заявка
+        </a>
+    </div>
+
+    {% if enrollments %}
+    <div class="row">
+        {% for enrollment in enrollments %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center"
+                     style="background: {% if enrollment.status == 'approved' %}linear-gradient(135deg, #28a745, #20c997){% elif enrollment.status == 'pending' %}linear-gradient(135deg, #ffc107, #fd7e14){% elif enrollment.status == 'rejected' %}linear-gradient(135deg, #dc3545, #c82333){% else %}linear-gradient(135deg, #6c757d, #495057){% endif %}; color: white;">
+                    <strong>{{ enrollment.service.name }}</strong>
+                    <span class="badge bg-light text-dark">
+                        {{ enrollment.get_status_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <p class="text-muted small mb-1">
+                            <i class="fas fa-child me-1"></i>
+                            <strong>Ребенок:</strong> {{ enrollment.child.full_name }}
+                        </p>
+                        <p class="text-muted small mb-1">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            <strong>Дата подачи:</strong> {{ enrollment.enrollment_date|date:"d.m.Y" }}
+                        </p>
+                        <p class="text-muted small mb-1">
+                            <i class="fas fa-play-circle me-1"></i>
+                            <strong>Начало занятий:</strong> {{ enrollment.start_date|date:"d.m.Y" }}
+                        </p>
+                        {% if enrollment.end_date %}
+                        <p class="text-muted small mb-1">
+                            <i class="fas fa-stop-circle me-1"></i>
+                            <strong>Окончание:</strong> {{ enrollment.end_date|date:"d.m.Y" }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <p class="small mb-1">
+                            <i class="fas fa-chalkboard-teacher me-1 text-info"></i>
+                            <strong>Преподаватель:</strong> {{ enrollment.service.teacher|default:"Не назначен" }}
+                        </p>
+                        <p class="small mb-1">
+                            <i class="fas fa-clock me-1 text-info"></i>
+                            <strong>Расписание:</strong> {{ enrollment.service.schedule|default:"Уточняется" }}
+                        </p>
+                        <p class="small mb-1">
+                            <i class="fas fa-ruble-sign me-1 text-success"></i>
+                            <strong>Стоимость:</strong> {{ enrollment.service.price_per_month }} ₽/мес
+                            <small class="text-muted">({{ enrollment.service.price_per_lesson }} ₽/занятие)</small>
+                        </p>
+                    </div>
+
+                    <hr>
+
+                    <!-- Статус договора -->
+                    <div class="mb-3">
+                        {% if enrollment.contract_signed %}
+                        <div class="alert alert-success text-center py-2 mb-0">
+                            <i class="fas fa-check-circle me-1"></i>
+                            Договор подписан {{ enrollment.contract_signed_at|date:"d.m.Y H:i" }}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning text-center py-2 mb-0">
+                            <i class="fas fa-clock me-1"></i>
+                            Договор не подписан
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Кнопки действий -->
+                    <div class="d-flex flex-column gap-2">
+                        {% if enrollment.status == 'approved' %}
+                            {% if not enrollment.contract_signed %}
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'payments:generate_service_contract' enrollment.id %}" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-file-download me-1"></i> Скачать договор
+                                </a>
+                                <form method="post" action="{% url 'payments:sign_service_contract' enrollment.id %}" 
+                                      style="display: inline;"
+                                      onsubmit="return confirm('Подтверждаете ознакомление и согласие с договором?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fas fa-check-circle me-1"></i> Ознакомлен и согласен
+                                    </button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <div class="text-center">
+                                <span class="badge bg-success p-2">
+                                    <i class="fas fa-check me-1"></i> Договор подписан
+                                </span>
+                                <a href="{% url 'payments:generate_service_contract' enrollment.id %}" 
+                                   class="btn btn-outline-secondary btn-sm mt-2 w-100">
+                                    <i class="fas fa-file-download me-1"></i> Скачать договор
+                                </a>
+                            </div>
+                            {% endif %}
+                        {% elif enrollment.status == 'pending' %}
+                            <div class="alert alert-info text-center py-2 mb-0 small">
+                                <i class="fas fa-spinner fa-spin me-1"></i>
+                                Заявка на рассмотрении. Ожидайте подтверждения.
+                            </div>
+                        {% elif enrollment.status == 'rejected' %}
+                            <div class="alert alert-danger text-center py-2 mb-0 small">
+                                <i class="fas fa-times-circle me-1"></i>
+                                В заявке отказано. Обратитесь к заведующей.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center py-5">
+        <i class="fas fa-info-circle fa-3x mb-3 d-block text-muted"></i>
+        <h5>У вас пока нет заявок на дополнительные услуги</h5>
+        <p class="mb-3">Запишите ребенка на кружок или секцию</p>
+        <a href="{% url 'payments:services_catalog' %}" class="btn btn-primary">
+            <i class="fas fa-search me-1"></i> Перейти в каталог услуг
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+}
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+    padding: 12px 15px;
+}
+.btn-group {
+    display: flex;
+    gap: 8px;
+}
+.btn-group .btn {
+    flex: 1;
+}
+</style>
+
+{% block extra_js %}
+<script>
+    // Автоматическое скрытие сообщений через 5 секунд
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert:not(.alert-info):not(.alert-warning)');
+        alerts.forEach(function(alert) {
+            alert.style.transition = 'opacity 0.5s';
+            alert.style.opacity = '0';
+            setTimeout(function() {
+                alert.remove();
+            }, 500);
+        });
+    }, 5000);
+</script>
+{% endblock %}
+{% endblock %}

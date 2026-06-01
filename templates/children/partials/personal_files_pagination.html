@@ -1,0 +1,25 @@
+{% if children.has_other_pages %}
+<div class="pagination-custom">
+    {% if children.has_previous %}
+        <a class="page-link-custom" data-page="1">
+            <i class="fas fa-angle-double-left"></i>
+        </a>
+        <a class="page-link-custom" data-page="{{ children.previous_page_number }}">
+            <i class="fas fa-angle-left"></i>
+        </a>
+    {% endif %}
+    
+    <span class="page-link-custom page-active">
+        {{ children.number }}
+    </span>
+    
+    {% if children.has_next %}
+        <a class="page-link-custom" data-page="{{ children.next_page_number }}">
+            <i class="fas fa-angle-right"></i>
+        </a>
+        <a class="page-link-custom" data-page="{{ children.paginator.num_pages }}">
+            <i class="fas fa-angle-double-right"></i>
+        </a>
+    {% endif %}
+</div>
+{% endif %}

@@ -1,0 +1,135 @@
+<!-- staff/templates/staff/position_list.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Должности{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-briefcase"></i>
+                    Должности
+                </h1>
+                <p class="mb-0 opacity-75">Справочник должностей для штатного расписания</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'staff:position_create' %}" class="btn btn-light staff-btn">
+                    <i class="fas fa-plus"></i> Новая должность
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <!-- Статистика -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="staff-stat-card position-relative">
+                <i class="fas fa-briefcase"></i>
+                <p class="stat-value">{{ positions.count }}</p>
+                <p class="stat-label">Всего должностей</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="staff-stat-card position-relative" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <i class="fas fa-check-circle"></i>
+                <p class="stat-value">{{ positions_active }}</p>
+                <p class="stat-label">Активных</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="staff-stat-card position-relative" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="fas fa-tags"></i>
+                <p class="stat-value">{{ categories_count }}</p>
+                <p class="stat-label">Категорий</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Фильтр по категориям -->
+    <div class="staff-filter-bar mb-4">
+        <div class="btn-group" role="group">
+            <a href="?category=" class="btn {% if not request.GET.category %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                Все
+            </a>
+            {% for code, name in categories %}
+            <a href="?category={{ code }}" class="btn {% if request.GET.category == code %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                {{ name }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Список должностей -->
+    <div class="staff-card">
+        <div class="card-header">
+            <i class="fas fa-list"></i>
+            Список должностей
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="staff-table table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Код</th>
+                            <th>Наименование</th>
+                            <th>Категория</th>
+                            <th>Тарифный разряд</th>
+                            <th>Базовый оклад</th>
+                            <th>Надбавки</th>
+                            <th>Статус</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for position in positions %}
+                        <tr>
+                            <td><strong>{{ position.code }}</strong></td>
+                            <td>{{ position.title }}</td>
+                            <td>{{ position.get_category_display }}</td>
+                            <td>{{ position.tariff_category|default:"—" }}</td>
+                            <td>{{ position.base_salary|floatformat:0 }} ₽</td>
+                            <td>
+                                {% if position.hazardous_bonus > 0 %}
+                                <span class="badge bg-warning" title="За вредность">В: {{ position.hazardous_bonus }}%</span>
+                                {% endif %}
+                                {% if position.irregular_bonus > 0 %}
+                                <span class="badge bg-info" title="Ненормированный день">Н: {{ position.irregular_bonus }}%</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if position.is_active %}
+                                <span class="badge bg-success">Активна</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Неактивна</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'staff:position_edit' position.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Нет созданных должностей</p>
+                                <a href="{% url 'staff:position_create' %}" class="btn staff-btn-primary btn-sm">
+                                    Создать первую должность
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

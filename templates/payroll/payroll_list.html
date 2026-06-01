@@ -1,0 +1,157 @@
+{% extends 'payroll/base_payroll.html' %}
+
+{% block page_title %}Расчет зарплаты за {{ month }}.{{ year }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group me-2">
+    <form method="get" class="d-flex">
+        <select name="year" class="form-select form-select-sm me-2">
+            {% for y in years %}
+                <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+        <select name="month" class="form-select form-select-sm me-2">
+            {% for m in months %}
+                <option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-sm btn-outline-secondary">Показать</button>
+    </form>
+</div>
+<form method="post" action="{% url 'payroll:payroll_bulk_calculate' %}" class="d-inline">
+    {% csrf_token %}
+    <input type="hidden" name="year" value="{{ year }}">
+    <input type="hidden" name="month" value="{{ month }}">
+    <button type="submit" class="btn btn-sm btn-primary">
+        <i class="fas fa-calculator"></i> Рассчитать всех
+    </button>
+</form>
+{% endblock %}
+
+{% block page_content %}
+<div class="row">
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Начислено всего</h5>
+                <p class="card-text display-6">{{ total_accrued|floatformat:2 }} ₽</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">К выплате</h5>
+                <p class="card-text display-6">{{ total_net|floatformat:2 }} ₽</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">НДФЛ</h5>
+                <p class="card-text display-6">{{ total_ndfl|floatformat:2 }} ₽</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Сотрудников</h5>
+                <p class="card-text display-6">{{ payrolls|length }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Расчеты зарплаты</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Сотрудник</th>
+                            <th>Должность</th>
+                            <th>Начислено</th>
+                            <th>НДФЛ</th>
+                            <th>К выплате</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payroll in payrolls %}
+                        <tr>
+                            <td>{{ payroll.employee.get_full_name }}</td>
+                            <td>{{ payroll.hire_document.position|default:"—" }}</td>
+                            <td>{{ payroll.total_accrued|floatformat:2 }} ₽</td>
+                            <td>{{ payroll.total_ndfl|floatformat:2 }} ₽</td>
+                            <td><strong>{{ payroll.net_amount|floatformat:2 }} ₽</strong></td>
+                            <td>
+                                <span class="badge {% if payroll.status == 'paid' %}bg-success{% elif payroll.status == 'approved' %}bg-primary{% elif payroll.status == 'calculated' %}bg-info{% else %}bg-secondary{% endif %}">
+                                    {{ payroll.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'payroll:payroll_detail' payroll.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> Детали
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">Нет расчетов за выбранный период</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if employees_without_payroll %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Сотрудники без расчета</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Сотрудник</th>
+                            <th>Должность</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees_without_payroll %}
+                        <tr>
+                            <td>{{ employee.get_full_name }}</td>
+                            <td>
+                                {% with hire=employee.hire_documents.first %}
+                                    {{ hire.position|default:"—" }}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                <a href="{% url 'payroll:payroll_calculate' employee.id %}?year={{ year }}&month={{ month }}" 
+                                   class="btn btn-sm btn-success">
+                                    <i class="fas fa-calculator"></i> Рассчитать
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

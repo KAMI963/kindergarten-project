@@ -1,0 +1,102 @@
+<!-- staff/templates/staff/inn_form.html -->
+{% extends 'staff/base_staff.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}ИНН сотрудника{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <h1>
+            <i class="fas fa-id-card"></i>
+            ИНН сотрудника
+        </h1>
+        <p class="mb-0 opacity-75">{{ employee.full_name }}</p>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-edit"></i>
+                    {% if inn %}Редактирование ИНН{% else %}Добавление ИНН{% endif %}
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-4 text-center">
+                            <i class="fas fa-id-card fa-4x text-primary mb-3"></i>
+                            <p class="text-muted">ИНН (Индивидуальный номер налогоплательщика)</p>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-12">
+                                {{ form.inn_number|as_crispy_field }}
+                                <small class="text-muted">ИНН состоит из 12 цифр. Пример: 123456789012</small>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="staff-file-upload mb-3">
+                                    <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                                    <p class="mb-2">Загрузите скан свидетельства ИНН</p>
+                                    <small class="text-muted">Поддерживаются форматы PDF, JPG, PNG (до 10 МБ)</small>
+                                    {{ form.scan }}
+                                </div>
+                                {% if inn and inn.scan %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-file-pdf me-2"></i>
+                                    Текущий файл: <a href="{{ inn.scan.url }}" target="_blank">{{ inn.scan.name|slice:"15:" }}</a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'staff:employee_detail' employee.id %}" class="btn btn-secondary px-4">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn staff-btn-primary px-5">
+                                <i class="fas fa-save"></i> Сохранить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.querySelector('input[type="file"]');
+    const fileUpload = document.querySelector('.staff-file-upload');
+    
+    if (fileInput && fileUpload) {
+        fileInput.style.display = 'none';
+        fileUpload.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const fileName = this.files[0].name;
+                fileUpload.querySelector('p').innerHTML = `<i class="fas fa-check-circle text-success me-2"></i>Выбран файл: ${fileName}`;
+            }
+        });
+    }
+    
+    // Автоматическое форматирование ИНН
+    const innInput = document.getElementById('id_inn_number');
+    if (innInput) {
+        innInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '').slice(0, 12);
+        });
+    }
+});
+</script>
+{% endblock %}

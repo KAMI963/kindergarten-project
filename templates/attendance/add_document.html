@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block title %}Добавить документ - {{ record.child.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-file-earmark-plus"></i> 
+                        Добавить документ для {{ record.child.full_name }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Табель:</strong> {{ sheet.group.name }} - {{ sheet.get_month_name }} {{ sheet.year }}<br>
+                        <strong>Ребенок:</strong> {{ record.child.full_name }}
+                    </div>
+                    
+                    <!-- Форма загрузки документа -->
+                    <form method="post" enctype="multipart/form-data" class="mb-4">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Тип документа *</label>
+                            {{ form.document_type }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Файл документа *</label>
+                            {{ form.document_file }}
+                            <small class="text-muted">Поддерживаемые форматы: PDF, JPG, PNG, DOC, DOCX</small>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Номер документа</label>
+                                    {{ form.document_number }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Дата выдачи</label>
+                                    {{ form.issue_date }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Дата начала *</label>
+                                    {{ form.start_date }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Дата окончания *</label>
+                                    {{ form.end_date }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Описание</label>
+                            {{ form.description }}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'attendance:attendance_sheet_edit' sheet.id %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Назад
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload"></i> Загрузить документ
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Список загруженных документов -->
+                    {% if existing_documents %}
+                    <hr>
+                    <h5><i class="bi bi-files"></i> Загруженные документы</h5>
+                    <div class="list-group">
+                        {% for doc in existing_documents %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ doc.get_document_type_display }}</strong>
+                                    {% if doc.document_number %}(№{{ doc.document_number }}){% endif %}
+                                    <br>
+                                    <small class="text-muted">
+                                        Период: {{ doc.start_date|date:"d.m.Y" }} - {{ doc.end_date|date:"d.m.Y" }}
+                                        {% if doc.issue_date %}| Выдан: {{ doc.issue_date|date:"d.m.Y" }}{% endif %}
+                                    </small>
+                                    {% if doc.description %}
+                                    <br><small>{{ doc.description|truncatechars:100 }}</small>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <a href="{% url 'attendance:download_absence_document' doc.id %}" class="btn btn-sm btn-success">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                    <a href="{% url 'attendance:delete_absence_document' doc.id %}" 
+                                       class="btn btn-sm btn-danger"
+                                       onclick="return confirm('Удалить документ? Отметки в табеле будут очищены.')">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}

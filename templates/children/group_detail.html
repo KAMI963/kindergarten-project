@@ -1,0 +1,724 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ group.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Premium Variables */
+    :root {
+        --primary: #4f46e5;
+        --primary-light: #818cf8;
+        --primary-dark: #3730a3;
+        --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        --secondary-gradient: linear-gradient(135deg, #06d6a0 0%, #10b981 100%);
+        --accent-gradient: linear-gradient(135deg, #ffd166 0%, #fbbf24 100%);
+        --danger-gradient: linear-gradient(135deg, #ef476f 0%, #ef4444 100%);
+        --info-gradient: linear-gradient(135deg, #118ab2 0%, #2563eb 100%);
+        --card-shadow: 0 20px 35px -8px rgba(0,0,0,0.1), 0 5px 15px -5px rgba(0,0,0,0.05);
+        --card-shadow-hover: 0 30px 45px -12px rgba(79,70,229,0.25), 0 10px 25px -8px rgba(0,0,0,0.1);
+        --radius-sm: 12px;
+        --radius-md: 20px;
+        --radius-lg: 28px;
+    }
+
+    body {
+        background: #f8faff;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Premium Header */
+    .page-header-premium {
+        background: var(--primary-gradient);
+        border-radius: var(--radius-lg);
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 40px -10px rgba(79,70,229,0.4);
+        position: relative;
+        overflow: hidden;
+        animation: slideInUp 0.6s ease-out;
+    }
+
+    .page-header-premium::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+        transform: rotate(25deg);
+        pointer-events: none;
+    }
+
+    .page-header-premium h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 4px 10px rgba(0,0,0,0.2);
+        letter-spacing: -0.5px;
+    }
+
+    .page-header-premium p {
+        color: rgba(255,255,255,0.9);
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+
+    .btn-header-premium {
+        background: white;
+        color: var(--primary-dark);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 100px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        margin-left: 10px;
+    }
+
+    .btn-header-premium:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px -5px rgba(0,0,0,0.3);
+        color: var(--primary-dark);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(255,255,255,0.5);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.6s ease-out;
+        height: 100%;
+    }
+
+    .premium-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .card-header-premium {
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        padding: 1.25rem 1.5rem;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-header-premium i {
+        font-size: 1.5rem;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .card-header-premium h5 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+        flex: 1;
+    }
+
+    .card-body-premium {
+        padding: 1.5rem;
+    }
+
+    /* Info Table Premium */
+    .info-table-premium {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+    }
+
+    .info-table-premium tr {
+        background: #f8fafc;
+        border-radius: var(--radius-sm);
+        transition: all 0.2s ease;
+    }
+
+    .info-table-premium tr:hover {
+        background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .info-table-premium td {
+        padding: 1rem 1.25rem;
+        border: none;
+    }
+
+    .info-table-premium td:first-child {
+        font-weight: 600;
+        color: #475569;
+        width: 40%;
+        border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+        background: rgba(226, 232, 240, 0.3);
+    }
+
+    .info-table-premium td:last-child {
+        font-weight: 500;
+        color: #0f172a;
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+
+    .info-table-premium td:last-child i {
+        color: var(--primary);
+        margin-right: 8px;
+    }
+
+    /* Stats Circle */
+    .stats-circle-premium {
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .stats-number-premium {
+        font-size: 4rem;
+        font-weight: 800;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.2;
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-label-premium {
+        color: #64748b;
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Progress Bar Premium */
+    .progress-container-premium {
+        margin: 1.5rem 0;
+    }
+
+    .progress-header-premium {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .progress-header-premium span:first-child {
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .progress-header-premium span:last-child {
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .progress-bar-premium {
+        height: 16px;
+        background: #e2e8f0;
+        border-radius: 100px;
+        overflow: hidden;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .progress-fill-premium {
+        height: 100%;
+        border-radius: 100px;
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        position: relative;
+        overflow: hidden;
+    }
+
+    .progress-fill-premium::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    .progress-fill-premium.danger {
+        background: linear-gradient(90deg, #ef4444, #f87171);
+    }
+
+    .progress-fill-premium.warning {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+
+    .progress-fill-premium.success {
+        background: linear-gradient(90deg, #10b981, #34d399);
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    /* Children Table Premium */
+    .table-premium {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+    }
+
+    .table-premium thead th {
+        padding: 1rem 1.5rem;
+        font-weight: 700;
+        color: #475569;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 2px solid var(--primary-light);
+    }
+
+    .table-premium tbody tr {
+        background: white;
+        border-radius: var(--radius-sm);
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        animation: fadeInRow 0.5s ease-out forwards;
+        opacity: 0;
+    }
+
+    .table-premium tbody tr:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(79,70,229,0.1);
+    }
+
+    .table-premium tbody td {
+        padding: 1.25rem 1.5rem;
+        border: none;
+        color: #334155;
+        font-weight: 500;
+    }
+
+    /* Child Avatar */
+    .child-avatar-premium {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1rem;
+        margin-right: 12px;
+    }
+
+    .child-name-premium {
+        font-weight: 600;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .child-name-premium i {
+        color: var(--primary);
+        font-size: 1rem;
+    }
+
+    /* Gender Badges */
+    .gender-badge-premium {
+        padding: 0.4rem 1rem;
+        border-radius: 100px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .gender-badge-premium.male {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+    }
+
+    .gender-badge-premium.female {
+        background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+        color: #9d174d;
+    }
+
+    /* Action Buttons */
+    .btn-view-premium {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 100px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(59,130,246,0.3);
+    }
+
+    .btn-view-premium:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(59,130,246,0.4);
+        color: white;
+    }
+
+    /* Empty State */
+    .empty-state-premium {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        border-radius: var(--radius-lg);
+    }
+
+    .empty-icon-premium {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        opacity: 0.5;
+    }
+
+    .empty-state-premium h5 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-premium p {
+        color: #64748b;
+        font-size: 1rem;
+    }
+
+    /* Animations */
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInRow {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Animation Delays */
+    .premium-card:nth-child(1) { animation-delay: 0.1s; }
+    .premium-card:nth-child(2) { animation-delay: 0.2s; }
+    .table-premium tbody tr:nth-child(1) { animation-delay: 0.1s; }
+    .table-premium tbody tr:nth-child(2) { animation-delay: 0.2s; }
+    .table-premium tbody tr:nth-child(3) { animation-delay: 0.3s; }
+    .table-premium tbody tr:nth-child(4) { animation-delay: 0.4s; }
+    .table-premium tbody tr:nth-child(5) { animation-delay: 0.5s; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header-premium {
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .page-header-premium .text-md-end {
+            margin-top: 1rem;
+        }
+        
+        .info-table-premium td:first-child {
+            width: 50%;
+        }
+        
+        .table-premium thead {
+            display: none;
+        }
+        
+        .table-premium tbody tr {
+            display: block;
+            margin-bottom: 1rem;
+            padding: 1rem;
+        }
+        
+        .table-premium tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .table-premium tbody td:last-child {
+            border-bottom: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Premium Header -->
+    <div class="page-header-premium">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>{{ group.name }}</h1>
+                <p><i class="fas fa-door-open me-2"></i>Комната №{{ group.room_number }} · {{ group.get_age_category_display }}</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'children:group_list' %}" class="btn-header-premium">
+                    <i class="fas fa-arrow-left"></i>Назад
+                </a>
+                {% if user.role == 'director' %}
+                <a href="{% url 'children:group_edit' group.id %}" class="btn-header-premium">
+                    <i class="fas fa-edit"></i>Редактировать
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Информация о группе -->
+        <div class="col-md-6">
+            <div class="premium-card">
+                <div class="card-header-premium">
+                    <i class="fas fa-info-circle"></i>
+                    <h5>Информация о группе</h5>
+                </div>
+                <div class="card-body-premium">
+                    <table class="info-table-premium">
+                        <tr>
+                            <td><i class="fas fa-tag me-2"></i>Название</td>
+                            <td><strong>{{ group.name }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-calendar-alt me-2"></i>Возрастная категория</td>
+                            <td>{{ group.get_age_category_display }}</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-user-tie me-2"></i>Воспитатель</td>
+                            <td>
+                                {% if group.teacher %}
+                                    {{ group.teacher.get_full_name }}
+                                {% else %}
+                                    <span class="text-muted">Не назначен</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-users me-2"></i>Вместимость</td>
+                            <td>{{ group.capacity }} детей</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-child me-2"></i>Текущее количество</td>
+                            <td><strong class="text-primary">{{ children_count }}</strong> детей</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-door-open me-2"></i>Свободных мест</td>
+                            <td>
+                                {% with free_spaces=group.capacity|add:0|add:children_count|add:0 %}
+                                    {% if free_spaces > 0 %}
+                                        <span class="text-success fw-bold">{{ free_spaces }}</span>
+                                    {% else %}
+                                        <span class="text-danger fw-bold">{{ free_spaces }}</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-hashtag me-2"></i>Комната</td>
+                            <td>№{{ group.room_number }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Статистика группы -->
+        <div class="col-md-6">
+            <div class="premium-card">
+                <div class="card-header-premium">
+                    <i class="fas fa-chart-pie"></i>
+                    <h5>Статистика группы</h5>
+                </div>
+                <div class="card-body-premium">
+                    <div class="stats-circle-premium">
+                        <div class="stats-number-premium">{{ children_count }}</div>
+                        <div class="stats-label-premium">Детей в группе</div>
+                    </div>
+                    
+                    <div class="progress-container-premium">
+                        <div class="progress-header-premium">
+                            <span>Заполненность</span>
+                            <span class="{% if fill_percentage >= 90 %}text-danger
+                                         {% elif fill_percentage >= 70 %}text-warning
+                                         {% else %}text-success{% endif %}">
+                                {{ children_count }}/{{ group.capacity }}
+                            </span>
+                        </div>
+                        <div class="progress-bar-premium">
+                            <div class="progress-fill-premium 
+                                {% if fill_percentage >= 90 %}danger
+                                {% elif fill_percentage >= 70 %}warning
+                                {% else %}success{% endif %}" 
+                                style="width: 0%;"
+                                data-width="{{ fill_percentage }}%">
+                            </div>
+                        </div>
+                        <small class="text-muted mt-2 d-block text-end">{{ fill_percentage }}% заполнено</small>
+                    </div>
+
+                    <div class="row g-3 mt-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-venus-mars text-primary me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Мальчиков</small>
+                                    <span class="fw-bold">{{ boys_count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-venus text-danger me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Девочек</small>
+                                    <span class="fw-bold">{{ girls_count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Список детей в группе -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="premium-card">
+                <div class="card-header-premium">
+                    <i class="fas fa-child"></i>
+                    <h5>Дети в группе</h5>
+                    <span class="badge bg-primary ms-2">{{ children_count }}</span>
+                </div>
+                <div class="card-body-premium">
+                    {% if children %}
+                    <div class="table-responsive">
+                        <table class="table-premium">
+                            <thead>
+                                <tr>
+                                    <th>ФИО ребенка</th>
+                                    <th>Возраст</th>
+                                    <th>Дата рождения</th>
+                                    <th>Пол</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for child in children %}
+                                <tr>
+                                    <td>
+                                        <div class="child-name-premium">
+                                            <div class="child-avatar-premium">
+                                                {{ child.full_name|first|upper }}
+                                            </div>
+                                            {{ child.full_name }}
+                                        </div>
+                                    </td>
+                                    <td><strong>{{ child.get_age }}</strong> лет</td>
+                                    <td>{{ child.birth_date|date:"d.m.Y" }}</td>
+                                    <td>
+                                        <span class="gender-badge-premium 
+                                            {% if child.gender == 'male' %}male{% else %}female{% endif %}">
+                                            <i class="fas fa-{% if child.gender == 'male' %}mars{% else %}venus{% endif %}"></i>
+                                            {{ child.get_gender_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'children:child_detail' child.id %}" class="btn-view-premium">
+                                            <i class="fas fa-eye"></i> Подробнее
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state-premium">
+                        <i class="fas fa-child empty-icon-premium"></i>
+                        <h5>В группе пока нет детей</h5>
+                        <p>Дети будут отображаться здесь после распределения по группам</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate progress bar
+    const progressBar = document.querySelector('.progress-fill-premium');
+    if (progressBar) {
+        const width = progressBar.getAttribute('data-width');
+        setTimeout(() => {
+            progressBar.style.width = width;
+        }, 500);
+    }
+
+    // Animate cards on scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animationPlayState = 'running';
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.premium-card, .table-premium tbody tr').forEach(el => {
+        el.style.animationPlayState = 'paused';
+        observer.observe(el);
+    });
+});
+</script>
+{% endblock %}

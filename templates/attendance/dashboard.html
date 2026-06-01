@@ -1,0 +1,248 @@
+<!-- attendance/dashboard.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Посещаемость{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-clipboard-check text-primary me-2"></i>Посещаемость
+        </h1>
+        <div class="btn-group">
+            <span class="btn btn-outline-primary">
+                <i class="fas fa-calendar me-1"></i>{{ today|date:"d.m.Y" }}
+            </span>
+            {% if teacher_group %}
+            <span class="btn btn-outline-secondary">
+                <i class="fas fa-users me-1"></i>{{ teacher_group.name }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Всего детей
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_children }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-child fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Присутствуют
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ present_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Отсутствуют
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ absent_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-times fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Посещаемость
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ attendance_percentage }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Таблица детей -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Дети группы</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th>ФИО ребенка</th>
+                            <th>Статус</th>
+                            <th>Питание</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in children %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.child.full_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ item.child.get_age }} лет</small>
+                            </td>
+                            <td>
+                                <select class="form-select attendance-status" 
+                                        data-child-id="{{ item.child.id }}"
+                                        data-date="{{ today|date:'Y-m-d' }}">
+                                    <option value="present" {% if item.status == 'present' %}selected{% endif %}>Присутствует</option>
+                                    <option value="absent" {% if item.status == 'absent' %}selected{% endif %}>Отсутствует</option>
+                                    <option value="sick" {% if item.status == 'sick' %}selected{% endif %}>Болеет</option>
+                                    <option value="vacation" {% if item.status == 'vacation' %}selected{% endif %}>Отпуск</option>
+                                </select>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    {% for meal_type, meal_name in meal_types %}
+                                    <input type="checkbox" class="btn-check meal-checkbox" 
+                                           id="meal_{{ item.child.id }}_{{ meal_type }}"
+                                           data-child-id="{{ item.child.id }}"
+                                           data-date="{{ today|date:'Y-m-d' }}"
+                                           data-meal-type="{{ meal_type }}"
+                                           {% if meal_type in item.meals_today %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary" for="meal_{{ item.child.id }}_{{ meal_type }}">
+                                        {{ meal_name }}
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info view-history" 
+                                        data-child-id="{{ item.child.id }}">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Обновление статуса посещаемости
+    document.querySelectorAll('.attendance-status').forEach(select => {
+        select.addEventListener('change', function() {
+            const childId = this.getAttribute('data-child-id');
+            const date = this.getAttribute('data-date');
+            const status = this.value;
+            
+            fetch('{% url "attendance:update_attendance_ajax" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    child_id: childId,
+                    date: date,
+                    status: status
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Статус обновлен успешно!', 'success');
+                    location.reload();
+                } else {
+                    showAlert('Ошибка: ' + data.error, 'danger');
+                }
+            });
+        });
+    });
+    
+    // Обновление питания
+    document.querySelectorAll('.meal-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const childId = this.getAttribute('data-child-id');
+            const date = this.getAttribute('data-date');
+            const mealType = this.getAttribute('data-meal-type');
+            const checked = this.checked;
+            
+            fetch('{% url "attendance:update_meal_ajax" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    child_id: childId,
+                    date: date,
+                    meal_type: mealType,
+                    checked: checked
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    showAlert('Ошибка: ' + data.error, 'danger');
+                    this.checked = !checked; // Откатываем изменение
+                }
+            });
+        });
+    });
+    
+    function showAlert(message, type) {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+        alert.style.zIndex = '1060';
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alert);
+        
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 3000);
+    }
+});
+</script>
+{% endblock %}

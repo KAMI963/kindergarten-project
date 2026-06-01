@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Сброс табеля{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Сброс табеля</h1>
+        <a href="{% url 'attendance:attendance_sheet_edit' sheet.id %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Назад
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">Внимание!</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <strong>Вы уверены, что хотите сбросить все статусы?</strong><br>
+                Это действие удалит все отметки посещаемости и установит для всех детей статус "Отсутствует".
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p><strong>Группа:</strong> {{ sheet.group.name }}</p>
+                    <p><strong>Месяц:</strong> {{ month_name }} {{ sheet.year }}</p>
+                </div>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Да, сбросить все статусы
+                    </button>
+                    <a href="{% url 'attendance:attendance_sheet_edit' sheet.id %}" class="btn btn-secondary">
+                        Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

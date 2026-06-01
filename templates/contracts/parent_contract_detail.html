@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Мой договор №{{ contract.contract_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contract-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    /* Стили для родительского интерфейса - мягкие, дружелюбные тона */
+    .parent-header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 20px 20px 0 0;
+        padding: 25px 30px;
+        color: white;
+    }
+    
+    .parent-header .contract-number {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .parent-header .contract-date {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        margin-top: 5px;
+    }
+    
+    .parent-body {
+        background: white;
+        border-radius: 0 0 20px 20px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .info-card {
+        background: #f0fdf4;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #bbf7d0;
+    }
+    
+    .info-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #059669;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .info-row {
+        display: flex;
+        margin-bottom: 12px;
+        font-size: 0.9rem;
+        padding: 8px 0;
+        border-bottom: 1px dashed #dcfce7;
+    }
+    
+    .info-label {
+        width: 130px;
+        font-weight: 600;
+        color: #4b5563;
+    }
+    
+    .info-value {
+        flex: 1;
+        color: #1f2937;
+        font-weight: 500;
+    }
+    
+    .status-card {
+        background: #fef3c7;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .status-approved {
+        background: #d1fae5;
+        color: #059669;
+    }
+    
+    .status-pending {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    
+    .status-icon {
+        font-size: 3rem;
+        margin-bottom: 10px;
+    }
+    
+    .signature-box {
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 25px;
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    .btn-sign-parent {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 14px 28px;
+        font-size: 1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s;
+        width: 100%;
+    }
+    
+    .btn-sign-parent:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(16,185,129,0.3);
+    }
+    
+    .btn-sign-parent:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .btn-download-parent {
+        background: white;
+        border: 2px solid #10b981;
+        color: #059669;
+        padding: 10px 20px;
+        border-radius: 50px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .btn-download-parent:hover {
+        background: #10b981;
+        color: white;
+    }
+    
+    .info-message {
+        background: #e0e7ff;
+        border-radius: 12px;
+        padding: 15px;
+        font-size: 0.85rem;
+        color: #4338ca;
+        margin-top: 20px;
+    }
+    
+    .payment-badge {
+        background: #10b981;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4 contract-container">
+    <!-- Шапка для родителя -->
+    <div class="parent-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div class="contract-number">Договор №{{ contract.contract_number }}</div>
+                <div class="contract-date">от {{ contract.registration_date|date:"d.m.Y" }}</div>
+            </div>
+            <a href="{% url 'contracts:my_contracts' %}" class="btn btn-light btn-sm rounded-pill">
+                <i class="fas fa-arrow-left me-1"></i> Назад
+            </a>
+        </div>
+    </div>
+    
+    <div class="parent-body">
+        <!-- Информация о ребенке -->
+        <div class="info-card">
+            <div class="info-title">
+                <i class="fas fa-child"></i> Информация о ребенке
+            </div>
+            <div class="info-row">
+                <div class="info-label">ФИО ребенка:</div>
+                <div class="info-value">{{ contract.child_full_name }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Дата рождения:</div>
+                <div class="info-value">{{ contract.child_birth_date|date:"d.m.Y" }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Группа:</div>
+                <div class="info-value">{{ contract.group_name }}</div>
+            </div>
+        </div>
+        
+        <!-- Информация о родительской плате -->
+        <div class="info-card">
+            <div class="info-title">
+                <i class="fas fa-ruble-sign"></i> Родительская плата
+            </div>
+            <div class="info-row">
+                <div class="info-label">Абонентская плата:</div>
+                <div class="info-value">{{ contract.subscription_fee|floatformat:2 }} ₽/месяц</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Питание:</div>
+                <div class="info-value">{{ contract.food_fee|floatformat:2 }} ₽/месяц</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Итого к оплате:</div>
+                <div class="info-value"><span class="payment-badge">{{ contract.parent_fee|floatformat:2 }} ₽/месяц</span></div>
+            </div>
+        </div>
+        
+        <!-- Статус подписания -->
+        <div class="status-card {% if contract.parent_signed_at %}status-approved{% else %}status-pending{% endif %}">
+            <div class="status-icon">
+                {% if contract.parent_signed_at %}
+                    <i class="fas fa-check-circle"></i>
+                {% else %}
+                    <i class="fas fa-clock"></i>
+                {% endif %}
+            </div>
+            <h5>
+                {% if contract.parent_signed_at %}
+                    Договор подписан
+                {% else %}
+                    Ожидает вашей подписи
+                {% endif %}
+            </h5>
+            {% if contract.parent_signed_at %}
+                <small>Подписано: {{ contract.parent_signed_at|date:"d.m.Y H:i" }}</small>
+            {% endif %}
+        </div>
+        
+        {% if contract.generated_contract %}
+        <div class="text-center mb-3">
+            <a href="{% url 'contracts:download_contract' contract.pk %}" class="btn-download-parent">
+                <i class="fas fa-download"></i> Скачать договор
+            </a>
+        </div>
+        {% endif %}
+        
+        <!-- Форма подписания для родителя -->
+        {% if not contract.parent_signed_at %}
+            {% if contract.director_signed_at %}
+                <div class="signature-box">
+                    <h5 class="mb-3">Подписание договора</h5>
+                    <p>Пожалуйста, внимательно ознакомьтесь с договором перед подписанием.</p>
+                    <div class="form-check mb-3 text-start">
+                        <input class="form-check-input" type="checkbox" id="parentConfirmCheck" required>
+                        <label class="form-check-label" for="parentConfirmCheck">
+                            Я ознакомлен(а) с условиями договора и согласен(на)
+                        </label>
+                    </div>
+                    <form method="post" action="{% url 'contracts:sign_contract_parent' contract.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-sign-parent" id="parentSignBtn" disabled>
+                            <i class="fas fa-file-signature me-2"></i> Подписать договор
+                        </button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="info-message">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Договор будет доступен для подписания после проверки заведующей.
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    const parentCheckbox = document.getElementById('parentConfirmCheck');
+    const parentBtn = document.getElementById('parentSignBtn');
+    if (parentCheckbox && parentBtn) {
+        parentCheckbox.addEventListener('change', function() {
+            parentBtn.disabled = !this.checked;
+        });
+    }
+</script>
+{% endblock %}

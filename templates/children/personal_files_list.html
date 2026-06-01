@@ -1,0 +1,861 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Личные дела воспитанников{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ---- Основные переменные ---- */
+    .pf-module {
+        --pf-primary: #667eea;
+        --pf-primary-dark: #5a67d8;
+        --pf-success: #10b981;
+        --pf-warning: #f59e0b;
+        --pf-danger: #ef4444;
+        --pf-text-main: #1e293b;
+        --pf-text-muted: #64748b;
+        --pf-border: #e2e8f0;
+        --pf-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        --pf-shadow-hover: 0 6px 16px rgba(102,126,234,0.12);
+    }
+    
+    .pf-module {
+        padding: 12px;
+        max-width: 100%;
+        animation: pfFadeIn 0.4s ease-out;
+    }
+    
+    @keyframes pfFadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* ---- Заголовок ---- */
+    .pf-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 14px;
+        padding: 16px 20px;
+        color: white;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(102,126,234,0.25);
+    }
+    
+    .pf-header::before {
+        content: '';
+        position: absolute;
+        top: -60px;
+        right: -40px;
+        width: 150px;
+        height: 150px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+    }
+    
+    .pf-header::after {
+        content: '';
+        position: absolute;
+        bottom: -50px;
+        left: 20%;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 50%;
+    }
+    
+    .pf-header-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .pf-header-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .pf-header-title i {
+        font-size: 1.2rem;
+    }
+    
+    .pf-header-sub {
+        font-size: 0.75rem;
+        opacity: 0.85;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .pf-header-badge {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(4px);
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    /* ---- Статистика ---- */
+    .pf-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    
+    @media (max-width: 640px) {
+        .pf-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    
+    .pf-stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 12px 14px;
+        text-align: center;
+        border: 1px solid var(--pf-border);
+        box-shadow: var(--pf-shadow);
+        transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .pf-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .pf-stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--pf-shadow-hover);
+    }
+    
+    .pf-stat-card.total::before { background: linear-gradient(90deg, #667eea, #764ba2); }
+    .pf-stat-card.active::before { background: linear-gradient(90deg, #10b981, #059669); }
+    .pf-stat-card.warning::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .pf-stat-card.danger::before { background: linear-gradient(90deg, #ef4444, #dc2626); }
+    
+    .pf-stat-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 6px;
+        font-size: 0.9rem;
+    }
+    
+    .pf-stat-icon.total { background: rgba(102,126,234,0.12); color: #667eea; }
+    .pf-stat-icon.active { background: rgba(16,185,129,0.12); color: #10b981; }
+    .pf-stat-icon.warning { background: rgba(245,158,11,0.12); color: #f59e0b; }
+    .pf-stat-icon.danger { background: rgba(239,68,68,0.12); color: #ef4444; }
+    
+    .pf-stat-number {
+        font-size: 1.3rem;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+    
+    .pf-stat-label {
+        font-size: 0.6rem;
+        color: var(--pf-text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* ---- Фильтры ---- */
+    .pf-filters-panel {
+        background: white;
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        border: 1px solid var(--pf-border);
+        box-shadow: var(--pf-shadow);
+    }
+    
+    .pf-filter-input, .pf-filter-select {
+        border: 1.5px solid var(--pf-border);
+        border-radius: 8px;
+        padding: 7px 12px;
+        font-size: 0.8rem;
+        width: 100%;
+        background: white;
+        transition: all 0.2s ease;
+    }
+    
+    .pf-filter-input:focus, .pf-filter-select:focus {
+        border-color: var(--pf-primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(102,126,234,0.12);
+    }
+    
+    .pf-btn-apply {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 7px 16px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        width: 100%;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(102,126,234,0.2);
+    }
+    
+    .pf-btn-apply:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(102,126,234,0.3);
+    }
+    
+    .pf-btn-reset {
+        background: transparent;
+        color: var(--pf-text-muted);
+        border: 1px solid var(--pf-border);
+        border-radius: 8px;
+        padding: 6px 16px;
+        font-weight: 500;
+        font-size: 0.8rem;
+        width: 100%;
+        transition: all 0.2s ease;
+    }
+    
+    .pf-btn-reset:hover {
+        background: #f1f5f9;
+        color: var(--pf-text-main);
+    }
+    
+    /* ---- Таблица ---- */
+    .pf-table-wrapper {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--pf-border);
+        overflow: hidden;
+        box-shadow: var(--pf-shadow);
+    }
+    
+    .pf-table {
+        width: 100%;
+        margin-bottom: 0;
+        font-size: 0.8rem;
+    }
+    
+    .pf-table thead th {
+        background: #f8fafc;
+        padding: 10px 12px;
+        font-weight: 700;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--pf-text-muted);
+        border-bottom: 1px solid var(--pf-border);
+    }
+    
+    .pf-table tbody td {
+        padding: 10px 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        transition: all 0.2s ease;
+    }
+    
+    .pf-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .pf-table tbody tr:hover {
+        background: #f5f7ff;
+    }
+    
+    .pf-table tbody tr:hover td {
+        color: var(--pf-text-main);
+    }
+    
+    .pf-table tbody tr.pf-hidden {
+        display: none !important;
+    }
+    
+    /* ---- Аватар ---- */
+    .pf-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        background: #e2e8f0;
+    }
+    
+    .pf-avatar-placeholder {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 0.8rem;
+        border: 2px solid white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    
+    /* ---- Имя ребенка ---- */
+    .pf-child-name {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--pf-text-main);
+        display: block;
+    }
+    
+    .pf-child-meta {
+        font-size: 0.65rem;
+        color: var(--pf-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .pf-child-meta i {
+        font-size: 0.6rem;
+    }
+    
+    /* ---- Бейджи ---- */
+    .pf-group-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 10px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        font-size: 0.65rem;
+        font-weight: 500;
+        color: var(--pf-text-main);
+    }
+    
+    .pf-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    
+    .pf-badge-success {
+        background: rgba(16,185,129,0.12);
+        color: #10b981;
+    }
+    
+    .pf-badge-warning {
+        background: rgba(245,158,11,0.12);
+        color: #f59e0b;
+    }
+    
+    .pf-badge-danger {
+        background: rgba(239,68,68,0.12);
+        color: #ef4444;
+    }
+    
+    /* ---- Родители ---- */
+    .pf-parent-item {
+        font-size: 0.7rem;
+        color: var(--pf-text-main);
+        margin-bottom: 1px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .pf-parent-item i {
+        width: 12px;
+        color: var(--pf-text-muted);
+        font-size: 0.6rem;
+    }
+    
+    /* ---- Прогресс ---- */
+    .pf-progress-wrapper {
+        width: 90px;
+    }
+    
+    .pf-progress {
+        height: 5px;
+        border-radius: 10px;
+        background: #e2e8f0;
+        overflow: hidden;
+    }
+    
+    .pf-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 10px;
+        transition: width 0.4s ease;
+    }
+    
+    .pf-progress-text {
+        font-size: 0.6rem;
+        color: var(--pf-text-muted);
+        margin-top: 2px;
+        text-align: center;
+        font-weight: 500;
+    }
+    
+    /* ---- Действия ---- */
+    .pf-actions {
+        display: flex;
+        gap: 4px;
+    }
+    
+    .pf-btn-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        font-size: 0.75rem;
+        border: none;
+    }
+    
+    .pf-btn-view {
+        background: rgba(59,130,246,0.10);
+        color: #3b82f6;
+    }
+    
+    .pf-btn-view:hover {
+        background: #3b82f6;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(59,130,246,0.25);
+    }
+    
+    .pf-btn-edit {
+        background: rgba(245,158,11,0.10);
+        color: #f59e0b;
+    }
+    
+    .pf-btn-edit:hover {
+        background: #f59e0b;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(245,158,11,0.25);
+    }
+    
+    /* ---- Инфо-панель ---- */
+    .pf-info-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+        padding: 8px 14px;
+        background: #f8fafc;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        color: var(--pf-text-muted);
+        border: 1px solid var(--pf-border);
+    }
+    
+    .pf-info-bar strong {
+        color: var(--pf-text-main);
+    }
+    
+    /* ---- Пустое состояние ---- */
+    .pf-empty-state {
+        text-align: center;
+        padding: 40px 10px;
+        color: var(--pf-text-muted);
+    }
+    
+    .pf-empty-icon {
+        font-size: 2.5rem;
+        color: #cbd5e1;
+        margin-bottom: 12px;
+    }
+    
+    .pf-empty-state h6 {
+        font-size: 0.9rem;
+        color: var(--pf-text-main);
+        margin-bottom: 4px;
+    }
+    
+    /* ---- Адаптивность ---- */
+    @media (max-width: 768px) {
+        .pf-table thead { display: none; }
+        .pf-table tbody tr {
+            display: block;
+            margin-bottom: 10px;
+            border: 1px solid var(--pf-border);
+            border-radius: 10px;
+            background: white;
+            box-shadow: var(--pf-shadow);
+        }
+        .pf-table tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            text-align: right;
+        }
+        .pf-table tbody td:last-child { border-bottom: none; }
+        .pf-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            font-size: 0.65rem;
+            color: var(--pf-text-muted);
+            margin-right: 8px;
+            text-align: left;
+        }
+        .pf-actions { justify-content: flex-end; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pf-module">
+    <!-- Заголовок -->
+    <div class="pf-header">
+        <div class="pf-header-content">
+            <div>
+                <div class="pf-header-title">
+                    <i class="fas fa-folder-open"></i>
+                    Личные дела воспитанников
+                </div>
+                <div class="pf-header-sub">
+                    <i class="fas fa-users"></i>
+                    Управление документами и отслеживание сроков
+                </div>
+            </div>
+            <div class="pf-header-badge">
+                <i class="fas fa-calendar-alt me-1"></i>
+                {{ now|date:"d.m.Y" }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Статистика -->
+    <div class="pf-stats-grid">
+        <div class="pf-stat-card total">
+        <div class="pf-stat-icon total"><i class="fas fa-users"></i></div>
+        <div class="pf-stat-number" id="pfStatTotal">{{ total_children|default:0 }}</div>
+        <div class="pf-stat-label">Всего детей</div>
+    </div>
+        <div class="pf-stat-card active">
+            <div class="pf-stat-icon active"><i class="fas fa-check-double"></i></div>
+            <div class="pf-stat-number" id="pfStatActive">{{ active_files|default:0 }}</div>
+            <div class="pf-stat-label">Действующих дел</div>
+        </div>
+        <div class="pf-stat-card warning">
+            <div class="pf-stat-icon warning"><i class="fas fa-triangle-exclamation"></i></div>
+            <div class="pf-stat-number" id="pfStatExpiring">{{ expiring_count|default:0 }}</div>
+            <div class="pf-stat-label">Истекает скоро</div>
+        </div>
+        <div class="pf-stat-card danger">
+            <div class="pf-stat-icon danger"><i class="fas fa-circle-xmark"></i></div>
+            <div class="pf-stat-number" id="pfStatExpired">{{ expired_count|default:0 }}</div>
+            <div class="pf-stat-label">Просрочено</div>
+        </div>
+    </div>
+    
+    <!-- Фильтры -->
+    <div class="pf-filters-panel">
+        <div class="row g-2">
+            <div class="col-md-4 col-sm-6">
+                <input type="text" id="pfSearchInput" class="pf-filter-input" placeholder="🔍 Поиск по ФИО...">
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <select id="pfStatusFilter" class="pf-filter-select">
+                    <option value="">Все статусы</option>
+                    <option value="active">✅ Действует</option>
+                    <option value="warning">⚠️ Истекает</option>
+                    <option value="expired">❌ Просрочено</option>
+                </select>
+            </div>
+            <div class="col-md-2 col-sm-6">
+                <select id="pfGroupFilter" class="pf-filter-select">
+                    <option value="">Все группы</option>
+                    {% for group in groups %}
+                    <option value="{{ group.id }}">{{ group.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="d-flex gap-1">
+                    <button id="pfApplyFilters" class="pf-btn-apply">
+                        <i class="fas fa-filter me-1"></i> Фильтр
+                    </button>
+                    <button id="pfResetFilters" class="pf-btn-reset">
+                        <i class="fas fa-rotate-left"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Таблица -->
+    <div class="pf-table-wrapper">
+        <div class="table-responsive">
+            <table class="pf-table">
+                <thead>
+                    <tr>
+                        <th style="width:35px;">#</th>
+                        <th style="width:40px;">Фото</th>
+                        <th>Ребёнок</th>
+                        <th>Группа</th>
+                        <th>Родители</th>
+                        <th>Регистрация</th>
+                        <th>Медкарта</th>
+                        <th style="width:90px;">Заполнение</th>
+                        <th style="width:70px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="pfTableBody">
+                    {% for child_data in children_data %}
+                    <tr data-pf-name="{{ child_data.child.full_name|lower }}" 
+                        data-pf-status="{{ child_data.expiry_status }}" 
+                        data-pf-group="{{ child_data.child.group.id|default:'' }}">
+                        <td data-label="#" class="text-muted">{{ forloop.counter }}</td>
+                        <td data-label="Фото" class="text-center">
+                            {% if child_data.child.photo and child_data.child.photo.url %}
+                                <img src="{{ child_data.child.photo.url }}" alt="{{ child_data.child.full_name }}" class="pf-avatar">
+                            {% else %}
+                                <div class="pf-avatar-placeholder">{{ child_data.child.full_name|first|upper }}</div>
+                            {% endif %}
+                        </td>
+                        <td data-label="Ребёнок">
+                            <span class="pf-child-name">{{ child_data.child.full_name }}</span>
+                            <div class="pf-child-meta">
+                                <i class="fas fa-cake-candles"></i>
+                                {{ child_data.child.birth_date|date:"d.m.Y" }} ({{ child_data.child.get_age }} лет)
+                            </div>
+                        </td>
+                        <td data-label="Группа">
+                            {% if child_data.child.group %}
+                                <span class="pf-group-badge">
+                                    <i class="fas fa-users me-1"></i> {{ child_data.child.group.name }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Родители">
+                            {% for parent in child_data.parents|slice:":2" %}
+                                <div class="pf-parent-item">
+                                    <i class="fas fa-user"></i> {{ parent.full_name }}
+                                </div>
+                            {% empty %}
+                                <span class="text-muted small">Не указаны</span>
+                            {% endfor %}
+                        </td>
+                        <td data-label="Регистрация">
+                            {% if child_data.registration_status == 'expired' %}
+                                <span class="pf-badge pf-badge-danger">
+                                    <i class="fas fa-circle-exclamation"></i> Истекла
+                                </span>
+                            {% elif child_data.registration_status == 'warning' %}
+                                <span class="pf-badge pf-badge-warning">
+                                    <i class="fas fa-triangle-exclamation"></i> Истекает
+                                </span>
+                            {% else %}
+                                <span class="pf-badge pf-badge-success">
+                                    <i class="fas fa-check-circle"></i> Действует
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Медкарта">
+                            {% if child_data.medical_status == 'expired' %}
+                                <span class="pf-badge pf-badge-danger">
+                                    <i class="fas fa-circle-exclamation"></i> Истекла
+                                </span>
+                            {% elif child_data.medical_status == 'warning' %}
+                                <span class="pf-badge pf-badge-warning">
+                                    <i class="fas fa-triangle-exclamation"></i> Истекает
+                                </span>
+                            {% else %}
+                                <span class="pf-badge pf-badge-success">
+                                    <i class="fas fa-check-circle"></i> Действует
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Заполнение">
+                            <div class="pf-progress-wrapper">
+                                <div class="pf-progress">
+                                    <div class="pf-progress-bar" style="width:{{ child_data.completion_percentage|default:0 }}%;"></div>
+                                </div>
+                                <div class="pf-progress-text">{{ child_data.completion_percentage|default:0 }}%</div>
+                            </div>
+                        </td>
+                        <td data-label="Действия">
+                            <div class="pf-actions">
+                                <a href="{% url 'children:personal_file_detail' child_data.child.id %}" 
+                                   class="pf-btn-icon pf-btn-view" title="Просмотр">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'children:personal_file_edit' child_data.child.id %}" 
+                                   class="pf-btn-icon pf-btn-edit" title="Редактировать">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9">
+                            <div class="pf-empty-state">
+                                <div class="pf-empty-icon"><i class="fas fa-folder-open"></i></div>
+                                <h6>Нет данных для отображения</h6>
+                                <p class="small text-muted mb-0">Попробуйте изменить параметры фильтрации</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Инфо-панель -->
+    <div class="pf-info-bar">
+        <div>
+            <i class="fas fa-info-circle me-1"></i>
+            Показано <strong id="pfVisibleCount">{{ children_data|length }}</strong> из <strong id="pfTotalCount">{{ total_children|default:0 }}</strong>
+        </div>
+        <div>
+            <kbd class="bg-light border px-2 py-1 rounded small" style="font-size:0.6rem;">/</kbd> — фокус на поиск
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    
+    const elements = {
+        search: document.getElementById('pfSearchInput'),
+        status: document.getElementById('pfStatusFilter'),
+        group: document.getElementById('pfGroupFilter'),
+        applyBtn: document.getElementById('pfApplyFilters'),
+        resetBtn: document.getElementById('pfResetFilters'),
+        tableBody: document.getElementById('pfTableBody'),
+        visibleCount: document.getElementById('pfVisibleCount'),
+        totalCount: document.getElementById('pfTotalCount'),
+        statTotal: document.getElementById('pfStatTotal'),
+        statActive: document.getElementById('pfStatActive'),
+        statExpiring: document.getElementById('pfStatExpiring'),
+        statExpired: document.getElementById('pfStatExpired')
+    };
+    
+    const rows = elements.tableBody ? Array.from(elements.tableBody.querySelectorAll('tr[data-pf-name]')) : [];
+    
+    function getRowStatus(row) {
+        const statusCell = row.querySelector('td:nth-child(6)');
+        if (!statusCell) return 'active';
+        const text = statusCell.innerText.toLowerCase();
+        if (text.includes('истекла')) return 'expired';
+        if (text.includes('истекает')) return 'warning';
+        return 'active';
+    }
+    
+    function applyFilters() {
+        const searchTerm = (elements.search?.value || '').trim().toLowerCase();
+        const statusFilter = elements.status?.value || '';
+        const groupFilter = elements.group?.value || '';
+        
+        let visibleCount = 0;
+        let activeCount = 0;
+        let expiringCount = 0;
+        let expiredCount = 0;
+        
+        rows.forEach(row => {
+            const name = (row.dataset.pfName || '').toLowerCase();
+            const rowGroup = row.dataset.pfGroup || '';
+            const rowStatus = row.dataset.pfStatus || getRowStatus(row);
+            
+            const matchSearch = !searchTerm || name.includes(searchTerm);
+            const matchStatus = !statusFilter || rowStatus === statusFilter;
+            const matchGroup = !groupFilter || rowGroup === groupFilter;
+            
+            if (matchSearch && matchStatus && matchGroup) {
+                row.classList.remove('pf-hidden');
+                visibleCount++;
+                if (rowStatus === 'expired') expiredCount++;
+                else if (rowStatus === 'warning') expiringCount++;
+                else activeCount++;
+            } else {
+                row.classList.add('pf-hidden');
+            }
+        });
+        
+        if (elements.visibleCount) elements.visibleCount.textContent = visibleCount;
+        if (elements.statTotal) elements.statTotal.textContent = visibleCount;
+        if (elements.statActive) elements.statActive.textContent = activeCount;
+        if (elements.statExpiring) elements.statExpiring.textContent = expiringCount;
+        if (elements.statExpired) elements.statExpired.textContent = expiredCount;
+    }
+    
+    function resetFilters() {
+        if (elements.search) elements.search.value = '';
+        if (elements.status) elements.status.value = '';
+        if (elements.group) elements.group.value = '';
+        applyFilters();
+    }
+    
+    function debounce(func, delay) {
+        let timeout;
+        return function() {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, arguments), delay);
+        };
+    }
+    
+    function handleKeydown(e) {
+        if (e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+            e.preventDefault();
+            elements.search?.focus();
+            elements.search?.select();
+        }
+        if (e.key === 'Escape' && document.activeElement === elements.search) {
+            elements.search.blur();
+            if (elements.search.value) {
+                elements.search.value = '';
+                applyFilters();
+            }
+        }
+    }
+    
+    function init() {
+        applyFilters();
+        if (elements.search) elements.search.addEventListener('input', debounce(applyFilters, 300));
+        if (elements.status) elements.status.addEventListener('change', applyFilters);
+        if (elements.group) elements.group.addEventListener('change', applyFilters);
+        if (elements.applyBtn) elements.applyBtn.addEventListener('click', applyFilters);
+        if (elements.resetBtn) elements.resetBtn.addEventListener('click', resetFilters);
+        document.addEventListener('keydown', handleKeydown);
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+{% endblock %}

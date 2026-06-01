@@ -1,0 +1,99 @@
+<!-- lessons/templates/lessons/calendar_view.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Календарь занятий - Детский сад{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4>Календарь занятий и напоминаний</h4>
+                        <div>
+                            <a href="{% url 'lessons:lesson_plan_create' %}" class="btn btn-primary btn-sm me-2">
+                                <i class="fas fa-plus me-1"></i> Новое занятие
+                            </a>
+                            <a href="{% url 'lessons:reminder_create' %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-bell me-1"></i> Новое напоминание
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id='calendar'></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+<style>
+    .fc-event {
+        cursor: pointer;
+    }
+    .fc-event.lesson-completed {
+        opacity: 0.7;
+    }
+    .fc-toolbar {
+        flex-wrap: wrap;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/ru.js'></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            locale: 'ru',
+            timeZone: 'Europe/Moscow',
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+            },
+            buttonText: {
+                today: 'Сегодня',
+                month: 'Месяц',
+                week: 'Неделя',
+                day: 'День',
+                list: 'Список'
+            },
+            navLinks: true,
+            editable: false,
+            dayMaxEvents: true,
+            events: '{% url "lessons:get_calendar_events" %}',
+            eventClick: function(info) {
+                if (info.event.extendedProps.url) {
+                    window.location.href = info.event.extendedProps.url;
+                }
+            },
+            eventDidMount: function(info) {
+                // Добавляем иконки в зависимости от типа события
+                if (info.event.extendedProps.type === 'reminder') {
+                    info.el.querySelector('.fc-event-title').innerHTML = 
+                        '⏰ ' + info.event.title;
+                }
+                
+                // Добавляем класс для завершенных занятий
+                if (info.event.extendedProps.type === 'lesson' && 
+                    info.event.extendedProps.completed) {
+                    info.el.classList.add('lesson-completed');
+                }
+            }
+        });
+        
+        calendar.render();
+    });
+</script>
+{% endblock %}

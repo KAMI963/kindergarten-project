@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Оплата - {{ child.full_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-credit-card me-2"></i>Оплата детского сада
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Информация о платеже -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5>Информация о ребенке</h5>
+                        <div class="card">
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Ребенок:</strong> {{ child.full_name }}</p>
+                                <p class="mb-1"><strong>Группа:</strong> 
+                                    {% if child.group %}
+                                        {{ child.group.name }}
+                                    {% else %}
+                                        <span class="text-muted">Не распределен</span>
+                                    {% endif %}
+                                </p>
+                                <p class="mb-0"><strong>Возраст:</strong> {{ child.get_age }} лет</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Детали оплаты</h5>
+                        <div class="card">
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Период:</strong> 
+                                    {% with month_names="Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь" %}
+                                        {{ month_names.split|slice:payment.month|last }} {{ payment.year }}
+                                    {% endwith %}
+                                </p>
+                                <p class="mb-1"><strong>Дни посещения:</strong> {{ payment.attendance_days }}/{{ payment.total_days }}</p>
+                                <p class="mb-1"><strong>Дни питания:</strong> {{ payment.food_days }}</p>
+                                <p class="mb-0"><strong>К оплате:</strong> 
+                                    <span class="text-success fw-bold fs-5">{{ payment.amount|floatformat:2 }} ₽</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Детальный расчет -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calculator me-2"></i>Детали расчета
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center mb-3">
+                            <div class="col-md-2">
+                                <div class="border rounded p-2">
+                                    <small class="text-muted">Всего дней</small>
+                                    <div class="fw-bold text-primary">{{ payment.total_days }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-2">
+                                    <small class="text-muted">Посещено</small>
+                                    <div class="fw-bold text-success">{{ payment.attendance_days }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-2">
+                                    <small class="text-muted">Питание</small>
+                                    <div class="fw-bold text-warning">{{ payment.food_days }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-2">
+                                    <small class="text-muted">Базовая сумма</small>
+                                    <div class="fw-bold text-info">{{ payment.base_amount|floatformat:2 }} ₽</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-2">
+                                    <small class="text-muted">Скидка</small>
+                                    <div class="fw-bold text-danger">-{{ payment.discount|floatformat:2 }} ₽</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-2 bg-success text-white">
+                                    <small>К оплате</small>
+                                    <div class="fw-bold">{{ payment.amount|floatformat:2 }} ₽</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Сумма рассчитана автоматически на основе фактической посещаемости и питания.
+                            <a href="{% url 'payments:payment_calculation' child.id %}" class="alert-link">
+                                Подробнее о расчете
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Выбор способа оплаты -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Выберите способ оплаты</h5>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card payment-method" data-method="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-credit-card fa-3x text-primary mb-3"></i>
+                                    <h6>Банковская карта</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card payment-method" data-method="qr">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-qrcode fa-3x text-success mb-3"></i>
+                                    <h6>QR-код</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card payment-method" data-method="bank">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-university fa-3x text-info mb-3"></i>
+                                    <h6>Банковский перевод</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Форма оплаты картой -->
+                <div id="cardPayment" class="payment-form" style="display: none;">
+                    <h5 class="border-bottom pb-2">Оплата банковской картой</h5>
+                    <div class="alert alert-info">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Все операции защищены SSL-шифрованием
+                    </div>
+                    <form id="cardPaymentForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cardNumber" class="form-label">Номер карты *</label>
+                                <input type="text" class="form-control" id="cardNumber" placeholder="0000 0000 0000 0000" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="cardExpiry" class="form-label">Срок действия *</label>
+                                <input type="text" class="form-control" id="cardExpiry" placeholder="ММ/ГГ" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="cardCvc" class="form-label">CVC/CVV *</label>
+                                <input type="text" class="form-control" id="cardCvc" placeholder="000" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cardHolder" class="form-label">Имя владельца карты *</label>
+                            <input type="text" class="form-control" id="cardHolder" placeholder="IVAN IVANOV" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="button" class="btn btn-success btn-lg" onclick="simulateCardPayment({{ payment.id }})">
+                                <i class="fas fa-lock me-2"></i>Оплатить 15,000 ₽
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- QR-код оплаты -->
+                <div id="qrPayment" class="payment-form text-center" style="display: none;">
+                    <h5 class="border-bottom pb-2">Оплата по QR-коду</h5>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-mobile-alt me-2"></i>
+                        Отсканируйте QR-код через мобильное приложение вашего банка
+                    </div>
+                    <div class="mb-4">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=kindergarten_payment_{{ payment.id }}_15000" 
+                             alt="QR Code" class="img-fluid border rounded">
+                    </div>
+                    <p class="text-muted mb-3">Сумма к оплате: <strong>15,000 ₽</strong></p>
+                    <button type="button" class="btn btn-success" onclick="simulateQRPayment({{ payment.id }})">
+                        <i class="fas fa-check me-2"></i>Я оплатил(а)
+                    </button>
+                </div>
+
+                <!-- Банковский перевод -->
+                <div id="bankPayment" class="payment-form" style="display: none;">
+                    <h5 class="border-bottom pb-2">Банковский перевод</h5>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Используйте эти реквизиты для перевода через ваш банк
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td style="width: 40%"><strong>Получатель:</strong></td>
+                                    <td>Детский сад "Солнышко"</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ИНН:</strong></td>
+                                    <td>1234567890</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>КПП:</strong></td>
+                                    <td>987654321</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Банк:</strong></td>
+                                    <td>ПАО "Сбербанк"</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>БИК:</strong></td>
+                                    <td>044525225</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Счет:</strong></td>
+                                    <td>40702810500000012345</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Корр. счет:</strong></td>
+                                    <td>30101810400000000225</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Назначение:</strong></td>
+                                    <td>Оплата за детский сад. {{ child.full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Сумма:</strong></td>
+                                    <td><strong>15,000 ₽</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-success" onclick="simulateBankPayment({{ payment.id }})">
+                            <i class="fas fa-check me-2"></i>Я перевел(а) деньги
+                        </button>
+                    </div>
+                </div>
+
+               <!-- Кнопки навигации -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'payments:payment_calculation' child.id %}" class="btn btn-info me-2">
+                                <i class="fas fa-calculator me-2"></i>Детали расчета
+                            </a>
+                            <a href="{% url 'payments:payment_history' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Вернуться назад
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Выбор способа оплаты
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentMethods = document.querySelectorAll('.payment-method');
+    const paymentForms = document.querySelectorAll('.payment-form');
+    
+    paymentMethods.forEach(method => {
+        method.addEventListener('click', function() {
+            // Убираем активный класс у всех методов
+            paymentMethods.forEach(m => m.classList.remove('border-primary', 'bg-light'));
+            // Добавляем активный класс к выбранному
+            this.classList.add('border-primary', 'bg-light');
+            
+            // Скрываем все формы
+            paymentForms.forEach(form => form.style.display = 'none');
+            
+            // Показываем выбранную форму
+            const methodType = this.getAttribute('data-method');
+            document.getElementById(methodType + 'Payment').style.display = 'block';
+        });
+    });
+});
+
+// Имитация оплаты картой
+function simulateCardPayment(paymentId) {
+    if (!validateCardForm()) {
+        return;
+    }
+    
+    showLoading('Обработка платежа...');
+    
+    setTimeout(function() {
+        window.location.href = `/payments/simulate/${paymentId}/`;
+    }, 2000);
+}
+
+// Имитация QR оплаты
+function simulateQRPayment(paymentId) {
+    showLoading('Проверка платежа...');
+    
+    setTimeout(function() {
+        window.location.href = `/payments/simulate/${paymentId}/`;
+    }, 3000);
+}
+
+// Имитация банковского перевода
+function simulateBankPayment(paymentId) {
+    showLoading('Регистрация перевода...');
+    
+    setTimeout(function() {
+        window.location.href = `/payments/simulate/${paymentId}/`;
+    }, 1500);
+}
+
+// Валидация формы карты
+function validateCardForm() {
+    const cardNumber = document.getElementById('cardNumber').value;
+    const cardExpiry = document.getElementById('cardExpiry').value;
+    const cardCvc = document.getElementById('cardCvc').value;
+    const cardHolder = document.getElementById('cardHolder').value;
+    
+    if (!cardNumber || !cardExpiry || !cardCvc || !cardHolder) {
+        alert('Пожалуйста, заполните все поля');
+        return false;
+    }
+    
+    // Простая валидация номера карты (16 цифр)
+    if (!/^\d{16}$/.test(cardNumber.replace(/\s/g, ''))) {
+        alert('Введите корректный номер карты (16 цифр)');
+        return false;
+    }
+    
+    return true;
+}
+
+// Показать индикатор загрузки
+function showLoading(message) {
+    const submitBtn = document.querySelector('.payment-form button[type="button"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>${message}`;
+    }
+}
+</script>
+
+<style>
+.payment-method {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.payment-method:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.payment-method.border-primary {
+    border-width: 2px !important;
+}
+</style>
+{% endblock %}

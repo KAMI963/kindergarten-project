@@ -1,0 +1,96 @@
+<!-- staff/templates/staff/leave_request_form.html -->
+{% extends 'staff/base_staff.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Заявление на отпуск{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <h1>
+            <i class="fas fa-paper-plane"></i>
+            Заявление на отпуск
+        </h1>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-edit"></i>
+                    Новое заявление
+                </div>
+                <div class="card-body p-4">
+                    {% if employees %}
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Сотрудник</label>
+                            <select name="employee" class="form-select" required>
+                                <option value="">Выберите сотрудника</option>
+                                {% for emp in employees %}
+                                <option value="{{ emp.id }}">{{ emp.full_name }} - {{ emp.position }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        {{ form|crispy }}
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'staff:leave_requests' %}" class="btn btn-secondary px-4">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn staff-btn-primary px-5">
+                                <i class="fas fa-paper-plane"></i> Отправить
+                            </button>
+                        </div>
+                    </form>
+                    {% else %}
+                        {{ form|crispy }}
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'dashboard' %}" class="btn btn-secondary px-4">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn staff-btn-primary px-5">
+                                <i class="fas fa-paper-plane"></i> Отправить
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.getElementById('id_start_date');
+    const endDateInput = document.getElementById('id_end_date');
+    const durationInput = document.getElementById('id_duration');
+    
+    if (startDateInput && endDateInput && durationInput) {
+        function calculateDuration() {
+            if (startDateInput.value && endDateInput.value) {
+                const start = new Date(startDateInput.value);
+                const end = new Date(endDateInput.value);
+                const diffTime = Math.abs(end - start);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                
+                durationInput.value = diffDays;
+            }
+        }
+        
+        startDateInput.addEventListener('change', calculateDuration);
+        endDateInput.addEventListener('change', calculateDuration);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load payments_extras %}
+
+{% block title %}Табель посещаемости - {{ service.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-calendar-alt me-2"></i>
+            Табель посещаемости: {{ service.name }}
+        </h1>
+        <div>
+            <a href="{% url 'payments:teacher_dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Назад
+            </a>
+        </div>
+    </div>
+
+    <!-- Выбор месяца -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Месяц</label>
+                    <select name="month" class="form-select">
+                        {% for m in "123456789101112"|make_list %}
+                        <option value="{{ m }}" {% if month == m|add:0 %}selected{% endif %}>
+                            {% for name in month_names %}{% if forloop.counter == m|add:0 %}{{ name }}{% endif %}{% endfor %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Год</label>
+                    <select name="year" class="form-select">
+                        <option value="{{ year }}" selected>{{ year }}</option>
+                        <option value="{{ year|add:1 }}">{{ year|add:1 }}</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Применить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Таблица посещаемости -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="min-width: 150px;">Ребенок</th>
+                            {% for date in dates %}
+                            <th class="text-center" style="min-width: 40px;">
+                                {{ date.day }}
+                            </th>
+                            {% endfor %}
+                            <th>Всего</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for enrollment in enrollments %}
+                        <tr>
+                            <td>
+                                <strong>{{ enrollment.child.full_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ enrollment.child.group.name|default:"—" }}</small>
+                            </td>
+                            {% for date in dates %}
+                            <td class="text-center">
+                                {% with att=attendance_data|get_item:enrollment.id|get_item:date.day %}
+                                    {% if att %}
+                                        {% if att.status == 'present' %}
+                                            <span class="badge bg-success" style="font-size: 1rem;">✓</span>
+                                        {% elif att.status == 'sick' %}
+                                            <span class="badge bg-warning" title="Болезнь">🤒</span>
+                                        {% elif att.status == 'vacation' %}
+                                            <span class="badge bg-info" title="Отпуск">🏖</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary" title="Отсутствует">✗</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            {% endfor %}
+                            <td class="text-center">
+                                {% with count=enrollment.get_attendance_count %}
+                                    <strong>{{ count }}</strong>
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+    .table-bordered th, .table-bordered td {
+        border: 1px solid #dee2e6;
+    }
+    .badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.5rem;
+    }
+</style>
+{% endblock %}
+{% endblock %}

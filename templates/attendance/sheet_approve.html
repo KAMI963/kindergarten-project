@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Утверждение табеля{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Утверждение табеля посещаемости</h1>
+        <a href="{% url 'attendance:attendance_sheet_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Назад
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">Подтверждение документа</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <strong>Внимание!</strong> После утверждения табеля воспитатель больше не сможет его редактировать.
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p><strong>Группа:</strong> {{ sheet.group.name }}</p>
+                    <p><strong>Месяц:</strong> {{ month_name }} {{ sheet.year }}</p>
+                    <p><strong>Количество детей:</strong> {{ sheet.records.count }}</p>
+                </div>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Проверка данных:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirmCheck" required>
+                        <label class="form-check-label" for="confirmCheck">
+                            Я подтверждаю, что проверил(а) данные посещаемости и они верны
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                        <i class="bi bi-check-lg"></i> Провести и утвердить
+                    </button>
+                    <!-- ИСПРАВЛЕНО: используем sheet.id вместо group.id и date -->
+                    <a href="{% url 'attendance:attendance_sheet_view' sheet.id %}" class="btn btn-secondary">
+                        Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('confirmCheck').addEventListener('change', function() {
+    document.getElementById('submitBtn').disabled = !this.checked;
+});
+</script>
+{% endblock %}

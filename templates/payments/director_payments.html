@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Мониторинг оплат{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-card {
+        border: none;
+        border-radius: 16px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    }
+    .card-stats {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .card-stats-danger {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    .card-stats-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+    .card-stats-warning {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: white;
+    }
+    .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.3;
+        position: absolute;
+        right: 20px;
+        bottom: 20px;
+    }
+    .progress-bar-custom {
+        height: 8px;
+        border-radius: 4px;
+    }
+    .table-payments th {
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+    .debtor-row {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+    }
+    .paid-row {
+        background-color: #d4edda;
+        border-left: 4px solid #28a745;
+    }
+    .overdue-badge {
+        background: #dc3545;
+        color: white;
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.6; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-chart-line me-2"></i>
+                Мониторинг оплат
+            </h1>
+            <p class="text-muted small">
+                {{ current_month_name }} {{ current_year }} | 
+                Обновлено: {% now "d.m.Y H:i" %}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'payments:tariff_management' %}" class="btn btn-outline-primary me-2">
+                <i class="fas fa-cog me-1"></i> Тарифы
+            </a>
+            <button type="button" class="btn btn-warning" onclick="recalculatePayments()">
+                <i class="fas fa-sync-alt me-1"></i> Пересчитать
+            </button>
+        </div>
+    </div>
+
+    <!-- Карточки статистики -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card card-stats">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title opacity-75 mb-0">Всего платежей</h6>
+                            <h2 class="mb-0">{{ total_payments }}</h2>
+                            <small class="opacity-75">за текущий месяц</small>
+                        </div>
+                        <i class="fas fa-receipt stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card card-stats-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title opacity-75 mb-0">Оплачено</h6>
+                            <h2 class="mb-0">{{ paid_count }}</h2>
+                            <small class="opacity-75">{{ paid_percentage }}% от всех</small>
+                        </div>
+                        <i class="fas fa-check-circle stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card card-stats-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title opacity-75 mb-0">Ожидают оплаты</h6>
+                            <h2 class="mb-0">{{ pending_count }}</h2>
+                            <small class="opacity-75">требуют внимания</small>
+                        </div>
+                        <i class="fas fa-clock stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card card-stats-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title opacity-75 mb-0">Просрочено</h6>
+                            <h2 class="mb-0">{{ overdue_count }}</h2>
+                            <small class="opacity-75">после 15 числа</small>
+                        </div>
+                        <i class="fas fa-exclamation-triangle stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Суммы -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted mb-2">Общая сумма к оплате</h6>
+                    <h2 class="mb-0 text-primary">{{ total_amount_due|floatformat:2 }} ₽</h2>
+                    <div class="progress progress-bar-custom mt-3">
+                        <div class="progress-bar bg-primary" style="width: {{ paid_percentage }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted mb-2">Сумма оплаченных платежей</h6>
+                    <h2 class="mb-0 text-success">{{ total_amount_paid|floatformat:2 }} ₽</h2>
+                    <small class="text-muted">Поступило на счет</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Управление расчетами -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-calculator me-2"></i>
+                Управление расчетами
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'payments:recalculate_all_payments' %}" 
+                   class="btn btn-warning"
+                   onclick="return confirm('Пересчитать ВСЕ платежи? Это может занять некоторое время.')">
+                    <i class="fas fa-calculator me-1"></i> Пересчитать все платежи
+                </a>
+                <a href="{% url 'payments:recalculate_month_payments' current_year current_month %}" 
+                   class="btn btn-outline-warning"
+                   onclick="return confirm('Пересчитать платежи за {{ current_month_name }} {{ current_year }}?')">
+                    <i class="fas fa-sync-alt me-1"></i> Пересчитать за {{ current_month_name }}
+                </a>
+            </div>
+            <div class="alert alert-info small mt-3 mb-0">
+                <i class="fas fa-info-circle me-1"></i>
+                Расчет происходит автоматически 25 числа каждого месяца. 
+                Вручную пересчет может понадобиться после корректировки посещаемости или тарифов.
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика по группам -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-users me-2"></i>
+                Статистика по группам
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Группа</th>
+                            <th>Всего детей</th>
+                            <th>Оплатили</th>
+                            <th>Не оплатили</th>
+                            <th>Сумма к оплате</th>
+                            <th>Оплачено</th>
+                            <th>Прогресс</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for group_name, stats in payments_by_group.items %}
+                        <tr>
+                            <td><strong>{{ group_name }}</strong></td>
+                            <td>{{ stats.total }}</td>
+                            <td class="text-success">{{ stats.paid }}</td>
+                            <td class="text-warning">{{ stats.pending }}</td>
+                            <td>{{ stats.amount_due|floatformat:2 }} ₽</td>
+                            <td class="text-success">{{ stats.amount_paid|floatformat:2 }} ₽</td>
+                            <td>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success" style="width: {% widthratio stats.paid stats.total 100 %}%"></div>
+                                </div>
+                                <small>{% widthratio stats.paid stats.total 100 %}%</small>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-3 text-muted">Нет данных</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Список должников -->
+    {% if debtors %}
+    <div class="card border-danger mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Должники (просрочка оплаты)
+                <span class="badge bg-light text-danger ms-2">{{ debtors|length }}</span>
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ребенок</th>
+                            <th>Группа</th>
+                            <th>Период</th>
+                            <th>Сумма долга</th>
+                            <th>Просрочка (дней)</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for debtor in debtors %}
+                        <tr class="debtor-row">
+                            <td>
+                                <strong>{{ debtor.child.full_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ debtor.child.birth_date|date:"d.m.Y" }}</small>
+                            </td>
+                            <td>{{ debtor.child.group.name|default:"—" }}</td>
+                            <td>{{ debtor.payment.get_month_name }} {{ debtor.payment.year }}</td>
+                            <td class="text-danger fw-bold">{{ debtor.amount|floatformat:2 }} ₽</td>
+                            <td><span class="badge bg-danger">{{ debtor.days_overdue }}</span></td>
+                            <td>
+                                <span class="badge overdue-badge">
+                                    <i class="fas fa-exclamation-circle me-1"></i> Просрочено
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'communication:dashboard' %}?child_id={{ debtor.child.id }}" 
+                                       class="btn btn-outline-warning" title="Напомнить родителю">
+                                        <i class="fas fa-bell"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Детализация платежей -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>
+                Детализация платежей за {{ current_month_name }} {{ current_year }}
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="paymentsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ребенок</th>
+                            <th>Группа</th>
+                            <th>Дни посещения</th>
+                            <th>Основная сумма</th>
+                            <th>Льгота</th>
+                            <th>Доп. услуги</th>
+                            <th>Итого</th>
+                            <th>Статус</th>
+                            <th>Дата оплаты</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr class="{% if payment.status == 'completed' %}paid-row{% elif payment.is_overdue %}debtor-row{% endif %}">
+                            <td>
+                                <strong>{{ payment.child.full_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ payment.child.birth_date|date:"d.m.Y" }}</small>
+                            </td>
+                            <td>{{ payment.child.group.name|default:"—" }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ payment.attendance_days }}/{{ payment.total_days }}</span>
+                            </td>
+                            <td>{{ payment.base_amount|floatformat:2 }} ₽</td>
+                            <td class="text-success">
+                                -{{ payment.discount_amount|floatformat:2 }} ₽
+                                <br>
+                                <small class="text-muted">({{ payment.discount_rate|floatformat:0 }}%)</small>
+                            </td>
+                            <td>
+                                {% if payment.additional_services_amount > 0 %}
+                                {{ payment.additional_services_amount|floatformat:2 }} ₽
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold 
+                                {% if payment.status == 'completed' %}text-success
+                                {% elif payment.is_overdue %}text-danger
+                                {% else %}text-primary{% endif %}">
+                                {{ payment.amount|floatformat:2 }} ₽
+                            </td>
+                            <td>
+                                {% if payment.status == 'completed' %}
+                                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Оплачено</span>
+                                {% elif payment.is_overdue %}
+                                <span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i> Просрочено</span>
+                                {% elif payment.status == 'pending' %}
+                                <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i> Ожидает</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ payment.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.paid_at %}
+                                {{ payment.paid_at|date:"d.m.Y H:i" }}
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                <i class="fas fa-info-circle fa-2x mb-2 d-block text-muted"></i>
+                                <p class="text-muted">Нет данных о платежах за текущий месяц</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="6" class="text-end">Итого:</th>
+                            <th class="fw-bold">{{ total_amount_due|floatformat:2 }} ₽</th>
+                            <th colspan="2"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function recalculatePayments() {
+        if (confirm('Пересчитать платежи за {{ current_month_name }} {{ current_year }}?')) {
+            window.location.href = "{% url 'payments:recalculate_month_payments' current_year current_month %}";
+        }
+    }
+</script>
+{% endblock %}

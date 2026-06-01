@@ -1,0 +1,141 @@
+<!-- staff/templates/staff/passport_form.html -->
+{% extends 'staff/base_staff.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Паспортные данные{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <h1>
+            <i class="fas fa-passport"></i>
+            Паспортные данные
+        </h1>
+        <p class="mb-0 opacity-75">{{ employee.full_name }}</p>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-edit"></i>
+                    {% if passport %}Редактирование паспортных данных{% else %}Добавление паспортных данных{% endif %}
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-4 text-center">
+                            <i class="fas fa-passport fa-4x text-info mb-3"></i>
+                            <p class="text-muted">Паспорт гражданина РФ</p>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                {{ form.series|as_crispy_field }}
+                                <small class="text-muted">4 цифры. Пример: 9216</small>
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.number|as_crispy_field }}
+                                <small class="text-muted">6 цифр. Пример: 123456</small>
+                            </div>
+                            
+                            <div class="col-12">
+                                {{ form.issued_by|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.issue_date|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.department_code|as_crispy_field }}
+                                <small class="text-muted">Формат: XXX-XXX. Пример: 160-001</small>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="staff-file-upload mb-3">
+                                    <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                                    <p class="mb-2">Загрузите скан паспорта (главная страница и прописка)</p>
+                                    <small class="text-muted">Поддерживаются форматы PDF, JPG, PNG (до 10 МБ)</small>
+                                    {{ form.scan }}
+                                </div>
+                                {% if passport and passport.scan %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-file-pdf me-2"></i>
+                                    Текущий файл: <a href="{{ passport.scan.url }}" target="_blank">{{ passport.scan.name|slice:"15:" }}</a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'staff:employee_detail' employee.id %}" class="btn btn-secondary px-4">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn staff-btn-primary px-5">
+                                <i class="fas fa-save"></i> Сохранить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.querySelector('input[type="file"]');
+    const fileUpload = document.querySelector('.staff-file-upload');
+    
+    if (fileInput && fileUpload) {
+        fileInput.style.display = 'none';
+        fileUpload.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const fileName = this.files[0].name;
+                fileUpload.querySelector('p').innerHTML = `<i class="fas fa-check-circle text-success me-2"></i>Выбран файл: ${fileName}`;
+            }
+        });
+    }
+    
+    // Форматирование серии паспорта
+    const seriesInput = document.getElementById('id_series');
+    if (seriesInput) {
+        seriesInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '').slice(0, 4);
+        });
+    }
+    
+    // Форматирование номера паспорта
+    const numberInput = document.getElementById('id_number');
+    if (numberInput) {
+        numberInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '').slice(0, 6);
+        });
+    }
+    
+    // Форматирование кода подразделения
+    const codeInput = document.getElementById('id_department_code');
+    if (codeInput) {
+        codeInput.addEventListener('input', function(e) {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length > 6) value = value.slice(0, 6);
+            
+            if (value.length > 3) {
+                this.value = value.slice(0, 3) + '-' + value.slice(3, 6);
+            } else {
+                this.value = value;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

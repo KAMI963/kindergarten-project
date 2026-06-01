@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load payments_extras %}
+
+{% block title %}Посещаемость — {{ service.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .att-row { transition: background 0.15s ease; }
+    .att-row:hover { background: #f8f9ff; }
+    .radio-group label { 
+        cursor: pointer; 
+        padding: 4px 10px; 
+        border-radius: 6px; 
+        font-size: 0.78rem; 
+        font-weight: 500;
+        border: 1px solid #e5e7eb;
+        transition: all 0.15s ease;
+        margin-right: 4px;
+        display: inline-block;
+    }
+    .radio-group input[type="radio"] { display: none; }
+    .radio-group input[type="radio"]:checked + label.lbl-present { background: #d1fae5; color: #065f46; border-color: #10b981; }
+    .radio-group input[type="radio"]:checked + label.lbl-absent { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
+    .radio-group input[type="radio"]:checked + label.lbl-sick { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
+    .radio-group input[type="radio"]:checked + label.lbl-vacation { background: #dbeafe; color: #1e40af; border-color: #3b82f6; }
+    .radio-group input[type="radio"]:checked + label.lbl-family { background: #f3e8ff; color: #6b21a8; border-color: #9333ea; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h2 class="mb-1" style="font-size: 1.3rem;">
+                <i class="fas fa-check-double me-2 text-primary"></i>{{ service.name }}
+            </h2>
+            <small class="text-muted">Отметка посещаемости за <strong>{{ today|date:"d.m.Y" }}</strong></small>
+        </div>
+        <a href="{% url 'payments:teacher_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Назад к кружкам
+        </a>
+    </div>
+
+    {% if enrollments %}
+    <form method="post">
+        {% csrf_token %}
+        <div class="card shadow-sm" style="border-radius: 10px; overflow: hidden;">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" style="font-size: 0.85rem;">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 30px;">#</th>
+                            <th>Ребёнок</th>
+                            <th>Группа</th>
+                            <th>Статус</th>
+                            <th>Примечание</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for enrollment in enrollments %}
+                        <tr class="att-row">
+                            <td class="text-muted">{{ forloop.counter }}</td>
+                            <td><strong>{{ enrollment.child.full_name }}</strong></td>
+                            <td class="text-muted">{{ enrollment.child.group.name|default:"—" }}</td>
+                            <td>
+                                <div class="radio-group">
+                                    {% with current_status=existing_attendance|default_if_none:"" %}
+                                    <input type="radio" name="status_{{ enrollment.id }}" id="present_{{ enrollment.id }}" 
+                                           value="present" {% if existing_attendance|get_item:enrollment.id == "present" or not existing_attendance|get_item:enrollment.id %}checked{% endif %}>
+                                    <label for="present_{{ enrollment.id }}" class="lbl-present">✓ Здесь</label>
+                                    
+                                    <input type="radio" name="status_{{ enrollment.id }}" id="absent_{{ enrollment.id }}" 
+                                           value="absent" {% if existing_attendance|get_item:enrollment.id == "absent" %}checked{% endif %}>
+                                    <label for="absent_{{ enrollment.id }}" class="lbl-absent">✗ Нет</label>
+                                    
+                                    <input type="radio" name="status_{{ enrollment.id }}" id="sick_{{ enrollment.id }}" 
+                                           value="sick" {% if existing_attendance|get_item:enrollment.id == "sick" %}checked{% endif %}>
+                                    <label for="sick_{{ enrollment.id }}" class="lbl-sick">🤒 Болеет</label>
+                                    
+                                    <input type="radio" name="status_{{ enrollment.id }}" id="vacation_{{ enrollment.id }}" 
+                                           value="vacation" {% if existing_attendance|get_item:enrollment.id == "vacation" %}checked{% endif %}>
+                                    <label for="vacation_{{ enrollment.id }}" class="lbl-vacation">🏖 Отпуск</label>
+                                    {% endwith %}
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" name="notes_{{ enrollment.id }}" 
+                                       class="form-control form-control-sm" 
+                                       placeholder="Заметка..."
+                                       style="font-size: 0.78rem; min-width: 120px;"
+                                       value="">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+                <small class="text-muted">Всего детей: <strong>{{ enrollments|length }}</strong></small>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Сохранить посещаемость
+                </button>
+            </div>
+        </div>
+    </form>
+    {% else %}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        На этот кружок пока никто не записан или заявки ещё не одобрены.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

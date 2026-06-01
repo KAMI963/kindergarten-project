@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Удаление вида начисления{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Подтверждение удаления</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title mb-4">Вы уверены, что хотите удалить вид начисления?</h6>
+                    
+                    <div class="alert alert-info">
+                        <p><strong>Код:</strong> <code>{{ payroll_type.code }}</code></p>
+                        <p><strong>Наименование:</strong> {{ payroll_type.name }}</p>
+                        <p><strong>Тип:</strong> 
+                            {% if payroll_type.is_accrual %}
+                                <span class="badge bg-success">Начисление</span>
+                            {% else %}
+                                <span class="badge bg-danger">Удержание</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    {% if is_used %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Этот вид начисления используется в назначениях сотрудникам. 
+                            При удалении он будет только деактивирован, но данные сохранятся.
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'staff:payroll_type_list' %}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times me-2"></i>Отмена
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>
+                                {% if is_used %}Деактивировать{% else %}Удалить{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>{{ title }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="childForm">
+                    {% csrf_token %}
+                    
+                    <!-- Основная информация -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2 text-primary">
+                            <i class="fas fa-info-circle me-2"></i>Основная информация
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.full_name|as_crispy_field }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.birth_date|as_crispy_field }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.gender|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Группа и статус -->
+                    {% if form.group or form.is_active %}
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2 text-primary">
+                            <i class="fas fa-users me-2"></i>Группа и статус
+                        </h5>
+                        <div class="row">
+                            {% if form.group %}
+                            <div class="col-md-6">
+                                {{ form.group|as_crispy_field }}
+                            </div>
+                            {% endif %}
+                            {% if form.is_active %}
+                            <div class="col-md-6">
+                                {{ form.is_active|as_crispy_field }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Адресные данные -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2 text-primary">
+                            <i class="fas fa-home me-2"></i>Адресные данные
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.registration_address|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.actual_address|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Медицинская информация -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2 text-primary">
+                            <i class="fas fa-heartbeat me-2"></i>Медицинская информация
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-3">
+                                {{ form.blood_type|as_crispy_field }}
+                            </div>
+                            <div class="col-md-9">
+                                {{ form.allergies|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.chronic_diseases|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.special_needs|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Кнопки -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-save me-2"></i>{{ submit_text }}
+                                </button>
+                                <a href="{% if child %}{% url 'children:child_detail' child.id %}{% else %}{% url 'children:children_list' %}{% endif %}" class="btn btn-secondary btn-lg">
+                                    <i class="fas fa-arrow-left me-2"></i>Отмена
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Автоматическая валидация даты рождения
+    const birthDateField = document.getElementById('id_birth_date');
+    if (birthDateField) {
+        birthDateField.addEventListener('change', function() {
+            const birthDate = new Date(this.value);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            
+            // Проверка на корректность возраста
+            if (age < 0 || age > 18) {
+                alert('Пожалуйста, проверьте дату рождения. Возраст ребенка должен быть от 0 до 18 лет.');
+                this.value = '';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

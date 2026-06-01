@@ -1,0 +1,150 @@
+<!-- staff/templates/staff/personal_file_edit.html -->
+{% extends 'staff/base_staff.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Личное дело{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <h1>
+            <i class="fas fa-folder-open"></i>
+            Личное дело №{{ personal_file.file_number }}
+        </h1>
+        <p class="mb-0 opacity-75">{{ employee.full_name }}</p>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-edit"></i>
+                    Редактирование личного дела
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-600">Документы личного дела</h6>
+                            <p class="text-muted small">Загрузите отсканированные копии документов</p>
+                        </div>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="fw-600 mb-3">Личная карточка Т-2</h6>
+                                        <input type="file" name="personal_card" class="form-control mb-2">
+                                        {% if personal_file.personal_card %}
+                                        <small>
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            Текущий файл: <a href="{{ personal_file.personal_card.url }}" target="_blank">{{ personal_file.personal_card.name|slice:"20:" }}</a>
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="fw-600 mb-3">Трудовая книжка</h6>
+                                        <input type="file" name="employment_history" class="form-control mb-2">
+                                        {% if personal_file.employment_history %}
+                                        <small>
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            Текущий файл: <a href="{{ personal_file.employment_history.url }}" target="_blank">{{ personal_file.employment_history.name|slice:"20:" }}</a>
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="fw-600 mb-3">Заявление о приеме</h6>
+                                        <input type="file" name="application" class="form-control mb-2">
+                                        {% if personal_file.application %}
+                                        <small>
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            Текущий файл: <a href="{{ personal_file.application.url }}" target="_blank">{{ personal_file.application.name|slice:"20:" }}</a>
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="fw-600 mb-3">Приказ о приеме</h6>
+                                        <input type="file" name="order" class="form-control mb-2">
+                                        {% if personal_file.order %}
+                                        <small>
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            Текущий файл: <a href="{{ personal_file.order.url }}" target="_blank">{{ personal_file.order.name|slice:"20:" }}</a>
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="fw-600 mb-3">Воинский учет</h6>
+                                        <input type="file" name="military_registration" class="form-control mb-2">
+                                        {% if personal_file.military_registration %}
+                                        <small>
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            Текущий файл: <a href="{{ personal_file.military_registration.url }}" target="_blank">{{ personal_file.military_registration.name|slice:"20:" }}</a>
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="fw-600 mb-3">Дополнительные документы</h6>
+                                        <input type="file" name="additional_docs" class="form-control mb-2">
+                                        {% if personal_file.additional_docs %}
+                                        <small>
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            Текущий файл: <a href="{{ personal_file.additional_docs.url }}" target="_blank">{{ personal_file.additional_docs.name|slice:"20:" }}</a>
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label class="form-label fw-600">Примечания</label>
+                                    <textarea name="notes" class="form-control" rows="4">{{ personal_file.notes }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'staff:employee_detail' employee.id %}" class="btn btn-secondary px-4">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn staff-btn-primary px-5">
+                                <i class="fas fa-save"></i> Сохранить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

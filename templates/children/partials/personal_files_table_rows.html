@@ -1,0 +1,85 @@
+{% for child_data in children_data %}
+<tr style="opacity: 0; animation: fadeInUp 0.3s ease-out forwards; animation-delay: {{ forloop.counter0|add:"0"|floatformat:0 }}s;">
+    <td>{{ page_start|default:forloop.counter|add:forloop.counter0 }}</td>
+    <td>
+        <div class="child-info-cell">
+            {% if child_data.child.photo %}
+                <img src="{{ child_data.child.photo.url }}" alt="{{ child_data.child.full_name }}" class="child-avatar-small">
+            {% else %}
+                <div class="child-avatar-small" style="background: var(--purple-bg); display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-child" style="color: var(--purple-primary); font-size: 20px;"></i>
+                </div>
+            {% endif %}
+            <div>
+                <div class="child-name">{{ child_data.child.full_name }}</div>
+                <div class="child-birth">{{ child_data.child.birth_date|date:"d.m.Y" }} ({{ child_data.child.get_age }} лет)</div>
+            </div>
+        </div>
+    </td>
+    <td>
+        {% if child_data.child.group %}
+            <span class="badge-custom" style="background: var(--purple-bg); color: var(--purple-primary);">
+                {{ child_data.child.group.name }}
+            </span>
+        {% else %}
+            <span class="text-muted">—</span>
+        {% endif %}
+    </td>
+    <td>
+        {% for parent in child_data.parents|slice:":2" %}
+            <div><small>{{ parent.full_name }}</small></div>
+        {% empty %}
+            <small class="text-muted">—</small>
+        {% endfor %}
+        {% if child_data.parents|length > 2 %}
+            <small class="text-muted">+{{ child_data.parents|length|add:"-2" }}</small>
+        {% endif %}
+    </td>
+    <td>
+        {% if child_data.registration_status == 'expired' %}
+            <span class="badge-custom badge-danger"><i class="fas fa-times-circle"></i> Истекла</span>
+        {% elif child_data.registration_status == 'warning' %}
+            <span class="badge-custom badge-warning"><i class="fas fa-clock"></i> Истекает</span>
+        {% else %}
+            <span class="badge-custom badge-success"><i class="fas fa-check-circle"></i> Действует</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if child_data.medical_status == 'expired' %}
+            <span class="badge-custom badge-danger"><i class="fas fa-times-circle"></i> Истекла</span>
+        {% elif child_data.medical_status == 'warning' %}
+            <span class="badge-custom badge-warning"><i class="fas fa-clock"></i> Истекает</span>
+        {% else %}
+            <span class="badge-custom badge-success"><i class="fas fa-check-circle"></i> Действует</span>
+        {% endif %}
+    </td>
+    <td>
+        <div class="d-flex align-items-center">
+            <div class="progress-custom">
+                <div class="progress-fill" style="width: {{ child_data.completion_percentage }}%"></div>
+            </div>
+            <span class="percentage-text">{{ child_data.completion_percentage }}%</span>
+        </div>
+    </td>
+    <td>
+        <div class="action-buttons">
+            <a href="{% url 'children:personal_file_detail' child_data.child.id %}" class="btn-icon btn-view" title="Просмотр">
+                <i class="fas fa-eye"></i>
+            </a>
+            <a href="{% url 'children:personal_file_edit' child_data.child.id %}" class="btn-icon btn-edit" title="Редактировать">
+                <i class="fas fa-edit"></i>
+            </a>
+        </div>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="8" class="text-center py-5">
+        <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <h4>Нет данных для отображения</h4>
+            <p class="text-muted">Попробуйте изменить параметры фильтрации</p>
+        </div>
+    </td>
+</tr>
+{% endfor %}

@@ -1,0 +1,479 @@
+<!-- templates/personalfiles/list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Личные дела детей - Рябинушка{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --purple-primary: #6B21A5;
+        --purple-light: #9333EA;
+        --purple-dark: #4C1D95;
+        --purple-soft: #F3E8FF;
+        --purple-gradient: linear-gradient(135deg, #6B21A5 0%, #9333EA 100%);
+    }
+    
+    body {
+        background: linear-gradient(135deg, #F8F0FF 0%, #E9D5FF 100%);
+        min-height: 100vh;
+    }
+    
+    .page-header {
+        background: var(--purple-gradient);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 30px 30px;
+        box-shadow: 0 4px 20px rgba(107, 33, 165, 0.3);
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+        border-left: 5px solid var(--purple-primary);
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(107, 33, 165, 0.15);
+    }
+    
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: var(--purple-primary);
+    }
+    
+    .filter-bar {
+        background: white;
+        border-radius: 15px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .children-table {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    .children-table thead {
+        background: var(--purple-gradient);
+        color: white;
+    }
+    
+    .children-table th {
+        padding: 1rem;
+        font-weight: 600;
+        border: none;
+    }
+    
+    .children-table td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f0e6ff;
+    }
+    
+    .children-table tr:hover {
+        background: var(--purple-soft);
+        transition: background 0.2s;
+    }
+    
+    .completion-bar {
+        width: 100px;
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .completion-fill {
+        height: 100%;
+        background: var(--purple-primary);
+        border-radius: 10px;
+        transition: width 0.3s;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .status-complete { background: #d1fae5; color: #065f46; }
+    .status-partial { background: #fed7aa; color: #9a3412; }
+    .status-low { background: #fee2e2; color: #991b1b; }
+    
+    .expiry-warning {
+        color: #dc2626;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .expiry-near {
+        color: #f59e0b;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .btn-purple {
+        background: var(--purple-primary);
+        color: white;
+        border-radius: 25px;
+        padding: 0.5rem 1.25rem;
+        transition: all 0.3s;
+    }
+    
+    .btn-purple:hover {
+        background: var(--purple-dark);
+        color: white;
+        transform: scale(1.02);
+    }
+    
+    .btn-outline-purple {
+        border: 2px solid var(--purple-primary);
+        color: var(--purple-primary);
+        border-radius: 25px;
+        padding: 0.5rem 1.25rem;
+        background: transparent;
+        transition: all 0.3s;
+    }
+    
+    .btn-outline-purple:hover {
+        background: var(--purple-primary);
+        color: white;
+    }
+    
+    .search-input {
+        border-radius: 25px;
+        border: 2px solid #e5e7eb;
+        padding: 0.5rem 1rem 0.5rem 2.5rem;
+        transition: all 0.3s;
+    }
+    
+    .search-input:focus {
+        border-color: var(--purple-primary);
+        box-shadow: 0 0 0 3px rgba(107, 33, 165, 0.1);
+        outline: none;
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+    }
+    
+    /* Анимации загрузки */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+    }
+    
+    .loading-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .spinner-custom {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(107, 33, 165, 0.2);
+        border-top: 4px solid var(--purple-primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .table-row-enter {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    
+    .table-row-enter-active {
+        opacity: 1;
+        transform: translateX(0);
+        transition: all 0.3s ease;
+    }
+    
+    .fade-up {
+        animation: fadeUp 0.4s ease-out;
+    }
+    
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1 class="display-5 fw-bold mb-2">
+            <i class="fas fa-folder-open me-3"></i>Личные дела детей
+        </h1>
+        <p class="lead mb-0">Управление документацией воспитанников</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Статистика -->
+    <div class="row g-4 mb-4" id="stats-container">
+        {% include 'personalfiles/partials/stats.html' %}
+    </div>
+    
+    <!-- Фильтры -->
+    <div class="filter-bar">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Группа</label>
+                <select name="group" id="filter-group" class="form-select">
+                    <option value="">Все группы</option>
+                    {% for group in groups %}
+                        <option value="{{ group.id }}" {% if selected_group == group.id|stringformat:"s" %}selected{% endif %}>
+                            {{ group.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Статус дела</label>
+                <select name="status" id="filter-status" class="form-select">
+                    <option value="">Все</option>
+                    <option value="complete" {% if status_filter == "complete" %}selected{% endif %}>Укомплектовано</option>
+                    <option value="partial" {% if status_filter == "partial" %}selected{% endif %}>Частично</option>
+                    <option value="low" {% if status_filter == "low" %}selected{% endif %}>Начато</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Срок действия</label>
+                <select name="expiry" id="filter-expiry" class="form-select">
+                    <option value="">Все</option>
+                    <option value="expired" {% if expiry_filter == "expired" %}selected{% endif %}>Просрочено</option>
+                    <option value="near_expiry" {% if expiry_filter == "near_expiry" %}selected{% endif %}>Истекает скоро</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Поиск</label>
+                <div class="position-relative">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="filter-search" class="form-control search-input" 
+                           placeholder="ФИО ребенка..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button id="apply-filters" class="btn btn-purple w-100">
+                    <i class="fas fa-filter me-2"></i>Применить
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Таблица -->
+    <div id="table-container" class="fade-up">
+        {% include 'personalfiles/partials/table.html' %}
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="spinner-custom"></div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Глобальные переменные
+    let currentFilters = {
+        group: document.getElementById('filter-group')?.value || '',
+        status: document.getElementById('filter-status')?.value || '',
+        expiry: document.getElementById('filter-expiry')?.value || '',
+        search: document.getElementById('filter-search')?.value || ''
+    };
+    
+    let debounceTimer;
+    
+    // Показать загрузку
+    function showLoading() {
+        document.getElementById('loading-overlay').classList.add('active');
+    }
+    
+    // Скрыть загрузку
+    function hideLoading() {
+        document.getElementById('loading-overlay').classList.remove('active');
+    }
+    
+    // Обновить статистику
+    async function updateStats() {
+        try {
+            const params = new URLSearchParams(currentFilters);
+            const response = await fetch(`/personalfiles/api/stats/?${params}`);
+            const html = await response.text();
+            document.getElementById('stats-container').innerHTML = html;
+            document.getElementById('stats-container').classList.add('fade-up');
+            setTimeout(() => {
+                document.getElementById('stats-container').classList.remove('fade-up');
+            }, 400);
+        } catch (error) {
+            console.error('Ошибка обновления статистики:', error);
+        }
+    }
+    
+    // Обновить таблицу
+    async function updateTable() {
+        showLoading();
+        try {
+            const params = new URLSearchParams(currentFilters);
+            const response = await fetch(`/personalfiles/api/table/?${params}`);
+            const html = await response.text();
+            
+            const tableContainer = document.getElementById('table-container');
+            tableContainer.style.opacity = '0';
+            tableContainer.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                tableContainer.innerHTML = html;
+                tableContainer.style.transition = 'all 0.3s ease';
+                tableContainer.style.opacity = '1';
+                tableContainer.style.transform = 'translateY(0)';
+                
+                // Перепривязываем события для новых кнопок
+                attachTableEvents();
+            }, 150);
+        } catch (error) {
+            console.error('Ошибка обновления таблицы:', error);
+            const tableContainer = document.getElementById('table-container');
+            tableContainer.innerHTML = '<div class="alert alert-danger">Ошибка загрузки данных</div>';
+        } finally {
+            setTimeout(hideLoading, 300);
+        }
+    }
+    
+    // Привязать события к кнопкам в таблице
+    function attachTableEvents() {
+        document.querySelectorAll('.view-child-btn').forEach(btn => {
+            btn.removeEventListener('click', handleViewChild);
+            btn.addEventListener('click', handleViewChild);
+        });
+    }
+    
+    // Обработчик просмотра ребенка
+    function handleViewChild(e) {
+        e.preventDefault();
+        const childId = this.dataset.childId;
+        if (childId) {
+            window.location.href = `/personalfiles/child/${childId}/`;
+        }
+    }
+    
+    // Применить все фильтры
+    async function applyFilters() {
+        currentFilters = {
+            group: document.getElementById('filter-group')?.value || '',
+            status: document.getElementById('filter-status')?.value || '',
+            expiry: document.getElementById('filter-expiry')?.value || '',
+            search: document.getElementById('filter-search')?.value || ''
+        };
+        
+        await Promise.all([updateStats(), updateTable()]);
+        
+        // Обновить URL без перезагрузки
+        const params = new URLSearchParams(currentFilters);
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.pushState({ filters: currentFilters }, '', newUrl);
+    }
+    
+    // Обработчик поиска с debounce
+    function handleSearch() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            applyFilters();
+        }, 500);
+    }
+    
+    // Инициализация событий
+    document.addEventListener('DOMContentLoaded', function() {
+        // Кнопка применения фильтров
+        const applyBtn = document.getElementById('apply-filters');
+        if (applyBtn) {
+            applyBtn.addEventListener('click', applyFilters);
+        }
+        
+        // Поиск с debounce
+        const searchInput = document.getElementById('filter-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', handleSearch);
+        }
+        
+        // Dropdown фильтры - применяются сразу при изменении
+        const groupSelect = document.getElementById('filter-group');
+        const statusSelect = document.getElementById('filter-status');
+        const expirySelect = document.getElementById('filter-expiry');
+        
+        if (groupSelect) groupSelect.addEventListener('change', applyFilters);
+        if (statusSelect) statusSelect.addEventListener('change', applyFilters);
+        if (expirySelect) expirySelect.addEventListener('change', applyFilters);
+        
+        // Привязать события для существующих кнопок
+        attachTableEvents();
+        
+        // Обработка кнопок назад/вперед
+        window.addEventListener('popstate', function(event) {
+            if (event.state && event.state.filters) {
+                currentFilters = event.state.filters;
+                
+                // Обновить значения полей
+                const groupSelect = document.getElementById('filter-group');
+                const statusSelect = document.getElementById('filter-status');
+                const expirySelect = document.getElementById('filter-expiry');
+                const searchInput = document.getElementById('filter-search');
+                
+                if (groupSelect) groupSelect.value = currentFilters.group || '';
+                if (statusSelect) statusSelect.value = currentFilters.status || '';
+                if (expirySelect) expirySelect.value = currentFilters.expiry || '';
+                if (searchInput) searchInput.value = currentFilters.search || '';
+                
+                updateStats();
+                updateTable();
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+
+{% block title %}Панель родителя{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        --card-hover-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+        background-color: #f3f6f9;
+    }
+
+    .stat-card {
+        border: none;
+        border-radius: 20px;
+        background: white;
+        box-shadow: var(--card-shadow);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--card-hover-shadow);
+    }
+
+    .stat-icon-box {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .modern-table-card {
+        border: none;
+        border-radius: 20px;
+        background: white;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+
+    .modern-table thead th {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .modern-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .status-pill {
+        padding: 5px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .action-btn {
+        border-radius: 15px;
+        border: none;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .action-btn:hover {
+        transform: scale(1.02);
+    }
+
+    .header-title {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+    }
+    
+    /* Стили для фото ребенка */
+    .child-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #667eea;
+    }
+    
+    .child-avatar-placeholder {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <h2 class="header-title display-6 mb-1">Здравствуйте, {{ user.first_name|default:user.username }}! 👋</h2>
+        </div>
+        <div class="col-auto">
+            <div class="d-flex gap-2">
+                <a href="{% url 'applications:application_create' %}" class="btn btn-primary rounded-pill px-4 shadow-sm" style="background: var(--primary-gradient); border:none;">
+                    <i class="fas fa-plus me-2"></i>Новое заявление
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if active_application and queue_position %}
+    <div class="card shadow-sm mb-4 border-primary">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-hourglass-half me-2"></i> 
+                Ваша очередь в детский сад
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-4 text-center">
+                    <div class="display-4 fw-bold text-primary">{{ queue_position|default:"—" }}</div>
+                    <div class="text-muted">Позиция в очереди</div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="display-4 fw-bold text-info">{{ total_in_queue|default:"0" }}</div>
+                    <div class="text-muted">Всего в очереди</div>
+                </div>
+                <div class="col-md-4">
+                    <a href="{% url 'applications:parent_queue' %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-chart-line me-2"></i>Подробнее о очереди
+                    </a>
+                </div>
+            </div>
+            
+            {% if queue_position and total_in_queue %}
+            <div class="mt-3">
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-success" style="width: {% widthratio queue_position total_in_queue 100 %}%"></div>
+                </div>
+                <small class="text-muted">
+                    Вы находитесь в начале <strong>{% widthratio queue_position total_in_queue 100 %}%</strong> очереди
+                </small>
+            </div>
+            {% endif %}
+            
+            <div class="alert alert-info mt-3 mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                Позиция в очереди может меняться при поступлении новых льготных заявлений.
+                Статус обновляется автоматически.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Статистика (Карточки) -->
+    <div class="row g-4 mb-5">
+        <!-- Дети -->
+        <div class="col-md-4">
+            <div class="stat-card h-100 p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted text-uppercase small fw-bold mb-1">Мои дети</p>
+                        <h2 class="display-5 fw-bold text-dark mb-0">{{ children_count|default:0 }}</h2>
+                    </div>
+                    <div class="stat-icon-box" style="background: var(--primary-gradient);">
+                        <i class="fas fa-child"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'children:children_list' %}" class="text-decoration-none text-primary fw-bold small">
+                        Посмотреть список <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Заявления -->
+        <div class="col-md-4">
+            <div class="stat-card h-100 p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted text-uppercase small fw-bold mb-1">Заявления</p>
+                        <h2 class="display-5 fw-bold text-dark mb-0">{{ applications_count|default:0 }}</h2>
+                    </div>
+                    <div class="stat-icon-box" style="background: var(--secondary-gradient);">
+                        <i class="fas fa-file-signature"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'applications:applications_list' %}" class="text-decoration-none text-danger fw-bold small">
+                        История заявок <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Финансы -->
+        <div class="col-md-4">
+            <div class="stat-card h-100 p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted text-uppercase small fw-bold mb-1">Финансы</p>
+                        <h5 class="fw-bold text-dark mb-0">Баланс</h5>
+                        <h3 class="fw-bold {% if current_balance < 0 %}text-danger{% else %}text-success{% endif %}">
+                            {{ current_balance|floatformat:2 }} ₽
+                        </h3>
+                    </div>
+                    <div class="stat-icon-box" style="background: var(--success-gradient);">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'payments:parent_finance' %}" class="text-decoration-none text-success fw-bold small">
+                        Управление <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Быстрые действия (Сетка) -->
+    <div class="row g-3 mb-5">
+        <div class="col-6 col-md-3">
+            <a href="{% url 'applications:application_create' %}" class="action-btn d-block p-3 text-center text-decoration-none bg-white shadow-sm rounded-4 h-100">
+                <div class="mb-2 text-primary"><i class="fas fa-plus-circle fa-2x"></i></div>
+                <span class="fw-bold text-dark d-block">Подать заявление</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="{% url 'children:children_list' %}" class="action-btn d-block p-3 text-center text-decoration-none bg-white shadow-sm rounded-4 h-100">
+                <div class="mb-2 text-success"><i class="fas fa-users fa-2x"></i></div>
+                <span class="fw-bold text-dark d-block">Дети</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="{% url 'payments:parent_finance' %}" class="action-btn d-block p-3 text-center text-decoration-none bg-white shadow-sm rounded-4 h-100">
+                <div class="mb-2 text-info"><i class="fas fa-file-invoice-dollar fa-2x"></i></div>
+                <span class="fw-bold text-dark d-block">Оплаты</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="{% url 'accounts:profile' %}" class="action-btn d-block p-3 text-center text-decoration-none bg-white shadow-sm rounded-4 h-100">
+                <div class="mb-2 text-secondary"><i class="fas fa-user-cog fa-2x"></i></div>
+                <span class="fw-bold text-dark d-block">Профиль</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Основной контент: Две колонки -->
+    <div class="row g-4">
+        
+        <!-- Секция: Дети (с ФОТО) -->
+        <div class="col-lg-7">
+            <div class="modern-table-card h-100">
+                <div class="card-header bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-dark">Мои дети</h5>
+                    <span class="badge bg-light text-dark border">{{ children_count }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if children %}
+                    <div class="table-responsive">
+                        <table class="table modern-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">ФИО</th>
+                                    <th>Возраст</th>
+                                    <th>Группа</th>
+                                    <th>Статус</th>
+                                    <th class="text-end pe-4"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for child in children %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <!-- ФОТО РЕБЕНКА -->
+                                            <div class="me-3">
+                                                {% if child.photo %}
+                                                    <img src="{{ child.photo.url }}" class="child-avatar" alt="{{ child.full_name }}">
+                                                {% elif child.application.child_photo %}
+                                                    <img src="{{ child.application.child_photo.url }}" class="child-avatar" alt="{{ child.full_name }}">
+                                                {% else %}
+                                                    <div class="child-avatar-placeholder">
+                                                        <i class="fas fa-user fa-sm"></i>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <a href="{% url 'children:child_detail' child.id %}" class="text-decoration-none fw-bold text-dark d-block">
+                                                    {{ child.full_name }}
+                                                </a>
+                                                <small class="text-muted">ID: {{ child.id }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold text-dark">{{ child.age_display }}</span>
+                                    </td>
+                                    <td>
+                                        {% if child.group %}
+                                            <span class="badge bg-light text-dark border">{{ child.group.name }}</span>
+                                        {% else %}
+                                            <span class="text-muted small">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if child.is_active %}
+                                            <span class="status-pill bg-success bg-opacity-10 text-success">Активен</span>
+                                        {% else %}
+                                            <span class="status-pill bg-secondary bg-opacity-10 text-secondary">Архив</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a href="{% url 'children:child_detail' child.id %}" class="btn btn-sm btn-light text-primary rounded-circle">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 px-4">
+                        <div class="mb-3 text-muted opacity-25">
+                            <i class="fas fa-baby-carriage fa-4x"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">Список пуст</h5>
+                        <p class="text-muted small">Добавьте ребенка через форму заявления.</p>
+                        <a href="{% url 'applications:application_create' %}" class="btn btn-primary btn-sm rounded-pill px-4 mt-2">
+                            <i class="fas fa-plus me-1"></i>Подать заявление
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Секция: Заявления -->
+        <div class="col-lg-5">
+            <div class="modern-table-card h-100">
+                <div class="card-header bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-dark">Последние заявления</h5>
+                    <a href="{% url 'applications:applications_list' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">Все</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_applications %}
+                    <div class="table-responsive">
+                        <table class="table modern-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Заявка</th>
+                                    <th>Дата</th>
+                                    <th>Статус</th>
+                                    <th class="text-end pe-4"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for application in recent_applications %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="fw-bold text-dark">{{ application.child_full_name|default:"Анонимно" }}</div>
+                                        <small class="text-muted">№{{ application.application_number|truncatechars:8 }}</small>
+                                    </td>
+                                    <td class="small text-muted">
+                                        {{ application.created_at|date:"d.m.Y" }}
+                                    </td>
+                                    <td>
+                                        {% if application.status == 'draft' %}
+                                            <span class="status-pill bg-secondary bg-opacity-10 text-secondary">Черновик</span>
+                                        {% elif application.status == 'pending' %}
+                                            <span class="status-pill bg-warning bg-opacity-10 text-warning">Проверка</span>
+                                        {% elif application.status == 'queue' %}
+                                            <span class="status-pill bg-info bg-opacity-10 text-info">В очереди</span>
+                                        {% elif application.status == 'invited' %}
+                                            <span class="status-pill bg-success bg-opacity-10 text-success">Приглашен</span>
+                                        {% elif application.status == 'enrolled' %}
+                                            <span class="status-pill bg-primary bg-opacity-10 text-primary">Зачислен</span>
+                                        {% elif application.status == 'rejected' %}
+                                            <span class="status-pill bg-danger bg-opacity-10 text-danger">Отказ</span>
+                                        {% else %}
+                                            <span class="status-pill bg-light text-dark border">{{ application.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a href="{% url 'applications:application_detail' application.id %}" class="text-muted">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 px-4">
+                        <div class="mb-3 text-muted opacity-25">
+                            <i class="fas fa-clipboard-list fa-4x"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">Нет заявок</h5>
+                        <p class="text-muted small">Вы еще не подавали заявлений.</p>
+                        <a href="{% url 'applications:application_create' %}" class="btn btn-primary btn-sm rounded-pill px-4 mt-2">
+                            <i class="fas fa-plus me-1"></i>Создать
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

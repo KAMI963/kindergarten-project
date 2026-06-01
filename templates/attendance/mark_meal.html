@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load attendance_filters %}
+
+{% block title %}Отметить питание - {{ child.full_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Отметить питание</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'attendance:attendance_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Назад к списку
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ child.full_name }}</h5>
+                <small class="text-muted">{{ today|date:"d E Y" }}</small>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        {% for meal_type in meal_types %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-2">
+                                        {% with meal=meal_dict|get_item:meal_type %}
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="{{ meal_type }}_eaten" name="{{ meal_type }}_eaten"
+                                               {% if meal and meal.eaten %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="{{ meal_type }}_eaten">
+                                            {% if meal_type == 'breakfast' %}
+                                                <i class="fas fa-egg text-warning me-2"></i>Завтрак
+                                            {% elif meal_type == 'lunch' %}
+                                                <i class="fas fa-utensils text-primary me-2"></i>Обед
+                                            {% elif meal_type == 'snack' %}
+                                                <i class="fas fa-apple-alt text-success me-2"></i>Полдник
+                                            {% elif meal_type == 'dinner' %}
+                                                <i class="fas fa-moon text-info me-2"></i>Ужин
+                                            {% endif %}
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="{{ meal_type }}_notes" class="form-label small">Примечания:</label>
+                                        <textarea class="form-control form-control-sm" 
+                                                  id="{{ meal_type }}_notes" 
+                                                  name="{{ meal_type }}_notes" 
+                                                  rows="2"
+                                                  placeholder="Например: не ел кашу, попросил добавку...">{% if meal %}{{ meal.notes }}{% endif %}</textarea>
+                                    </div>
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i> Сохранить питание
+                        </button>
+                        <a href="{% url 'attendance:attendance_list' %}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Информация о ребенке</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Группа:</strong> {{ child.group.name|default:"Не назначена" }}</p>
+                <p><strong>Возраст:</strong> {{ child.get_age }} лет</p>
+                <p><strong>Медицинская информация:</strong></p>
+                <p class="small text-muted">{{ child.medical_info|default:"Нет информации"|linebreaks }}</p>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Сегодняшнее питание</h6>
+            </div>
+            <div class="card-body">
+                {% for meal_type in meal_types %}
+                    {% with meal=meal_dict|get_item:meal_type %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>
+                            {% if meal_type == 'breakfast' %}🍳 Завтрак
+                            {% elif meal_type == 'lunch' %}🍲 Обед
+                            {% elif meal_type == 'snack' %}🍎 Полдник
+                            {% elif meal_type == 'dinner' %}🌙 Ужин
+                            {% endif %}
+                        </span>
+                        <span class="badge {% if meal and meal.eaten %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if meal and meal.eaten %}Съедено{% else %}Не отмечено{% endif %}
+                        </span>
+                    </div>
+                    {% if meal and meal.notes %}
+                    <div class="small text-muted mb-3">
+                        <i>{{ meal.notes }}</i>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

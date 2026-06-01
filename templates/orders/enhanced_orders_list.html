@@ -1,0 +1,522 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Приказы о зачислении - Детский сад "Рябинушка"{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Заголовок и статистика -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i>Приказы о зачислении
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createSingleOrderModal">
+                            <i class="fas fa-plus me-1"></i>Создать приказ
+                        </button>
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createBulkOrdersModal">
+                            <i class="fas fa-bulk me-1"></i>Массовое создание
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 col-6">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body py-3">
+                                    <h6 class="card-title">Всего приказов</h6>
+                                    <h4 class="mb-0">{{ total_orders }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="card bg-success text-white">
+                                <div class="card-body py-3">
+                                    <h6 class="card-title">Активных</h6>
+                                    <h4 class="mb-0">{{ active_orders }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="card bg-info text-white">
+                                <div class="card-body py-3">
+                                    <h6 class="card-title">Доступно заявлений</h6>
+                                    <h4 class="mb-0">{{ available_applications_count }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body py-3">
+                                    <h6 class="card-title">За сегодня</h6>
+                                    <h4 class="mb-0">{{ today_orders }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Фильтры</h6>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">ФИО ребенка</label>
+                            <input type="text" class="form-control" name="child_name" 
+                                   value="{{ filters.child_name }}" placeholder="Поиск по ФИО...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Номер приказа</label>
+                            <input type="text" class="form-control" name="order_number" 
+                                   value="{{ filters.order_number }}" placeholder="Номер приказа...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Дата приказа</label>
+                            <input type="date" class="form-control" name="order_date" 
+                                   value="{{ filters.order_date }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Группа</label>
+                            <select class="form-select" name="group">
+                                <option value="all">Все группы</option>
+                                {% for group in all_groups %}
+                                <option value="{{ group.id }}" 
+                                        {% if filters.group == group.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ group.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Статус</label>
+                            <select class="form-select" name="is_active">
+                                <option value="">Все</option>
+                                <option value="true" {% if filters.is_active == 'true' %}selected{% endif %}>Активные</option>
+                                <option value="false" {% if filters.is_active == 'false' %}selected{% endif %}>Неактивные</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Группированные приказы -->
+    <div class="row">
+        <div class="col-12">
+            {% for group_data in grouped_orders %}
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            {% if group_data.group %}
+                                <i class="fas fa-users me-2"></i>{{ group_data.group.name }}
+                                <span class="badge bg-primary ms-2">{{ group_data.orders_count }} приказов</span>
+                                <span class="badge bg-success ms-1">{{ group_data.active_orders_count }} активных</span>
+                            {% else %}
+                                <i class="fas fa-question-circle me-2"></i>Без группы
+                                <span class="badge bg-secondary ms-2">{{ group_data.orders_count }} приказов</span>
+                            {% endif %}
+                        </h6>
+                        <div>
+                            <small class="text-muted">
+                                Заполненность: 
+                                {% if group_data.group %}
+                                    {{ group_data.group.fill_percentage }}%
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>№ приказа</th>
+                                    <th>Дата</th>
+                                    <th>Ребенок</th>
+                                    <th>Возраст</th>
+                                    <th>Дата зачисления</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in group_data.orders %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ order.order_number }}</strong>
+                                    </td>
+                                    <td>{{ order.order_date|date:"d.m.Y" }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <strong>{{ order.child.full_name }}</strong>
+                                                {% if order.application %}
+                                                <br>
+                                                <small class="text-muted">
+                                                    Заявление: {{ order.application.application_number }}
+                                                </small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ order.child_age }} лет</td>
+                                    <td>{{ order.enrollment_date|date:"d.m.Y" }}</td>
+                                    <td>
+                                        {% if order.is_active %}
+                                        <span class="badge bg-success">Активен</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Неактивен</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'orders:order_detail' order.id %}" 
+                                               class="btn btn-outline-primary" title="Просмотр">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'orders:generate_word' order.id %}" 
+                                               class="btn btn-outline-success" title="Скачать Word">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <a href="{% url 'orders:order_edit' order.id %}" 
+                                               class="btn btn-outline-warning" title="Редактировать">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <h5>Приказы не найдены</h5>
+                    <p class="text-muted">Измените параметры фильтра или создайте новые приказы</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно создания одиночного приказа -->
+<div class="modal fade" id="createSingleOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Создание приказа о зачислении</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="singleOrderForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Ребенок *</label>
+                            <select class="form-select" id="childSelect" required>
+                                <option value="">Выберите ребенка...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Группа *</label>
+                            <select class="form-select" id="groupSelect" required>
+                                <option value="">Выберите группу...</option>
+                                {% for group in all_groups %}
+                                <option value="{{ group.id }}" data-capacity="{{ group.capacity }}" 
+                                        data-current="{{ group.children_count }}">
+                                    {{ group.name }} (свободно: {{ group.free_spaces }} мест)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Дата приказа *</label>
+                            <input type="date" class="form-control" id="orderDate" required 
+                                   value="{% now 'Y-m-d' %}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Дата зачисления *</label>
+                            <input type="date" class="form-control" id="enrollmentDate" required 
+                                   value="{% now 'Y-m-d' %}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Основание</label>
+                            <textarea class="form-control" id="basisDocuments" rows="3">
+На основании заявления родителей, свидетельства о рождении, медицинской карты
+                            </textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="createSingleOrder()">Создать приказ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно массового создания приказов -->
+<div class="modal fade" id="createBulkOrdersModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Массовое создание приказов из заявлений</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Доступные заявления</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="applicationsList" class="list-group" style="max-height: 400px; overflow-y: auto;">
+                                    <!-- Список заявлений будет загружен через AJAX -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Параметры приказов</h6>
+                            </div>
+                            <div class="card-body">
+                                <form id="bulkOrderForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Группа *</label>
+                                        <select class="form-select" id="bulkGroupSelect" required>
+                                            <option value="">Выберите группу...</option>
+                                            {% for group in all_groups %}
+                                            <option value="{{ group.id }}">
+                                                {{ group.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Дата приказа *</label>
+                                        <input type="date" class="form-control" id="bulkOrderDate" required 
+                                               value="{% now 'Y-m-d' %}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Дата зачисления *</label>
+                                        <input type="date" class="form-control" id="bulkEnrollmentDate" required 
+                                               value="{% now 'Y-m-d' %}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Основание</label>
+                                        <textarea class="form-control" id="bulkBasisDocuments" rows="3">
+На основании заявления родителей, свидетельства о рождении, медицинской карты
+                                        </textarea>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="createBulkOrders()">
+                    Создать приказы (<span id="selectedCount">0</span>)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Загрузка доступных детей и заявлений при открытии модальных окон
+document.addEventListener('DOMContentLoaded', function() {
+    // Загрузка детей для одиночного приказа
+    loadAvailableChildren();
+    
+    // Загрузка заявлений для массового создания
+    loadAvailableApplications();
+    
+    // Обработчики для модальных окон
+    $('#createSingleOrderModal').on('show.bs.modal', function() {
+        loadAvailableChildren();
+    });
+    
+    $('#createBulkOrdersModal').on('show.bs.modal', function() {
+        loadAvailableApplications();
+    });
+});
+
+function loadAvailableChildren() {
+    fetch('{% url "orders:get_available_children" %}')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('childSelect');
+            select.innerHTML = '<option value="">Выберите ребенка...</option>';
+            
+            data.children.forEach(child => {
+                const option = document.createElement('option');
+                option.value = child.id;
+                option.textContent = `${child.full_name} (${child.age} лет, ${child.current_group})`;
+                select.appendChild(option);
+            });
+        });
+}
+
+function loadAvailableApplications() {
+    fetch('{% url "orders:get_available_applications" %}')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('applicationsList');
+            container.innerHTML = '';
+            
+            data.applications.forEach(app => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item';
+                item.innerHTML = `
+                    <div class="form-check">
+                        <input class="form-check-input application-checkbox" type="checkbox" 
+                               value="${app.id}" id="app_${app.id}">
+                        <label class="form-check-label w-100" for="app_${app.id}">
+                            <strong>${app.child_name}</strong><br>
+                            <small class="text-muted">
+                                Возраст: ${app.age} лет, Родитель: ${app.parent_name}<br>
+                                Телефон: ${app.phone}
+                            </small>
+                        </label>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+            
+            // Обновляем счетчик выбранных
+            updateSelectedCount();
+        });
+}
+
+function updateSelectedCount() {
+    const selected = document.querySelectorAll('.application-checkbox:checked').length;
+    document.getElementById('selectedCount').textContent = selected;
+}
+
+// Обработчик изменения чекбоксов
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('application-checkbox')) {
+        updateSelectedCount();
+    }
+});
+
+function createSingleOrder() {
+    const formData = {
+        child_id: document.getElementById('childSelect').value,
+        group_id: document.getElementById('groupSelect').value,
+        order_date: document.getElementById('orderDate').value,
+        enrollment_date: document.getElementById('enrollmentDate').value,
+        basis_documents: document.getElementById('basisDocuments').value
+    };
+    
+    fetch('{% url "orders:create_single_order" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            $('#createSingleOrderModal').modal('hide');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('error', data.error);
+        }
+    });
+}
+
+function createBulkOrders() {
+    const selectedApplications = Array.from(document.querySelectorAll('.application-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+    
+    if (selectedApplications.length === 0) {
+        showAlert('error', 'Выберите хотя бы одно заявление');
+        return;
+    }
+    
+    const formData = {
+        application_ids: selectedApplications,
+        group_id: document.getElementById('bulkGroupSelect').value,
+        order_date: document.getElementById('bulkOrderDate').value,
+        enrollment_date: document.getElementById('bulkEnrollmentDate').value,
+        basis_documents: document.getElementById('bulkBasisDocuments').value
+    };
+    
+    fetch('{% url "orders:create_bulk_orders" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let message = data.message;
+            if (data.errors && data.errors.length > 0) {
+                message += '<br>Ошибки:<br>' + data.errors.join('<br>');
+            }
+            showAlert('success', message);
+            $('#createBulkOrdersModal').modal('hide');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showAlert('error', data.error);
+        }
+    });
+}
+
+function showAlert(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alert = document.createElement('div');
+    alert.className = `alert ${alertClass} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container-fluid').insertBefore(alert, document.querySelector('.container-fluid').firstChild);
+    
+    setTimeout(() => {
+        alert.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

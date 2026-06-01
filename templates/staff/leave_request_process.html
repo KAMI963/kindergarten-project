@@ -1,0 +1,130 @@
+<!-- staff/templates/staff/leave_request_process.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Рассмотрение заявления{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <h1>
+            <i class="fas fa-clipboard-check"></i>
+            Рассмотрение заявления
+        </h1>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-info-circle"></i>
+                    Заявление на отпуск
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Сотрудник:</th>
+                                    <td>{{ leave_request.employee.full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Должность:</th>
+                                    <td>{{ leave_request.employee.position }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Тип отпуска:</th>
+                                    <td>{{ leave_request.get_leave_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Желаемый период:</th>
+                                    <td>{{ leave_request.start_date|date:"d.m.Y" }} - {{ leave_request.end_date|date:"d.m.Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Количество дней:</th>
+                                    <td><span class="badge bg-primary">{{ leave_request.duration }}</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Дата подачи:</th>
+                                    <td>{{ leave_request.request_date|date:"d.m.Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Комментарий:</th>
+                                    <td>{{ leave_request.comments|default:"—" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Текущий статус:</th>
+                                    <td>
+                                        <span class="badge bg-warning">На рассмотрении</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h5 class="mb-3">Принять решение</h5>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="btn-group w-100" role="group">
+                                    <button type="submit" name="action" value="approve" class="btn btn-success py-3">
+                                        <i class="fas fa-check-circle fa-2x mb-2"></i><br>
+                                        Утвердить
+                                    </button>
+                                    <button type="submit" name="action" value="reject" class="btn btn-danger py-3">
+                                        <i class="fas fa-times-circle fa-2x mb-2"></i><br>
+                                        Отклонить
+                                    </button>
+                                    <button type="button" class="btn btn-warning py-3" data-bs-toggle="collapse" data-bs-target="#rescheduleForm">
+                                        <i class="fas fa-calendar-alt fa-2x mb-2"></i><br>
+                                        Перенести
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="collapse mt-3" id="rescheduleForm">
+                            <div class="card card-body">
+                                <h6>Перенос отпуска</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Новая дата начала</label>
+                                        <input type="date" name="new_start_date" class="form-control">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Новая дата окончания</label>
+                                        <input type="date" name="new_end_date" class="form-control">
+                                    </div>
+                                    <div class="col-12 mt-3">
+                                        <button type="submit" name="action" value="reschedule" class="btn btn-warning w-100">
+                                            Подтвердить перенос
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'staff:leave_requests' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Назад к списку
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои кружки{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <h2 class="mb-4"><i class="fas fa-chalkboard-teacher me-2"></i>Мои кружки</h2>
+
+    {% if no_services %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        У вас пока нет назначенных кружков. Обратитесь к заведующей.
+    </div>
+    {% else %}
+    <div class="row g-3">
+        {% for sid, data in enrollments_by_service.items %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm" style="border-radius: 10px; border: 1px solid #e5e7eb;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0" style="font-size: 0.95rem;">{{ data.service.name }}</h5>
+                        <span class="badge bg-primary rounded-pill">{{ data.total_students }} чел.</span>
+                    </div>
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-clock me-1"></i>{{ data.service.schedule|default:"Расписание не указано" }}
+                    </p>
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-tag me-1"></i>{{ data.service.get_service_type_display }}
+                    </p>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'payments:mark_service_attendance' data.service.id %}" 
+                           class="btn btn-primary btn-sm">
+                            <i class="fas fa-check-double me-1"></i> Отметить посещаемость
+                        </a>
+                        <a href="{% url 'payments:service_attendance_sheet' data.service.id %}" 
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-table me-1"></i> Табель за месяц
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,455 @@
+<!-- attendance/analytics.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Аналитика посещаемости{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        border-left: 4px solid #4e73df;
+    }
+
+    .analytics-card-success {
+        border-left-color: #1cc88a;
+    }
+
+    .analytics-card-warning {
+        border-left-color: #f6c23e;
+    }
+
+    .analytics-card-danger {
+        border-left-color: #e74a3b;
+    }
+
+    .analytics-card-info {
+        border-left-color: #36b9cc;
+    }
+
+    .trend-up {
+        color: #1cc88a;
+    }
+
+    .trend-down {
+        color: #e74a3b;
+    }
+
+    .trend-stable {
+        color: #f6c23e;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        height: 100%;
+    }
+
+    .insight-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок и фильтры -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-chart-line text-primary me-2"></i>Аналитика посещаемости
+        </h1>
+        <div>
+            <a href="{% url 'attendance:statistics' %}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i>Назад к статистике
+            </a>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="filter-card">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Период анализа</label>
+                <select name="period" class="form-select">
+                    <option value="3months" {% if period == '3months' %}selected{% endif %}>3 месяца</option>
+                    <option value="6months" {% if period == '6months' %}selected{% endif %}>6 месяцев</option>
+                    <option value="year" {% if period == 'year' %}selected{% endif %}>Год</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Группа</label>
+                <select name="group" class="form-select">
+                    <option value="">Все группы</option>
+                    {% for group in groups %}
+                    <option value="{{ group.id }}" {% if selected_group and selected_group.id == group.id %}selected{% endif %}>
+                        {{ group.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-chart-bar me-1"></i>Применить
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Ключевые инсайты -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="insight-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-white-50">Тренд</h6>
+                        <h3 class="text-white">
+                            {% if trend_direction == 'up' %}
+                                +{{ trend }}%
+                            {% elif trend_direction == 'down' %}
+                                -{{ trend }}%
+                            {% else %}
+                                {{ trend }}%
+                            {% endif %}
+                        </h3>
+                    </div>
+                    <div class="align-self-center">
+                        {% if trend_direction == 'up' %}
+                        <i class="fas fa-arrow-up fa-2x text-success"></i>
+                        {% elif trend_direction == 'down' %}
+                        <i class="fas fa-arrow-down fa-2x text-warning"></i>
+                        {% else %}
+                        <i class="fas fa-minus fa-2x text-white-50"></i>
+                        {% endif %}
+                    </div>
+                </div>
+                <small class="text-white-50">Изменение за период</small>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="insight-card" style="background: linear-gradient(135deg, #1cc88a 0%, #17a673 100%);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-white-50">Лучший день</h6>
+                        <h4 class="text-white">
+                            {% if best_day %}
+                                {{ best_day.day_name }}
+                            {% else %}
+                                Нет данных
+                            {% endif %}
+                        </h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-trophy fa-2x text-warning"></i>
+                    </div>
+                </div>
+                <small class="text-white-50">
+                    {% if best_day %}
+                    {{ best_day.percentage }}% посещаемости
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="insight-card" style="background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-white-50">Худший день</h6>
+                        <h4 class="text-white">
+                            {% if worst_day %}
+                                {{ worst_day.day_name }}
+                            {% else %}
+                                Нет данных
+                            {% endif %}
+                        </h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x text-white"></i>
+                    </div>
+                </div>
+                <small class="text-white-50">
+                    {% if worst_day %}
+                    {{ worst_day.percentage }}% посещаемости
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="insight-card" style="background: linear-gradient(135deg, #36b9cc 0%, #2c9faf 100%);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-white-50">Период анализа</h6>
+                        <h4 class="text-white">{{ monthly_stats|length }} мес.</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calendar-alt fa-2x text-white"></i>
+                    </div>
+                </div>
+                <small class="text-white-50">
+                    {{ start_date|date:"d.m.Y" }} - {{ end_date|date:"d.m.Y" }}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Графики -->
+    <div class="row">
+        <!-- Динамика по месяцам -->
+        <div class="col-lg-8">
+            <div class="chart-container">
+                <h5 class="card-title mb-4">
+                    <i class="fas fa-chart-line me-2"></i>Динамика посещаемости по месяцам
+                </h5>
+                <canvas id="monthlyChart" height="250"></canvas>
+            </div>
+        </div>
+
+        <!-- Посещаемость по дням недели -->
+        <div class="col-lg-4">
+            <div class="chart-container">
+                <h5 class="card-title mb-4">
+                    <i class="fas fa-calendar-week me-2"></i>Посещаемость по дням недели
+                </h5>
+                <canvas id="weekdayChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Детальная аналитика -->
+    <div class="row mt-4">
+        <!-- Статистика по месяцам -->
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5 class="card-title mb-4">
+                    <i class="fas fa-table me-2"></i>Детальная статистика по месяцам
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Месяц</th>
+                                <th>Посещаемость</th>
+                                <th>Дети</th>
+                                <th>Дней</th>
+                                <th>Процент</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in monthly_stats %}
+                            <tr>
+                                <td><strong>{{ stat.month_name }}</strong></td>
+                                <td>{{ stat.actual_attendance }}</td>
+                                <td>{{ stat.total_children }}</td>
+                                <td>{{ stat.total_days }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if stat.percentage >= 80 %}bg-success
+                                        {% elif stat.percentage >= 60 %}bg-warning
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ stat.percentage }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Анализ по дням недели -->
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5 class="card-title mb-4">
+                    <i class="fas fa-chart-pie me-2"></i>Анализ по дням недели
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>День недели</th>
+                                <th>Посещений</th>
+                                <th>Дней в периоде</th>
+                                <th>Процент</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in weekday_stats %}
+                            <tr>
+                                <td><strong>{{ stat.day_name }}</strong></td>
+                                <td>{{ stat.count }}</td>
+                                <td>{{ stat.day_count }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                            <div class="progress-bar 
+                                                {% if stat.percentage >= 80 %}bg-success
+                                                {% elif stat.percentage >= 60 %}bg-warning
+                                                {% else %}bg-danger{% endif %}" 
+                                                style="width: {{ stat.percentage }}%">
+                                            </div>
+                                        </div>
+                                        <span class="badge 
+                                            {% if stat.percentage >= 80 %}bg-success
+                                            {% elif stat.percentage >= 60 %}bg-warning
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ stat.percentage }}%
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Рекомендации -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="analytics-card analytics-card-info">
+                <h5 class="card-title mb-4">
+                    <i class="fas fa-lightbulb me-2"></i>Рекомендации по аналитике
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Что можно улучшить:</h6>
+                        <ul>
+                            {% if worst_day and worst_day.percentage < 70 %}
+                            <li>Обратить внимание на низкую посещаемость в {{ worst_day.day_name }}</li>
+                            {% endif %}
+                            {% if trend_direction == 'down' %}
+                            <li>Требуется анализ причин снижения посещаемости</li>
+                            {% endif %}
+                            {% if best_day and best_day.percentage > 90 %}
+                            <li>Опыт успешных дней ({{ best_day.day_name }}) можно распространить на другие дни</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Следующие шаги:</h6>
+                        <ul>
+                            <li>Проанализировать причины отсутствий в проблемные дни</li>
+                            <li>Рассмотреть возможность корректировки расписания</li>
+                            <li>Провести работу с родителями детей с низкой посещаемостью</li>
+                            <li>Мониторить динамику после внесенных изменений</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // График по месяцам
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    const monthlyChart = new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ monthly_labels|safe }},
+            datasets: [{
+                label: 'Посещаемость (%)',
+                data: {{ monthly_percentages|safe }},
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#4e73df',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // График по дням недели
+    const weekdayCtx = document.getElementById('weekdayChart').getContext('2d');
+    const weekdayChart = new Chart(weekdayCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ weekday_labels|safe }},
+            datasets: [{
+                label: 'Посещаемость (%)',
+                data: {{ weekday_percentages|safe }},
+                backgroundColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', 
+                    '#e74a3b', '#6f42c1', '#fd7e14'
+                ],
+                borderColor: [
+                    '#2e59d9', '#17a673', '#2c9faf', '#dda20a',
+                    '#be2617', '#5a32a3', '#e3640a'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Графики работы{% endblock %}
+
+{% block extra_css %}
+<style>
+    .schedule-card {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+    }
+    .schedule-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 2rem rgba(0,0,0,0.12);
+    }
+    .schedule-type-badge {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+    .schedule-stats {
+        display: flex;
+        gap: 15px;
+        margin-top: 10px;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    .schedule-stats i {
+        margin-right: 5px;
+        width: 16px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 text-gray-800">Графики работы</h1>
+        <a href="{% url 'staff:schedule_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Создать график
+        </a>
+    </div>
+
+    <!-- Список графиков -->
+    <div class="row">
+        {% for schedule in schedules %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card schedule-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title mb-0">{{ schedule.name }}</h5>
+                        <span class="badge bg-info schedule-type-badge">{{ schedule.get_schedule_type_display }}</span>
+                    </div>
+                    
+                    <div class="schedule-stats">
+                        <div><i class="fas fa-clock"></i> {{ schedule.weekly_hours }} ч/нед</div>
+                        <div><i class="fas fa-calendar-day"></i> {{ schedule.daily_hours }} ч/день</div>
+                    </div>
+                    
+                    {% if schedule.employee_types %}
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-users"></i> 
+                            {{ schedule.employee_types|truncatechars:30 }}
+                        </small>
+                    </div>
+                    {% endif %}
+                    
+                    {% if schedule.description %}
+                    <p class="card-text text-muted small mt-2">
+                        {{ schedule.description|truncatechars:100 }}
+                    </p>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge {% if schedule.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if schedule.is_active %}Активен{% else %}Неактивен{% endif %}
+                        </span>
+                        
+                        <div>
+                            <a href="{% url 'staff:schedule_detail' schedule.id %}" class="btn btn-sm btn-outline-info" title="Просмотр">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'staff:schedule_edit' schedule.id %}" class="btn btn-sm btn-outline-warning" title="Редактировать">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-alt fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Нет созданных графиков работы</h5>
+                <p class="text-muted mb-4">Создайте первый график, чтобы начать учет рабочего времени</p>
+                <a href="{% url 'staff:schedule_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Создать график
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

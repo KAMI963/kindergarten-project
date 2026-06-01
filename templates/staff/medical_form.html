@@ -1,0 +1,124 @@
+<!-- staff/templates/staff/medical_form.html -->
+{% extends 'staff/base_staff.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <h1>
+            <i class="fas fa-file-medical"></i>
+            {{ title }}
+        </h1>
+        <p class="mb-0 opacity-75">{{ employee.full_name }}</p>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-edit"></i>
+                    {% if examination %}Редактирование медосмотра{% else %}Новый медосмотр{% endif %}
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-12">
+                                {{ form.examination_type|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.examination_date|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.valid_until|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-8">
+                                {{ form.medical_book_number|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Допущен к работе</label>
+                                    <div class="form-check form-switch mt-2">
+                                        {{ form.is_allowed }}
+                                        <label class="form-check-label" for="{{ form.is_allowed.id_for_label }}">
+                                            {% if form.is_allowed.value %}Да{% else %}Нет{% endif %}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                {{ form.notes|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="staff-file-upload mb-3">
+                                    <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                                    <p class="mb-2">Загрузите скан медицинской книжки</p>
+                                    <small class="text-muted">Поддерживаются форматы PDF, JPG, PNG (до 10 МБ)</small>
+                                    {{ form.medical_book_scan }}
+                                </div>
+                                {% if examination and examination.medical_book_scan %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-file-pdf me-2"></i>
+                                    Текущий файл: <a href="{{ examination.medical_book_scan.url }}" target="_blank">{{ examination.medical_book_scan.name|slice:"15:" }}</a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'staff:employee_detail' employee.id %}" class="btn btn-secondary px-4">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn staff-btn-primary px-5">
+                                <i class="fas fa-save"></i> {% if examination %}Сохранить{% else %}Добавить{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.querySelector('input[type="file"]');
+    const fileUpload = document.querySelector('.staff-file-upload');
+    
+    if (fileInput && fileUpload) {
+        fileInput.style.display = 'none';
+        fileUpload.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const fileName = this.files[0].name;
+                fileUpload.querySelector('p').innerHTML = `<i class="fas fa-check-circle text-success me-2"></i>Выбран файл: ${fileName}`;
+            }
+        });
+    }
+    
+    // Обновление текста переключателя
+    const isAllowedCheckbox = document.getElementById('{{ form.is_allowed.id_for_label }}');
+    const isAllowedLabel = document.querySelector('label[for="{{ form.is_allowed.id_for_label }}"]');
+    
+    if (isAllowedCheckbox && isAllowedLabel) {
+        isAllowedCheckbox.addEventListener('change', function() {
+            isAllowedLabel.textContent = this.checked ? 'Да' : 'Нет';
+        });
+    }
+});
+</script>
+{% endblock %}

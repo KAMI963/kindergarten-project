@@ -1,0 +1,537 @@
+{% load static %}
+{% load crispy_forms_tags %}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Регистрация - Детский сад Рябинушка</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-dark: #5b4fcf;
+            --secondary: #a29bfe;
+            --success: #00b894;
+            --error: #ff7675;
+            --warning: #fdcb6e;
+            --dark: #2d3436;
+            --gray: #636e72;
+            --light: #f5f6fa;
+            --white: #ffffff;
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.1);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --radius: 8px;
+            --radius-sm: 6px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 12px; position: relative;
+        }
+
+        .bg-decoration { position: fixed; border-radius: 50%; filter: blur(60px); opacity: 0.4; z-index: 0; animation: float 20s infinite ease-in-out; pointer-events: none; }
+        .decor-1 { top: -10%; right: -5%; width: 300px; height: 300px; background: linear-gradient(45deg, var(--primary), var(--secondary)); }
+        .decor-2 { bottom: -10%; left: -5%; width: 240px; height: 240px; background: linear-gradient(45deg, #fd79a8, var(--warning)); animation-delay: -5s; }
+        @keyframes float { 0%,100%{transform:translate(0,0)} 50%{transform:translate(15px,-15px)} }
+
+        /* === КОНТЕЙНЕР — уменьшенная высота === */
+        .register-container {
+            width: 100%; max-width: 760px;
+            background: var(--white); border-radius: 14px;
+            box-shadow: var(--shadow-lg); display: flex; overflow: hidden;
+            opacity: 0; transform: translateY(15px);
+            animation: fadeInUp 0.6s forwards 0.1s;
+            z-index: 1;
+        }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* === ЛЕВАЯ ПАНЕЛЬ — компактная === */
+        .info-panel {
+            flex: 0 0 260px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white); padding: 24px 20px;
+            display: flex; flex-direction: column; justify-content: center;
+            position: relative; overflow: hidden;
+        }
+        .info-panel::before {
+            content:''; position:absolute; inset:0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.06)"/></svg>');
+            background-size: 24px 24px; animation: movePattern 30s linear infinite;
+        }
+        @keyframes movePattern { to { background-position: 72px 72px; } }
+
+        .info-content { position: relative; z-index: 2; }
+        .info-icon { font-size: 28px; margin-bottom: 12px; display: inline-block; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+        .info-content h1 { font-size: 20px; font-weight: 800; line-height: 1.15; margin-bottom: 6px; }
+        .info-content > p { font-size: 11px; line-height: 1.4; opacity: 0.85; }
+
+        .steps-list { list-style: none; margin-top: 18px; }
+        .steps-list li {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 10px; opacity: 0; transform: translateX(-10px); animation: slideInRight 0.5s forwards;
+        }
+        .steps-list li:nth-child(1){animation-delay:0.15s}
+        .steps-list li:nth-child(2){animation-delay:0.3s}
+        .steps-list li:nth-child(3){animation-delay:0.45s}
+        @keyframes slideInRight { to{opacity:1;transform:translateX(0)} }
+
+        .step-number {
+            min-width: 22px; height: 22px; flex-shrink: 0;
+            background: rgba(255,255,255,0.15); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 10px;
+            backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.2);
+        }
+        .step-content h3 { font-size: 11px; font-weight: 600; margin-bottom: 0; line-height: 1.2; }
+        .step-content p { font-size: 9px; opacity: 0.75; line-height: 1.2; }
+
+        /* === ПРАВАЯ ПАНЕЛЬ (ФОРМА) — плотная компоновка === */
+        .form-panel {
+            flex: 1;
+            padding: 22px 28px 24px;
+            max-width: 500px;
+        }
+
+        .form-header { text-align: center; margin-bottom: 12px; }
+        .form-title { font-size: 18px; font-weight: 800; color: var(--dark); margin-bottom: 2px; }
+        .form-subtitle { color: var(--gray); font-size: 11px; }
+
+        /* Прогресс-бар — ультра-компакт */
+        .progress-bar-container {
+            display: flex; justify-content: space-between;
+            margin-bottom: 14px; position: relative; padding: 0 4px;
+        }
+        .progress-line {
+            position: absolute; top: 9px; left: 24px; right: 24px;
+            height: 2px; background: #e1e5e9; border-radius: 2px; z-index: 1;
+        }
+        .progress-fill {
+            position: absolute; top: 9px; left: 24px; height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 2px; z-index: 2; width: 0%; transition: width 0.4s ease;
+        }
+        .step-indicator {
+            width: 20px; height: 20px; border-radius: 50%; background: var(--white);
+            border: 2px solid #e1e5e9; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 9px; color: var(--gray);
+            position: relative; z-index: 3; transition: all 0.3s ease;
+        }
+        .step-indicator.active { border-color: var(--primary); background: var(--primary); color: var(--white); box-shadow: 0 0 0 2px rgba(108,92,231,0.15); }
+        .step-indicator.completed { border-color: var(--primary); background: var(--primary); color: var(--white); }
+        .step-indicator.completed span { display: none; }
+        .step-indicator.completed::after { content:'✓'; font-size: 9px; }
+
+        .register-form { animation: fadeIn 0.5s ease 0.2s both; }
+        
+        /* Поля формы — минимальные отступы */
+        .form-group { margin-bottom: 8px; }
+
+        .field-label {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 11px; font-weight: 600; color: var(--dark); margin-bottom: 3px;
+        }
+        .field-label i { color: var(--primary); font-size: 9px; }
+
+        .input-wrapper { position: relative; }
+        .form-input, .form-select {
+            width: 100%; padding: 8px 10px; padding-right: 32px;
+            border: 1.5px solid #e1e5e9; border-radius: var(--radius);
+            font-size: 12px; transition: var(--transition);
+            background: var(--light); color: var(--dark); outline: none;
+            line-height: 1.4;
+        }
+        .form-input:focus, .form-select:focus { border-color: var(--primary); background: var(--white); box-shadow: 0 0 0 2px rgba(108,92,231,0.08); }
+        .form-input.valid { border-color: var(--success); }
+        .form-input.invalid { border-color: var(--error); animation: shake 0.3s ease; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 75%{transform:translateX(3px)} }
+
+        .select-wrapper { position: relative; }
+        .select-wrapper::after {
+            content:'\f107'; font-family:'Font Awesome 6 Free'; font-weight:900;
+            position:absolute; right:10px; top:50%; transform:translateY(-50%);
+            color:var(--gray); pointer-events:none; font-size:10px;
+        }
+
+        .toggle-password {
+            position:absolute; right:8px; top:50%; transform:translateY(-50%);
+            background:none; border:none; color:var(--gray); font-size:12px;
+            cursor:pointer; padding:0; width:18px; height:18px;
+            display:flex; align-items:center; justify-content:center;
+            transition:var(--transition); z-index:10;
+        }
+        .toggle-password:hover { color:var(--primary); }
+
+        .generate-password-btn {
+            position:absolute; right:28px; top:50%; transform:translateY(-50%);
+            background:none; border:none; color:var(--primary); font-size:12px;
+            cursor:pointer; padding:0; width:18px; height:18px;
+            display:flex; align-items:center; justify-content:center;
+            transition:var(--transition); z-index:10;
+        }
+        .generate-password-btn:hover { color:var(--primary-dark); }
+
+        /* Сила пароля — минимальная высота */
+        .password-strength { margin-top: 2px; }
+        .strength-bar { display: flex; gap: 2px; margin-bottom: 1px; }
+        .strength-segment { flex:1; height:2px; background:#e1e5e9; border-radius:1px; transition:all 0.3s ease; }
+        .strength-segment.weak{background:var(--error)}
+        .strength-segment.medium{background:var(--warning)}
+        .strength-segment.strong{background:var(--success)}
+        .strength-segment.very-strong{background:var(--primary)}
+        .strength-text { font-size: 9px; color:var(--gray); display:flex; align-items:center; gap:2px; line-height: 1; }
+
+        .password-match {
+            margin-top:2px; font-size:9px; display:flex; align-items:center; gap:2px;
+            opacity:0; height:0; overflow:hidden; transition:all 0.2s ease;
+        }
+        .password-match.visible{opacity:1;height:14px;}
+        .password-match.matching{color:var(--success)}
+        .password-match.not-matching{color:var(--error)}
+
+        /* Кнопка — компактнее */
+        .btn-submit {
+            width:100%; padding:9px;
+            background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+            color:var(--white); border:none; border-radius:var(--radius);
+            font-size:12px; font-weight:600; cursor:pointer; transition:var(--transition);
+            position:relative; overflow:hidden; margin-top:4px;
+            display:flex; align-items:center; justify-content:center; gap:6px;
+            box-shadow:0 3px 10px rgba(108,92,231,0.25);
+        }
+        .btn-submit:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(108,92,231,0.35)}
+        .btn-submit:active{transform:translateY(0)}
+        .btn-submit::before {
+            content:''; position:absolute; top:50%; left:50%; width:0; height:0;
+            border-radius:50%; background:rgba(255,255,255,0.2);
+            transform:translate(-50%,-50%); transition:width 0.4s,height 0.4s;
+        }
+        .btn-submit:hover::before{width:200px;height:200px}
+        .btn-text{position:relative;z-index:2}
+        .spinner{display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .btn-submit.loading .btn-text{visibility:hidden}
+        .btn-submit.loading .spinner{display:block;position:absolute}
+
+        .login-link{text-align:center;margin-top:8px;font-size:10px;color:var(--gray)}
+        .login-link a{color:var(--primary);text-decoration:none;font-weight:600}
+        .login-link a:hover{text-decoration:underline}
+
+        .error-messages{margin-bottom:8px}
+        .alert{padding:6px 10px;border-radius:var(--radius-sm);margin-bottom:6px;display:flex;align-items:center;gap:6px;font-size:10px;animation:slideDown 0.3s ease;border:none;line-height:1.3}
+        @keyframes slideDown{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+        .alert-error,.alert-danger{background:rgba(255,118,117,0.1);color:var(--error);border-left:3px solid var(--error)}
+        .alert-success{background:rgba(0,184,148,0.1);color:var(--success);border-left:3px solid var(--success)}
+        .alert i{font-size:11px;flex-shrink:0}
+
+        .field-error{color:var(--error);font-size:9px;margin-top:1px;display:flex;align-items:center;gap:2px;opacity:0;height:0;overflow:hidden;transition:all 0.2s ease;line-height:1}
+        .field-error.visible{opacity:1;height:12px;margin-top:2px;}
+        small{font-size:9px;color:var(--gray)}
+
+        @media(max-width:760px){
+            .register-container{flex-direction:column;max-width:420px}
+            .info-panel{flex:none;padding:16px 20px}
+            .form-panel{max-width:none;padding:18px 20px 20px}
+            .info-content h1{font-size:17px}
+            .steps-list{display:none}
+        }
+        @media(max-width:480px){
+            body{padding:8px}
+            .register-container{border-radius:12px}
+            .info-panel{display:none}
+            .form-panel{padding:16px 14px 18px}
+            .form-title{font-size:17px}
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-decoration decor-1"></div>
+    <div class="bg-decoration decor-2"></div>
+
+    <div class="register-container">
+        <div class="info-panel">
+            <div class="info-content">
+                <div class="info-icon"><i class="fas fa-user-plus"></i></div>
+                <h1>Создайте<br>аккаунт</h1>
+                <p>Электронный детский сад «Рябинушка»</p>
+                <ul class="steps-list">
+                    <li><div class="step-number">1</div><div class="step-content"><h3>Логин</h3><p>Уникальное имя</p></div></li>
+                    <li><div class="step-number">2</div><div class="step-content"><h3>Email</h3><p>Почта для связи</p></div></li>
+                    <li><div class="step-number">3</div><div class="step-content"><h3>Пароль</h3><p>Защита аккаунта</p></div></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="form-panel">
+            <div class="form-header">
+                <h2 class="form-title">Регистрация</h2>
+                <p class="form-subtitle">Заполните данные для создания аккаунта</p>
+            </div>
+
+            <div class="error-messages">
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <form method="post" class="register-form" id="registerForm" novalidate>
+                {% csrf_token %}
+                
+                <div class="progress-bar-container">
+                    <div class="progress-line"></div>
+                    <div class="progress-fill" id="progressFill"></div>
+                    <div class="step-indicator" id="step1"><span>1</span></div>
+                    <div class="step-indicator" id="step2"><span>2</span></div>
+                    <div class="step-indicator" id="step3"><span>3</span></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label" for="id_username"><i class="fas fa-user"></i> Логин</label>
+                    <div class="input-wrapper">
+                        <input type="text" name="username" class="form-input" id="id_username" value="{{ form.username.value|default:'' }}" autocomplete="username" placeholder="ivanov_2024">
+                    </div>
+                    <div class="field-error" id="usernameClientError"><i class="fas fa-exclamation-circle"></i> <span></span></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label" for="id_email"><i class="fas fa-envelope"></i> Email адрес</label>
+                    <div class="input-wrapper">
+                        <input type="email" name="email" class="form-input" id="id_email" value="{{ form.email.value|default:'' }}" autocomplete="email" placeholder="example@mail.ru">
+                    </div>
+                    <div class="field-error" id="emailClientError"><i class="fas fa-exclamation-circle"></i> <span></span></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label" for="id_role"><i class="fas fa-user-tag"></i> Роль</label>
+                    <div class="select-wrapper">
+                        <select name="role" class="form-select" id="id_role" disabled>
+                            <option value="parent" selected>Родитель</option>
+                        </select>
+                        <input type="hidden" name="role" value="parent">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label" for="id_password1"><i class="fas fa-lock"></i> Пароль</label>
+                    <div class="input-wrapper">
+                        <input type="password" name="password1" class="form-input" id="id_password1" autocomplete="new-password" placeholder="••••••••">
+                        <button type="button" class="generate-password-btn" id="generatePasswordBtn" title="Сгенерировать пароль"><i class="fas fa-dice-d6"></i></button>
+                        <button type="button" class="toggle-password" tabindex="-1"><i class="fas fa-eye" data-target="id_password1"></i></button>
+                    </div>
+                    <div class="password-strength">
+                        <div class="strength-bar">
+                            <div class="strength-segment" id="strength1"></div>
+                            <div class="strength-segment" id="strength2"></div>
+                            <div class="strength-segment" id="strength3"></div>
+                            <div class="strength-segment" id="strength4"></div>
+                        </div>
+                        <div class="strength-text" id="strengthText"><i class="fas fa-shield-alt"></i> <span>Введите пароль</span></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label" for="id_password2"><i class="fas fa-lock"></i> Подтвердите пароль</label>
+                    <div class="input-wrapper">
+                        <input type="password" name="password2" class="form-input" id="id_password2" autocomplete="new-password" placeholder="••••••••">
+                        <button type="button" class="toggle-password" tabindex="-1"><i class="fas fa-eye" data-target="id_password2"></i></button>
+                    </div>
+                    <div class="password-match" id="passwordMatch"><i class="fas fa-check-circle"></i> <span>Пароли совпадают</span></div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span class="btn-text">Зарегистрироваться</span>
+                    <div class="spinner"></div>
+                    <i class="fas fa-user-plus"></i>
+                </button>
+
+                <div class="login-link">Уже есть аккаунт? <a href="{% url 'accounts:login' %}">Войти в систему</a></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('registerForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const usernameInput = document.getElementById('id_username');
+            const emailInput = document.getElementById('id_email');
+            const password1Input = document.getElementById('id_password1');
+            const password2Input = document.getElementById('id_password2');
+            const passwordMatch = document.getElementById('passwordMatch');
+            const progressFill = document.getElementById('progressFill');
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const step3 = document.getElementById('step3');
+            const generatePasswordBtn = document.getElementById('generatePasswordBtn');
+            const strengthSegments = [
+                document.getElementById('strength1'),
+                document.getElementById('strength2'),
+                document.getElementById('strength3'),
+                document.getElementById('strength4')
+            ];
+            const usernameClientError = document.getElementById('usernameClientError');
+            const emailClientError = document.getElementById('emailClientError');
+
+            let progressLocked = false;
+
+            function showNotification(type, message) {
+                document.querySelectorAll('.notification-toast').forEach(n => n.remove());
+                const el = document.createElement('div');
+                el.className = `alert alert-${type} notification-toast`;
+                el.style.cssText = 'position:fixed;bottom:12px;right:12px;z-index:1000;max-width:260px;box-shadow:0 4px 10px rgba(0,0,0,0.12);';
+                el.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i> ${message}`;
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 3500);
+            }
+
+            function generateStrongPassword() {
+                const u='ABCDEFGHJKLMNPQRSTUVWXYZ',l='abcdefghijkmnopqrstuvwxyz',n='23456789',s='!@#$%&*';
+                let p=u[Math.floor(Math.random()*u.length)]+l[Math.floor(Math.random()*l.length)]+n[Math.floor(Math.random()*n.length)]+s[Math.floor(Math.random()*s.length)];
+                const all=u+l+n+s;
+                while(p.length<12)p+=all[Math.floor(Math.random()*all.length)];
+                return p.split('').sort(()=>Math.random()-0.5).join('');
+            }
+
+            if(generatePasswordBtn){
+                generatePasswordBtn.addEventListener('click',function(){
+                    const pw=generateStrongPassword();
+                    password1Input.value=pw;password2Input.value='';
+                    checkPasswordStrength(pw);checkPasswordMatch();
+                    if(!progressLocked)updateProgress();
+                    password1Input.classList.add('valid');
+                    showNotification('success','Пароль сгенерирован!');
+                });
+            }
+
+            function checkPasswordStrength(password){
+                const txt=document.querySelector('#strengthText span');
+                const icon=document.querySelector('#strengthText i');
+                let score=0;
+                if(!password){
+                    strengthSegments.forEach(s=>s.className='strength-segment');
+                    if(txt)txt.textContent='Введите пароль';
+                    if(icon)icon.className='fas fa-shield-alt';
+                    return 0;
+                }
+                if(password.length>=8)score++;
+                if(password.length>=12)score++;
+                if(/[A-Z]/.test(password))score++;
+                if(/[a-z]/.test(password))score++;
+                if(/[0-9]/.test(password))score++;
+                if(/[^A-Za-z0-9]/.test(password))score++;
+                score=Math.min(score,4);
+                const levels=[
+                    {cls:'',text:'Очень слабый',icon:'fa-times-circle'},
+                    {cls:'weak',text:'Слабый',icon:'fa-exclamation-triangle'},
+                    {cls:'medium',text:'Средний',icon:'fa-chart-line'},
+                    {cls:'strong',text:'Хороший',icon:'fa-shield-alt'},
+                    {cls:'very-strong',text:'Отличный!',icon:'fa-shield-haltered'}
+                ];
+                strengthSegments.forEach((s,i)=>{s.className='strength-segment';if(i<score)s.classList.add(levels[score].cls);});
+                if(txt)txt.textContent=levels[score].text;
+                if(icon)icon.className=`fas ${levels[score].icon}`;
+                return score;
+            }
+
+            function validateUsernameClient(v){
+                if(!v){usernameClientError.classList.remove('visible');usernameInput.classList.remove('valid','invalid');return false;}
+                if(!/^[a-zA-Z0-9_]{3,30}$/.test(v)){
+                    usernameClientError.querySelector('span').textContent='3-30 символов (латиница, цифры, _)';
+                    usernameClientError.classList.add('visible');
+                    usernameInput.classList.remove('valid');usernameInput.classList.add('invalid');
+                    return false;
+                }
+                usernameClientError.classList.remove('visible');
+                usernameInput.classList.remove('invalid');usernameInput.classList.add('valid');
+                return true;
+            }
+
+            function validateEmailClient(v){
+                if(!v){emailClientError.classList.remove('visible');emailInput.classList.remove('valid','invalid');return false;}
+                if(!/^[^\s@]+@([^\s@]+\.)+[^\s@]+$/.test(v)){
+                    emailClientError.querySelector('span').textContent='Некорректный email';
+                    emailClientError.classList.add('visible');
+                    emailInput.classList.remove('valid');emailInput.classList.add('invalid');
+                    return false;
+                }
+                emailClientError.classList.remove('visible');
+                emailInput.classList.remove('invalid');emailInput.classList.add('valid');
+                return true;
+            }
+
+            function checkPasswordMatch(){
+                const p1=password1Input.value,p2=password2Input.value;
+                if(!p2){passwordMatch.classList.remove('visible','matching','not-matching');password2Input.classList.remove('valid','invalid');return false;}
+                passwordMatch.classList.add('visible');
+                if(p1===p2&&p1.length>0){
+                    passwordMatch.classList.remove('not-matching');passwordMatch.classList.add('matching');
+                    passwordMatch.innerHTML='<i class="fas fa-check-circle"></i> Совпадают';
+                    password2Input.classList.remove('invalid');password2Input.classList.add('valid');
+                    return true;
+                }else{
+                    passwordMatch.classList.remove('matching');passwordMatch.classList.add('not-matching');
+                    passwordMatch.innerHTML='<i class="fas fa-times-circle"></i> Не совпадают';
+                    password2Input.classList.remove('valid');password2Input.classList.add('invalid');
+                    return false;
+                }
+            }
+
+            function updateProgress(){
+                if(progressLocked)return;
+                const uOk=usernameInput.value.trim().length>0&&validateUsernameClient(usernameInput.value);
+                const eOk=emailInput.value.trim().length>0&&validateEmailClient(emailInput.value);
+                const str=checkPasswordStrength(password1Input.value);
+                const pOk=password1Input.value.length>=8&&str>=2&&checkPasswordMatch();
+                if(uOk){step1.classList.add('completed');step1.classList.remove('active');}
+                else{step1.classList.remove('completed');step1.classList.add('active');step2.classList.remove('active','completed');step3.classList.remove('active','completed');progressFill.style.width='0%';return;}
+                if(eOk){step2.classList.add('completed');step2.classList.remove('active');}
+                else{step2.classList.remove('completed');step2.classList.add('active');step3.classList.remove('active','completed');progressFill.style.width='33%';return;}
+                if(pOk){step3.classList.add('completed');step3.classList.remove('active');progressFill.style.width='100%';progressLocked=true;}
+                else{step3.classList.remove('completed');step3.classList.add('active');progressFill.style.width='66%';}
+            }
+
+            document.querySelectorAll('.toggle-password').forEach(btn=>{
+                btn.addEventListener('click',function(){
+                    const input=document.getElementById(this.querySelector('i').dataset.target);
+                    const icon=this.querySelector('i');
+                    if(input.type==='password'){input.type='text';icon.classList.replace('fa-eye','fa-eye-slash');}
+                    else{input.type='password';icon.classList.replace('fa-eye-slash','fa-eye');}
+                });
+            });
+
+            form.addEventListener('submit',function(e){
+                e.preventDefault();
+                const uOk=validateUsernameClient(usernameInput.value);
+                const eOk=validateEmailClient(emailInput.value);
+                const str=checkPasswordStrength(password1Input.value);
+                const mOk=checkPasswordMatch();
+                if(!uOk||!eOk||str<2||!mOk){
+                    let msg=!uOk?'Проверьте логин':!eOk?'Проверьте email':str<2?'Минимум 8 символов':'Пароли не совпадают';
+                    showNotification('error',msg);return;
+                }
+                submitBtn.classList.add('loading');submitBtn.disabled=true;form.submit();
+            });
+
+            usernameInput.addEventListener('input',()=>{validateUsernameClient(usernameInput.value);if(!progressLocked)updateProgress();});
+            emailInput.addEventListener('input',()=>{validateEmailClient(emailInput.value);if(!progressLocked)updateProgress();});
+            password1Input.addEventListener('input',()=>{checkPasswordStrength(password1Input.value);checkPasswordMatch();if(!progressLocked)updateProgress();});
+            password2Input.addEventListener('input',()=>{checkPasswordMatch();if(!progressLocked)updateProgress();});
+
+            updateProgress();
+            if(usernameInput)usernameInput.focus();
+        });
+    </script>
+</body>
+</html>

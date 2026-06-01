@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Панель управления{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Панель управления
+        </h1>
+        <div class="text-muted">
+            {{ request.user.get_full_name|default:request.user.username }} | 
+            Роль: 
+            {% if request.user.role == 'director' %}
+                Заведующая
+            {% elif request.user.role == 'teacher' %}
+                Воспитатель
+            {% elif request.user.role == 'parent' %}
+                Родитель
+            {% else %}
+                {{ request.user.role }}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Статистика для разных ролей -->
+    <div class="row">
+        {% if request.user.role == 'director' or request.user.is_superuser %}
+            <!-- Карточки для директора -->
+            <div class="col-md-4 mb-4">
+                <div class="card bg-primary text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title">Дети</h5>
+                                <h2 class="mb-0">{{ children_count|default:"0" }}</h2>
+                            </div>
+                            <i class="fas fa-child fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card bg-success text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title">Сотрудники</h5>
+                                <h2 class="mb-0">{{ employees_count|default:"0" }}</h2>
+                            </div>
+                            <i class="fas fa-users fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card bg-warning text-dark h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title">Оплаты за месяц</h5>
+                                <h2 class="mb-0">{{ monthly_payments|default:"0" }} ₽</h2>
+                            </div>
+                            <i class="fas fa-credit-card fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% elif request.user.role == 'teacher' %}
+            <!-- Карточки для воспитателя -->
+            <div class="col-md-6 mb-4">
+                <div class="card bg-primary text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title">Дети в группе</h5>
+                                <h2 class="mb-0">{{ group_children_count|default:"0" }}</h2>
+                            </div>
+                            <i class="fas fa-child fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card bg-success text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title">Посещаемость сегодня</h5>
+                                <h2 class="mb-0">{{ today_attendance|default:"0" }}%</h2>
+                            </div>
+                            <i class="fas fa-calendar-check fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% elif request.user.role == 'parent' %}
+            <!-- Карточки для родителя -->
+            <div class="col-md-4 mb-4">
+                <div class="card bg-primary text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title">Мои дети</h5>
+                                <h2 class="mb-0">{{ my_children_count|default:"0" }}</h2>
+                            </div>
+                            <i class="fas fa-child fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card bg-warning text-dark h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title">Задолженность</h5>
+                                <h2 class="mb-0">{{ total_debt|default:"0" }} ₽</h2>
+                            </div>
+                            <i class="fas fa-credit-card fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card bg-info text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title">Заявки на услуги</h5>
+                                <h2 class="mb-0">{{ enrollments_count|default:"0" }}</h2>
+                            </div>
+                            <i class="fas fa-clipboard-list fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Быстрые действия -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Быстрые действия</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if request.user.role == 'director' or request.user.is_superuser %}
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'payments:director_payments_dashboard' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-chart-line me-2"></i> Мониторинг оплат
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'payments:tariff_management' %}" class="btn btn-success w-100">
+                                <i class="fas fa-money-bill-wave me-2"></i> Управление тарифами
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'payments:group_enrollments' %}" class="btn btn-info w-100">
+                                <i class="fas fa-users me-2"></i> Заявки на услуги
+                            </a>
+                        </div>
+                        {% elif request.user.role == 'teacher' %}
+                        <div class="col-md-4 mb-2">
+                            <a href="{% url 'attendance:attendance_dashboard' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-clipboard-check me-2"></i> Отметить посещаемость
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="{% url 'children:children_list' %}" class="btn btn-success w-100">
+                                <i class="fas fa-child me-2"></i> Список детей
+                            </a>
+                        </div>
+                        {% elif request.user.role == 'parent' %}
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'payments:parent_payments' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-credit-card me-2"></i> Мои платежи
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'payments:services_catalog' %}" class="btn btn-success w-100">
+                                <i class="fas fa-palette me-2"></i> Каталог услуг
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'payments:my_enrollments' %}" class="btn btn-info w-100">
+                                <i class="fas fa-clipboard-list me-2"></i> Мои заявки
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'attendance:parent_dashboard' %}" class="btn btn-warning w-100">
+                                <i class="fas fa-calendar-check me-2"></i> Посещаемость
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

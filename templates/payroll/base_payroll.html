@@ -1,0 +1,519 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Кадры и зарплата - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<!-- Подключаем современный шрифт Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --primary-color: #4F46E5; /* Индиго */
+        --primary-hover: #4338CA;
+        --secondary-bg: #F3F4F6;
+        --text-main: #111827;
+        --text-secondary: #6B7280;
+        --success: #10B981;
+        --warning: #F59E0B;
+        --danger: #EF4444;
+        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        --radius-lg: 16px;
+        --radius-md: 12px;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--secondary-bg);
+        color: var(--text-main);
+    }
+
+    /* --- Контейнер --- */
+    .main-content {
+        margin-left: 260px;
+        padding: 32px;
+        min-height: 100vh;
+        transition: all 0.3s ease;
+    }
+
+    /* --- Хлебные крошки --- */
+    .breadcrumb-container {
+        margin-bottom: 24px;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .breadcrumb-item a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .breadcrumb-item a:hover {
+        color: var(--primary-color);
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "/";
+        color: #D1D5DB;
+        padding-right: 8px;
+    }
+
+    .breadcrumb-item.active {
+        color: var(--text-main);
+        font-weight: 500;
+    }
+
+    /* --- Заголовок --- */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+    }
+
+    .page-title h1 {
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    .page-title p {
+        color: var(--text-secondary);
+        margin: 4px 0 0 0;
+        font-size: 14px;
+    }
+
+    .btn-custom {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn-primary-custom {
+        background-color: var(--primary-color);
+        color: white;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-primary-custom:hover {
+        background-color: var(--primary-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+    }
+
+    /* --- Статистика (Grid) --- */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(229, 231, 235, 0.5);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-hover-shadow);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--primary-color);
+    }
+
+    .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-bottom: 16px;
+    }
+
+    .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- Основная карточка с таблицей --- */
+    .data-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(229, 231, 235, 0.5);
+        overflow: hidden;
+    }
+
+    .card-toolbar {
+        padding: 20px 24px;
+        border-bottom: 1px solid #F3F4F6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fff;
+    }
+
+    .search-wrapper {
+        position: relative;
+        width: 300px;
+    }
+
+    .search-wrapper i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9CA3AF;
+        font-size: 14px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 10px 14px 10px 40px;
+        border: 1px solid #E5E7EB;
+        border-radius: 10px;
+        font-size: 14px;
+        background: #F9FAFB;
+        color: var(--text-main);
+        transition: all 0.2s;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .modern-table thead th {
+        background: #F9FAFB;
+        padding: 16px 24px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #E5E7EB;
+        text-align: left;
+    }
+
+    .modern-table tbody td {
+        padding: 16px 24px;
+        font-size: 14px;
+        color: var(--text-main);
+        border-bottom: 1px solid #F3F4F6;
+        vertical-align: middle;
+    }
+
+    .modern-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .modern-table tbody tr:hover {
+        background-color: #F9FAFB;
+    }
+
+    /* --- Бейджи (Badges) --- */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
+    .badge-soft-blue { background: #DBEAFE; color: #1E40AF; }
+    .badge-soft-green { background: #D1FAE5; color: #065F46; }
+    .badge-soft-red { background: #FEE2E2; color: #991B1B; }
+    .badge-soft-yellow { background: #FEF3C7; color: #92400E; }
+    .badge-soft-purple { background: #EDE9FE; color: #5B21B6; }
+    .badge-soft-gray { background: #F3F4F6; color: #374151; }
+
+    /* --- Кнопки действий в таблице --- */
+    .action-group {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #6B7280;
+        background: transparent;
+        border: none;
+        transition: all 0.2s;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn-icon:hover {
+        background: #F3F4F6;
+        color: var(--primary-color);
+    }
+
+    .btn-icon.delete:hover {
+        background: #FEE2E2;
+        color: var(--danger);
+    }
+
+    /* --- Алерты --- */
+    .alert-custom {
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .alert-success { background: #ECFDF5; color: #065F46; }
+    .alert-error { background: #FEF2F2; color: #991B1B; }
+
+    /* --- Адаптивность --- */
+    @media (max-width: 1024px) {
+        .main-content { margin-left: 0; padding: 20px; }
+        .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+        .stats-grid { grid-template-columns: 1fr; }
+        .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+        .search-wrapper { width: 100%; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    
+    <!-- Хлебные крошки -->
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="fas fa-home me-1"></i> Главная</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'payroll:payroll_list' %}">Кадры и зарплата</a></li>
+                {% block breadcrumbs %}{% endblock %}
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Заголовок и действия -->
+    <div class="page-header">
+        <div class="page-title">
+            <h1>{% block page_title %}Управление персоналом{% endblock %}</h1>
+            <p>Обзор штатного расписания, начислений и выплат</p>
+        </div>
+        <div class="header-actions">
+            {% block header_actions %}
+            <a href="#" class="btn-custom btn-primary-custom">
+                <i class="fas fa-plus"></i> Добавить сотрудника
+            </a>
+            {% endblock %}
+        </div>
+    </div>
+
+    <!-- Сообщения (Alerts) -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert-custom {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %}"></i>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Блок статистики (Пример) -->
+    {% block stats_block %}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon-wrapper" style="background: #DBEAFE; color: #2563EB;">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-value">42</div>
+            <div class="stat-label">Всего сотрудников</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-wrapper" style="background: #D1FAE5; color: #059669;">
+                <i class="fas fa-ruble-sign"></i>
+            </div>
+            <div class="stat-value">1.2M ₽</div>
+            <div class="stat-label">Фонд оплаты труда</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-wrapper" style="background: #FEF3C7; color: #D97706;">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-value">3</div>
+            <div class="stat-label">В отпуске</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-wrapper" style="background: #FEE2E2; color: #DC2626;">
+                <i class="fas fa-file-invoice"></i>
+            </div>
+            <div class="stat-value">5</div>
+            <div class="stat-label">Требуют внимания</div>
+        </div>
+    </div>
+    {% endblock %}
+
+    <!-- Основной контент (Таблица) -->
+    <div class="data-card">
+        <div class="card-toolbar">
+            <h4 style="margin: 0; font-size: 16px; font-weight: 600;">Список сотрудников</h4>
+            <div class="search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Поиск по ФИО или должности...">
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Сотрудник</th>
+                        <th>Должность</th>
+                        <th>Подразделение</th>
+                        <th>Статус</th>
+                        <th>Оклад</th>
+                        <th style="text-align: right;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Пример данных (замените на цикл Django) -->
+                    {% block table_content %}
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: #E0E7FF; color: #4F46E5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">ИИ</div>
+                                <div>
+                                    <div style="font-weight: 500;">Иванова Ирина</div>
+                                    <div style="font-size: 12px; color: #9CA3AF;">ivanova@mbdou.ru</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Воспитатель</td>
+                        <td>Группа "Ромашка"</td>
+                        <td><span class="badge badge-soft-green">Активен</span></td>
+                        <td>28 500 ₽</td>
+                        <td style="text-align: right;">
+                            <div class="action-group" style="justify-content: flex-end;">
+                                <a href="#" class="btn-icon" title="Просмотр"><i class="far fa-eye"></i></a>
+                                <a href="#" class="btn-icon" title="Редактировать"><i class="fas fa-pen"></i></a>
+                                <a href="#" class="btn-icon delete" title="Удалить"><i class="far fa-trash-alt"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- Конец примера -->
+                    {% endblock %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Пагинация (пример) -->
+        {% block pagination %}
+        <div style="padding: 16px 24px; border-top: 1px solid #F3F4F6; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #6B7280;">
+            <span>Показано 1 из 42 записей</span>
+            <div style="display: flex; gap: 4px;">
+                <button class="btn-icon" style="width: 28px; height: 28px;"><i class="fas fa-chevron-left"></i></button>
+                <button class="btn-icon" style="width: 28px; height: 28px; background: #F3F4F6;"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+        {% endblock %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Анимация появления
+    const cards = document.querySelectorAll('.stat-card, .data-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+
+    // Поиск
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

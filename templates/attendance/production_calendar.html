@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Производственный календарь{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="calendar-card" style="max-width: 500px; margin: 0 auto; background: white; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden;">
+        <div class="calendar-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; color: white; text-align: center;">
+            <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center;">
+                <a href="?year={{ prev_year }}&month={{ prev_month }}" class="nav-btn" style="background: rgba(255,255,255,0.2); border: none; width: 36px; height: 36px; border-radius: 50%; color: white; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+                    ‹
+                </a>
+                <div>
+                    <div class="current-month" style="font-size: 1.5rem; font-weight: 700;">{{ month_name }}</div>
+                    <div class="current-year" style="font-size: 1rem; opacity: 0.9;">{{ current_year }}</div>
+                </div>
+                <a href="?year={{ next_year }}&month={{ next_month }}" class="nav-btn" style="background: rgba(255,255,255,0.2); border: none; width: 36px; height: 36px; border-radius: 50%; color: white; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+                    ›
+                </a>
+            </div>
+        </div>
+        
+        <div class="weekdays" style="display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; padding: 12px 8px; border-bottom: 1px solid #e9ecef;">
+            <div style="text-align: center; font-size: 0.8rem; font-weight: 600;">Пн</div>
+            <div style="text-align: center; font-size: 0.8rem; font-weight: 600;">Вт</div>
+            <div style="text-align: center; font-size: 0.8rem; font-weight: 600;">Ср</div>
+            <div style="text-align: center; font-size: 0.8rem; font-weight: 600;">Чт</div>
+            <div style="text-align: center; font-size: 0.8rem; font-weight: 600;">Пт</div>
+            <div style="text-align: center; font-size: 0.8rem; font-weight: 600; color: #dc3545;">Сб</div>
+            <div style="text-align: center; font-size: 0.8rem; font-weight: 600; color: #dc3545;">Вс</div>
+        </div>
+        
+        <div class="calendar-days" style="display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px; gap: 4px; min-height: 300px;">
+            {% for i in ""|ljust:first_day_weekday %}
+            <div style="aspect-ratio: 1;"></div>
+            {% endfor %}
+            
+            {% for day in days %}
+            <div class="day-cell" 
+                 style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; cursor: pointer; 
+                        background: {% if day.is_holiday %}#ffe5e5{% elif day.is_weekend %}#fff3e0{% else %}#f8f9fa{% endif %};
+                        transition: all 0.2s;"
+                 onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';"
+                 onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';"
+                 onclick="openEditModal({{ day.day }}, '{{ day.date|date:'Y-m-d' }}', {{ day.is_holiday|yesno:'true,false' }}, '{{ day.holiday_name|escapejs }}', {{ day.is_working_saturday|yesno:'true,false' }})">
+                <div style="font-weight: 600; font-size: 0.9rem;">{{ day.day }}</div>
+                {% if day.holiday_name %}
+                <div style="font-size: 0.65rem; color: #dc3545; margin-top: 2px; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px;">
+                    {{ day.holiday_name|truncatechars:8 }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="calendar-footer" style="padding: 16px; border-top: 1px solid #e9ecef; background: #f8f9fa; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 12px; height: 12px; background: #ffe5e5; border-radius: 4px;"></div>
+                    <span style="font-size: 0.75rem;">Праздник</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 12px; height: 12px; background: #fff3e0; border-radius: 4px;"></div>
+                    <span style="font-size: 0.75rem;">Выходной</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 12px; height: 12px; background: #f8f9fa; border-radius: 4px;"></div>
+                    <span style="font-size: 0.75rem;">Рабочий</span>
+                </div>
+            </div>
+            <form method="post" action="{% url 'attendance:production_calendar_generate' %}" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="year" value="{{ current_year }}">
+                <button type="submit" class="btn-generate" style="background: linear-gradient(135deg, #667eea, #764ba2); border: none; color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;" onclick="return confirm('Сгенерировать календарь на {{ current_year }} год?')">
+                    <i class="bi bi-calendar-plus"></i> Сгенерировать год
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="editDayModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; border: none;">
+            <form method="post" action="{% url 'attendance:production_calendar_update' %}">
+                {% csrf_token %}
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 20px 20px 0 0;">
+                    <h5 class="modal-title">
+                        <i class="bi bi-calendar-edit me-2"></i>Редактирование дня
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" name="date" id="edit-date">
+                    <p class="mb-3 text-muted" id="edit-date-display"></p>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_holiday" id="edit-is-holiday">
+                            <label class="form-check-label" for="edit-is-holiday">
+                                <i class="bi bi-calendar-x me-1 text-danger"></i>Выходной/праздничный день
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Название праздника</label>
+                        <input type="text" class="form-control" name="holiday_name" id="edit-holiday-name" 
+                               placeholder="Например: Новый год, 8 Марта...">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_working_saturday" id="edit-is-working-saturday">
+                            <label class="form-check-label" for="edit-is-working-saturday">
+                                <i class="bi bi-briefcase me-1 text-success"></i>Рабочая суббота
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border: none;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-save text-white" style="background: linear-gradient(135deg, #667eea, #764ba2); border: none;">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openEditModal(day, date, isHoliday, holidayName, isWorkingSaturday) {
+    document.getElementById('edit-date').value = date;
+    document.getElementById('edit-date-display').textContent = `${day} {{ month_name }} {{ current_year }}`;
+    document.getElementById('edit-is-holiday').checked = isHoliday === true;
+    document.getElementById('edit-is-working-saturday').checked = isWorkingSaturday === true;
+    document.getElementById('edit-holiday-name').value = holidayName || '';
+    
+    new bootstrap.Modal(document.getElementById('editDayModal')).show();
+}
+</script>
+{% endblock %}

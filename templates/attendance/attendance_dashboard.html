@@ -1,0 +1,686 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Посещаемость{% endblock %}
+
+{% block extra_css %}
+<style>
+.attendance-controls {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    color: white;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #28a745;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.meal-badge {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.meal-badge:hover {
+    transform: scale(1.1);
+}
+
+.meal-badge.checked {
+    background: #28a745 !important;
+    color: white !important;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+}
+
+.attendance-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.attendance-row {
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.attendance-row.present {
+    border-left-color: #28a745;
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.attendance-row.absent {
+    border-left-color: #dc3545;
+    background: rgba(220, 53, 69, 0.05);
+}
+
+.attendance-row.sick {
+    border-left-color: #ffc107;
+    background: rgba(255, 193, 7, 0.05);
+}
+
+.attendance-row.vacation {
+    border-left-color: #17a2b8;
+    background: rgba(23, 162, 184, 0.05);
+}
+
+.chart-container {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.time-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.set-now-btn {
+    padding: 5px 10px;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.set-now-btn:hover {
+    background: #f8f9fa;
+    border-color: #667eea;
+}
+
+.set-now-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.attendance-table input:disabled,
+.attendance-table select:disabled {
+    background-color: #f8f9fa;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Посещаемость</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button id="generateReport" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-file-word me-1"></i>Сформировать отчет
+            </button>
+            <a href="{% url 'attendance:statistics' %}" class="btn btn-sm btn-outline-info">
+                <i class="fas fa-chart-bar me-1"></i>Статистика
+            </a>
+        </div>
+        <span class="badge bg-primary fs-6">
+            <i class="fas fa-calendar me-1"></i>{{ today|date:"d E Y" }}
+        </span>
+    </div>
+</div>
+
+<!-- Панель управления редактированием -->
+<div class="attendance-controls">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h5 class="mb-3"><i class="fas fa-edit me-2"></i>Режим редактирования</h5>
+            <div class="d-flex align-items-center gap-3">
+                <label class="switch">
+                    <input type="checkbox" id="editModeToggle">
+                    <span class="slider"></span>
+                </label>
+                <div>
+                    <div id="editStatus" class="fw-bold">Выключен</div>
+                    <small class="opacity-75">Включите для редактирования посещаемости</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            {% if teacher_group %}
+            <div>
+                <h5 class="mb-1">Группа {{ teacher_group.name }}</h5>
+                <div class="opacity-75">{{ teacher_group.age_range }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Основная таблица -->
+<div class="dashboard-card attendance-table">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>Посещаемость на сегодня</h5>
+        <div class="text-muted small">
+            Автосохранение: <span id="autoSaveStatus" class="badge bg-success">Включено</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th width="200">Ребенок</th>
+                        <th width="150">Статус</th>
+                        <th width="120">Время прихода</th>
+                        <th width="120">Время ухода</th>
+                        <th width="200">Питание</th>
+                        <th>Примечания</th>
+                    </tr>
+                </thead>
+                <tbody id="attendanceTable">
+                    {% for child_data in children %}
+                    {% with child=child_data.child attendance=child_data.attendance %}
+                    <tr class="attendance-row {% if attendance %}{{ attendance.status }}{% else %}absent{% endif %}" 
+                        data-child-id="{{ child.id }}">
+                        <!-- ФИО ребенка -->
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
+                                     style="width: 40px; height: 40px;">
+                                    {% if child.gender == 'male' %}
+                                        <i class="fas fa-male text-primary"></i>
+                                    {% else %}
+                                        <i class="fas fa-female text-danger"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ child.full_name }}</div>
+                                    <small class="text-muted">Возраст: {{ child.birth_date|timesince }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <!-- Статус посещаемости -->
+                        <td>
+                            <div class="attendance-status">
+                                <select class="form-select form-select-sm status-select" 
+                                        disabled
+                                        data-child-id="{{ child.id }}">
+                                    <option value="present" {% if attendance and attendance.status == 'present' %}selected{% endif %}>
+                                        🟢 Присутствует
+                                    </option>
+                                    <option value="absent" {% if not attendance or attendance.status == 'absent' %}selected{% endif %}>
+                                        🔴 Отсутствует
+                                    </option>
+                                    <option value="sick" {% if attendance and attendance.status == 'sick' %}selected{% endif %}>
+                                        🟡 Болеет
+                                    </option>
+                                    <option value="vacation" {% if attendance and attendance.status == 'vacation' %}selected{% endif %}>
+                                        🔵 Отпуск
+                                    </option>
+                                </select>
+                            </div>
+                        </td>
+                        
+                        <!-- Время прихода -->
+                        <td>
+                            <div class="time-input-group">
+                                <input type="time" class="form-control form-control-sm time-input arrival-time" 
+                                       value="{% if attendance and attendance.arrival_time %}{{ attendance.arrival_time|time:'H:i' }}{% else %}08:00{% endif %}"
+                                       disabled
+                                       data-child-id="{{ child.id }}">
+                                <button class="btn btn-sm btn-outline-secondary set-now-btn" 
+                                        data-type="arrival"
+                                        data-child-id="{{ child.id }}"
+                                        disabled>
+                                    <i class="fas fa-clock"></i>
+                                </button>
+                            </div>
+                        </td>
+                        
+                        <!-- Время ухода -->
+                        <td>
+                            <div class="time-input-group">
+                                <input type="time" class="form-control form-control-sm time-input departure-time" 
+                                       value="{% if attendance and attendance.departure_time %}{{ attendance.departure_time|time:'H:i' }}{% else %}17:00{% endif %}"
+                                       disabled
+                                       data-child-id="{{ child.id }}">
+                                <button class="btn btn-sm btn-outline-secondary set-now-btn" 
+                                        data-type="departure"
+                                        data-child-id="{{ child.id }}"
+                                        disabled>
+                                    <i class="fas fa-clock"></i>
+                                </button>
+                            </div>
+                        </td>
+                        
+                        <!-- Питание -->
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                {% for meal_type, meal_name in meal_types %}
+                                <span class="badge meal-badge {% if meal_type in child_data.meals_today %}bg-success checked{% else %}bg-light text-dark{% endif %}" 
+                                      data-meal-type="{{ meal_type }}"
+                                      data-child-id="{{ child.id }}">
+                                    {{ meal_name }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        
+                        <!-- Примечания -->
+                        <td>
+                            <input type="text" class="form-control form-control-sm notes-input" 
+                                   placeholder="Примечания..."
+                                   value="{% if attendance %}{{ attendance.notes }}{% endif %}"
+                                   disabled
+                                   data-child-id="{{ child.id }}">
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <i class="fas fa-users fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">Нет детей в группе</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Диаграммы и статистика -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h5><i class="fas fa-chart-pie me-2"></i>Распределение по статусам</h5>
+            <canvas id="statusChart" height="250"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h5><i class="fas fa-chart-line me-2"></i>Посещаемость за неделю</h5>
+            <canvas id="weeklyChart" height="250"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Дополнительная статистика -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="text-primary fs-2 fw-bold">{{ attendance_percentage }}%</div>
+            <div class="text-muted">Посещаемость сегодня</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="text-success fs-2 fw-bold">{{ weekly_average }}%</div>
+            <div class="text-muted">Средняя за неделю</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="text-info fs-2 fw-bold">{{ meal_percentage }}%</div>
+            <div class="text-muted">Охват питанием</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Глобальные переменные
+let editMode = false;
+let autoSaveTimer = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEditMode();
+    initializeCharts();
+    setupEventListeners();
+});
+
+function initializeEditMode() {
+    const toggle = document.getElementById('editModeToggle');
+    const status = document.getElementById('editStatus');
+    
+    // Восстанавливаем состояние из localStorage
+    editMode = localStorage.getItem('attendanceEditMode') === 'true';
+    toggle.checked = editMode;
+    updateEditModeUI();
+    
+    toggle.addEventListener('change', function() {
+        editMode = this.checked;
+        localStorage.setItem('attendanceEditMode', editMode);
+        updateEditModeUI();
+    });
+}
+
+function updateEditModeUI() {
+    const status = document.getElementById('editStatus');
+    const inputs = document.querySelectorAll('.status-select, .time-input, .notes-input, .set-now-btn');
+    
+    if (editMode) {
+        status.textContent = 'Включен';
+        status.className = 'fw-bold text-success';
+        inputs.forEach(input => input.disabled = false);
+        startAutoSave();
+    } else {
+        status.textContent = 'Выключен';
+        status.className = 'fw-bold text-danger';
+        inputs.forEach(input => input.disabled = true);
+        stopAutoSave();
+    }
+}
+
+function setupEventListeners() {
+    // Обработка изменения статуса
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.addEventListener('change', function() {
+            updateAttendance(this.dataset.childId);
+            updateRowAppearance(this.dataset.childId);
+        });
+    });
+    
+    // Обработка времени
+    document.querySelectorAll('.time-input').forEach(input => {
+        input.addEventListener('change', function() {
+            updateAttendance(this.dataset.childId);
+        });
+    });
+    
+    // Кнопки "Сейчас"
+    document.querySelectorAll('.set-now-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const childId = this.dataset.childId;
+            const type = this.dataset.type;
+            const now = new Date();
+            const timeString = now.toTimeString().substring(0, 5);
+            
+            document.querySelector(`.${type}-time[data-child-id="${childId}"]`).value = timeString;
+            updateAttendance(childId);
+        });
+    });
+    
+    // Обработка питания
+    document.querySelectorAll('.meal-badge').forEach(badge => {
+        badge.addEventListener('click', function() {
+            if (!editMode) return;
+            
+            const childId = this.dataset.childId;
+            const mealType = this.dataset.mealType;
+            
+            this.classList.toggle('checked');
+            this.classList.toggle('bg-success');
+            this.classList.toggle('bg-light');
+            this.classList.toggle('text-dark');
+            
+            updateMeal(childId, mealType, this.classList.contains('checked'));
+        });
+    });
+    
+    // Обработка примечаний
+    document.querySelectorAll('.notes-input').forEach(input => {
+        input.addEventListener('change', function() {
+            updateAttendance(this.dataset.childId);
+        });
+    });
+    
+    // Генерация отчета
+    document.getElementById('generateReport').addEventListener('click', function() {
+        generateReport();
+    });
+}
+
+function updateRowAppearance(childId) {
+    const row = document.querySelector(`tr[data-child-id="${childId}"]`);
+    const status = document.querySelector(`.status-select[data-child-id="${childId}"]`).value;
+    
+    // Убираем все классы статусов
+    row.classList.remove('present', 'absent', 'sick', 'vacation');
+    
+    // Добавляем нужный класс
+    row.classList.add(status);
+}
+
+function updateAttendance(childId) {
+    if (!editMode) return;
+    
+    const data = {
+        child_id: childId,
+        date: '{{ today|date:"Y-m-d" }}',
+        status: document.querySelector(`.status-select[data-child-id="${childId}"]`).value,
+        arrival_time: document.querySelector(`.arrival-time[data-child-id="${childId}"]`).value,
+        departure_time: document.querySelector(`.departure-time[data-child-id="${childId}"]`).value,
+        notes: document.querySelector(`.notes-input[data-child-id="${childId}"]`).value
+    };
+    
+    saveAttendance(data);
+}
+
+function updateMeal(childId, mealType, checked) {
+    if (!editMode) return;
+    
+    const data = {
+        child_id: childId,
+        date: '{{ today|date:"Y-m-d" }}',
+        meal_type: mealType,
+        checked: checked
+    };
+    
+    fetch("{% url 'attendance:update_meal_ajax' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            showNotification('Ошибка сохранения питания', 'error');
+        }
+    });
+}
+
+function saveAttendance(data) {
+    fetch("{% url 'attendance:update_attendance_ajax' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            showNotification('Ошибка сохранения', 'error');
+        }
+    });
+}
+
+function startAutoSave() {
+    // Автосохранение каждые 30 секунд
+    autoSaveTimer = setInterval(() => {
+        document.querySelectorAll('.status-select').forEach(select => {
+            updateAttendance(select.dataset.childId);
+        });
+    }, 30000);
+}
+
+function stopAutoSave() {
+    if (autoSaveTimer) {
+        clearInterval(autoSaveTimer);
+        autoSaveTimer = null;
+    }
+}
+
+function generateReport() {
+    const button = document.getElementById('generateReport');
+    const originalText = button.innerHTML;
+    
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Формирование...';
+    button.disabled = true;
+    
+    fetch("{% url 'attendance:generate_report' %}?date={{ today|date:'Y-m-d' }}")
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `посещаемость_{{ today|date:'d_m_Y' }}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showNotification('Отчет успешно сформирован!', 'success');
+    })
+    .catch(error => {
+        showNotification('Ошибка при формировании отчета', 'error');
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function initializeCharts() {
+    // График статусов
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    const statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Присутствуют', 'Отсутствуют', 'Болеют', 'Отпуск'],
+            datasets: [{
+                data: [{{ present_count }}, {{ absent_count }}, {{ sick_count }}, {{ vacation_count }}],
+                backgroundColor: ['#28a745', '#dc3545', '#ffc107', '#17a2b8']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // График за неделю
+    const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+    const weeklyChart = new Chart(weeklyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ weekly_labels|safe }},
+            datasets: [{
+                label: 'Посещаемость (%)',
+                data: {{ weekly_data }},
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    min: 0,
+                    max: 100
+                }
+            }
+        }
+    });
+}
+
+function showNotification(message, type) {
+    // Простая реализация уведомлений
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alert = document.createElement('div');
+    alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        alert.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Управление отпусками{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .stat-label {
+        color: #6c757d;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .pending-badge {
+        font-size: 12px;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+    .leave-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    .conflict-alert {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 text-gray-800">Управление отпусками</h1>
+        <div>
+            <a href="{% url 'staff:leave_schedule_create' %}" class="btn btn-primary me-2">
+                <i class="fas fa-plus-circle me-2"></i>Добавить в график
+            </a>
+            <a href="{% url 'staff:export_leave_schedule_pdf' %}?year={{ current_year }}" class="btn btn-success">
+                <i class="fas fa-file-pdf me-2"></i>Экспорт PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Выбор года -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3 align-items-center">
+                        <div class="col-auto">
+                            <label for="year" class="col-form-label">Год:</label>
+                        </div>
+                        <div class="col-auto">
+                            <select name="year" id="year" class="form-select" onchange="this.form.submit()">
+                                {% for y in years %}
+                                <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-value">{{ leave_schedule|length }}</div>
+                            <div class="stat-label text-white-50">Всего отпусков</div>
+                        </div>
+                        <div class="stat-icon bg-white bg-opacity-25">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-value">{{ total_days_planned }}</div>
+                            <div class="stat-label text-white-50">Дней отпуска</div>
+                        </div>
+                        <div class="stat-icon bg-white bg-opacity-25">
+                            <i class="fas fa-sun"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stat-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-value">{{ pending_requests|length }}</div>
+                            <div class="stat-label text-white-50">Заявлений</div>
+                        </div>
+                        <div class="stat-icon bg-white bg-opacity-25">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stat-card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-value">{{ overlapping_leaves|length }}</div>
+                            <div class="stat-label text-white-50">Конфликты</div>
+                        </div>
+                        <div class="stat-icon bg-white bg-opacity-25">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Заявления на рассмотрении -->
+    {% if pending_requests %}
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Заявления на рассмотрении</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover leave-table">
+                    <thead>
+                        <tr>
+                            <th>Сотрудник</th>
+                            <th>Тип отпуска</th>
+                            <th>Период</th>
+                            <th>Дней</th>
+                            <th>Дата подачи</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in pending_requests %}
+                        <tr>
+                            <td>
+                                <strong>{{ request.employee.full_name }}</strong>
+                                <br><small class="text-muted">{{ request.employee.position }}</small>
+                            </td>
+                            <td>{{ request.get_leave_type_display }}</td>
+                            <td>{{ request.start_date|date:"d.m.Y" }} - {{ request.end_date|date:"d.m.Y" }}</td>
+                            <td><span class="badge bg-info">{{ request.duration }}</span></td>
+                            <td>{{ request.request_date|date:"d.m.Y" }}</td>
+                            <td>
+                                <a href="{% url 'staff:leave_request_process' request.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-check-circle me-1"></i>Рассмотреть
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Конфликты отпусков -->
+    {% if overlapping_leaves %}
+    <div class="conflict-alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
+            <div>
+                <h5 class="mb-1">Обнаружены конфликты в графике отпусков!</h5>
+                <p class="mb-0">Некоторые сотрудники отсутствуют в одно и то же время без назначенного замещения.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4 border-warning">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Конфликтующие отпуска</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Сотрудник</th>
+                            <th>Период отпуска</th>
+                            <th>Дней</th>
+                            <th>Замещающий</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in overlapping_leaves %}
+                        <tr>
+                            <td>{{ leave.employee.full_name }}</td>
+                            <td>{{ leave.start_date|date:"d.m.Y" }} - {{ leave.end_date|date:"d.m.Y" }}</td>
+                            <td>{{ leave.duration }}</td>
+                            <td>
+                                {% if leave.replacement_employee %}
+                                    {{ leave.replacement_employee.full_name }}
+                                {% else %}
+                                    <span class="text-danger">Не назначен</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-warning">{{ leave.get_status_display }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- График отпусков -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>График отпусков на {{ current_year }} год</h5>
+        </div>
+        <div class="card-body">
+            {% if leave_schedule %}
+            <div class="table-responsive">
+                <table class="table table-hover leave-table">
+                    <thead>
+                        <tr>
+                            <th>Сотрудник</th>
+                            <th>Должность</th>
+                            <th>Тип отпуска</th>
+                            <th>Начало</th>
+                            <th>Окончание</th>
+                            <th>Дней</th>
+                            <th>Статус</th>
+                            <th>Замещение</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in leave_schedule %}
+                        <tr>
+                            <td><strong>{{ leave.employee.full_name }}</strong></td>
+                            <td>{{ leave.employee.position }}</td>
+                            <td>{{ leave.get_leave_type_display }}</td>
+                            <td>{{ leave.start_date|date:"d.m.Y" }}</td>
+                            <td>{{ leave.end_date|date:"d.m.Y" }}</td>
+                            <td><span class="badge bg-info">{{ leave.duration }}</span></td>
+                            <td>
+                                {% if leave.status == 'approved' %}
+                                <span class="badge bg-success">Утвержден</span>
+                                {% elif leave.status == 'planned' %}
+                                <span class="badge bg-primary">Запланирован</span>
+                                {% elif leave.status == 'in_progress' %}
+                                <span class="badge bg-warning">В процессе</span>
+                                {% elif leave.status == 'completed' %}
+                                <span class="badge bg-secondary">Завершен</span>
+                                {% elif leave.status == 'cancelled' %}
+                                <span class="badge bg-danger">Отменен</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if leave.replacement_employee %}
+                                    {{ leave.replacement_employee.full_name }}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'staff:leave_schedule_edit' leave.id %}" class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Нет записей в графике отпусков</h5>
+                <p class="text-muted mb-4">Добавьте первую запись, чтобы начать планирование</p>
+                <a href="{% url 'staff:leave_schedule_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Добавить запись
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Автоматическое обновление при смене года
+    document.getElementById('year').addEventListener('change', function() {
+        this.form.submit();
+    });
+</script>
+{% endblock %}

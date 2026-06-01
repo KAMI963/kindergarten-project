@@ -1,0 +1,75 @@
+<!-- lessons/templates/lessons/schedule_view.html -->
+{% extends 'base.html' %}
+
+{% block title %}Расписание занятий - Детский сад{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4>Расписание занятий</h4>
+                        <div>
+                            {% if teacher_group %}
+                                <span class="badge bg-primary me-2">{{ teacher_group.name }}</span>
+                            {% endif %}
+                            <a href="{% url 'lessons:schedule_edit' %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-edit me-1"></i> Редактировать расписание
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if schedule_by_day %}
+                        <div class="row">
+                            {% for day_name, day_schedule in schedule_by_day.items %}
+                            <div class="col-lg-6 col-xl-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">{{ day_name }}</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="list-group list-group-flush">
+                                            {% for item in day_schedule %}
+                                            <div class="list-group-item">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div class="flex-fill">
+                                                        <h6 class="mb-1">{{ item.activity_type }}</h6>
+                                                        <p class="mb-1 text-sm text-muted">
+                                                            <i class="fas fa-clock me-1"></i>
+                                                            {{ item.start_time|time:"H:i" }} - {{ item.end_time|time:"H:i" }}
+                                                        </p>
+                                                        {% if item.description %}
+                                                            <p class="mb-0 text-xs">{{ item.description }}</p>
+                                                        {% endif %}
+                                                    </div>
+                                                    {% if item.is_regular %}
+                                                        <span class="badge bg-success ms-2">Регулярное</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Расписание не настроено</h5>
+                            <p class="text-muted mb-4">Создайте расписание для вашей группы</p>
+                            <a href="{% url 'lessons:schedule_edit' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> Создать расписание
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

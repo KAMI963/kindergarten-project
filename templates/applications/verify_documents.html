@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h3>Проверка документов: {{ application.child_full_name }}</h3>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" name="documents_verified" id="verified" {% if application.documents_verified %}checked{% endif %}>
+            <label class="form-check-label" for="verified">Документы проверены</label>
+        </div>
+        <div class="mb-3">
+            <label>Примечание проверяющего</label>
+            <textarea name="verification_comment" class="form-control" rows="3">{{ application.verification_comment }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label>Новый статус</label>
+            <select name="status" class="form-select">
+                <option value="pending" {% if application.status == 'pending' %}selected{% endif %}>На проверке</option>
+                <option value="queue" {% if application.status == 'queue' %}selected{% endif %}>В очередь</option>
+                <option value="rejected" {% if application.status == 'rejected' %}selected{% endif %}>Отказать</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <a href="{% url 'applications:director_queue' %}" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
+{% endblock %}

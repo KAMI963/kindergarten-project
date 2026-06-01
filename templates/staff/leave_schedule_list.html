@@ -1,0 +1,179 @@
+<!-- staff/templates/staff/leave_schedule_list.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}График отпусков {{ year }}{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-calendar-alt"></i>
+                    График отпусков
+                </h1>
+                <p class="mb-0 opacity-75">{{ year }} год</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'staff:leave_schedule_create' %}" class="btn btn-light staff-btn me-2">
+                    <i class="fas fa-plus"></i> Добавить
+                </a>
+                <a href="{% url 'staff:export_leave_schedule_pdf' %}?year={{ year }}" class="btn btn-outline-light staff-btn">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <!-- Навигация по годам -->
+    <div class="d-flex justify-content-center mb-4">
+        <div class="btn-group" role="group">
+            {% for y in years %}
+            <a href="?year={{ y }}" class="btn {% if y == year %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                {{ y }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Календарь по месяцам -->
+    <div class="row mb-4">
+        {% for month_name, month_leaves in by_month.items %}
+        <div class="col-md-6 mb-4">
+            <div class="staff-card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">{{ month_name }} {{ year }}</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for leave in month_leaves %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ leave.employee.full_name }}</h6>
+                                    <p class="mb-1 small">
+                                        {{ leave.start_date|date:"d.m" }} - {{ leave.end_date|date:"d.m" }}
+                                        ({{ leave.duration }} дн.)
+                                    </p>
+                                    <small class="text-muted">
+                                        <span class="badge {% if leave.leave_type == 'annual' %}bg-success{% elif leave.leave_type == 'additional' %}bg-info{% else %}bg-secondary{% endif %}">
+                                            {{ leave.get_leave_type_display }}
+                                        </span>
+                                        {% if leave.replacement_employee %}
+                                        <span class="ms-2">Замена: {{ leave.replacement_employee.full_name }}</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div>
+                                    <span class="badge {% if leave.status == 'approved' %}bg-success{% elif leave.status == 'planned' %}bg-warning{% elif leave.status == 'in_progress' %}bg-info{% endif %}">
+                                        {{ leave.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item text-center py-3">
+                            <p class="text-muted mb-0">Нет отпусков в этом месяце</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Сводная таблица -->
+    <div class="staff-card">
+        <div class="card-header">
+            <i class="fas fa-list"></i>
+            Сводный график отпусков на {{ year }} год
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="staff-table table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Сотрудник</th>
+                            <th>Должность</th>
+                            <th>Тип отпуска</th>
+                            <th>Период</th>
+                            <th>Дней</th>
+                            <th>Статус</th>
+                            <th>Заявление</th>
+                            <th>Приказ</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for month_name, month_leaves in by_month.items %}
+                            {% for leave in month_leaves %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="staff-avatar staff-avatar-sm me-2">
+                                            {{ leave.employee.full_name|first|upper }}
+                                        </div>
+                                        {{ leave.employee.full_name }}
+                                    </div>
+                                </td>
+                                <td>{{ leave.employee.position }}</td>
+                                <td>{{ leave.get_leave_type_display }}</td>
+                                <td>{{ leave.start_date|date:"d.m.Y" }} - {{ leave.end_date|date:"d.m.Y" }}</td>
+                                <td><span class="badge bg-primary">{{ leave.duration }}</span></td>
+                                <td>
+                                    {% if leave.status == 'approved' %}
+                                    <span class="badge bg-success">Утвержден</span>
+                                    {% elif leave.status == 'planned' %}
+                                    <span class="badge bg-warning">Запланирован</span>
+                                    {% elif leave.status == 'in_progress' %}
+                                    <span class="badge bg-info">В процессе</span>
+                                    {% elif leave.status == 'completed' %}
+                                    <span class="badge bg-secondary">Завершен</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if leave.application_file %}
+                                    <a href="{{ leave.application_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if leave.order_file %}
+                                    <a href="{{ leave.order_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'staff:leave_schedule_edit' leave.id %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">График отпусков на {{ year }} год не составлен</p>
+                                <a href="{% url 'staff:leave_schedule_create' %}" class="btn staff-btn-primary btn-sm">
+                                    Добавить первый отпуск
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

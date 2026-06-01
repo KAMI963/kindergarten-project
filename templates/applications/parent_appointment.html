@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Назначение встречи{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white">
+            <h4><i class="fas fa-calendar-alt me-2 text-primary"></i>Назначение времени для сверки оригиналов</h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Вы приглашены для оформления документов. Пожалуйста, выберите удобное время для визита.
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Ваше заявление:</h5>
+                    <p><strong>Ребенок:</strong> {{ application.child_full_name }}</p>
+                    <p><strong>Статус:</strong> <span class="badge bg-success">Приглашен на оформление</span></p>
+                    <p><strong>Срок приглашения:</strong> до {{ application.invitation_expires_at|date:"d.m.Y" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Выберите время:</h5>
+                    <form method="post" id="appointmentForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Дата визита</label>
+                            <select name="appointment_date" class="form-select" required>
+                                <option value="">-- Выберите дату --</option>
+                                {% for slot in available_slots %}
+                                <option value="{{ slot.datetime|date:'Y-m-d H:i' }}">
+                                    {{ slot.date|date:"d.m.Y" }} в {{ slot.time }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check-circle me-2"></i>Подтвердить запись
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h5>Что взять с собой:</h5>
+                <ul>
+                    <li>📄 Паспорт родителя (оригинал)</li>
+                    <li>📄 Свидетельство о рождении ребенка (оригинал)</li>
+                    <li>📄 Медицинскую карту (оригинал)</li>
+                    <li>📄 Документы, подтверждающие льготу (если есть)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('appointmentForm')?.addEventListener('submit', function(e) {
+        const btn = this.querySelector('button[type="submit"]');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Бронирование...';
+        btn.disabled = true;
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+<!-- staff/templates/staff/staff_unit_confirm_delete.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Удаление штатной единицы{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <h1>
+            <i class="fas fa-trash-alt"></i>
+            Удаление штатной единицы
+        </h1>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="staff-card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Подтверждение удаления
+                </div>
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-question-circle fa-4x text-danger mb-3"></i>
+                    
+                    <h5 class="mb-3">Вы уверены, что хотите удалить штатную единицу?</h5>
+                    
+                    <div class="alert alert-warning">
+                        <p class="mb-1"><strong>{{ unit.position.title }}</strong></p>
+                        <p class="mb-1">Количество ставок: {{ unit.quantity }}</p>
+                        {% if unit.employee %}
+                        <p class="mb-0 text-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Внимание! Эта единица занята сотрудником {{ unit.employee.full_name }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'staff:staffing_table' %}" class="btn btn-secondary px-4">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn btn-danger px-4">
+                                <i class="fas fa-trash"></i> Удалить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

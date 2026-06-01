@@ -1,0 +1,164 @@
+<!-- staff/templates/staff/courses_list.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Курсы повышения квалификации{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    Курсы повышения квалификации
+                </h1>
+                <p class="mb-0 opacity-75">{{ employee.full_name }} • {{ employee.position }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'staff:course_add' employee.id %}" class="btn btn-light staff-btn me-2">
+                    <i class="fas fa-plus"></i> Добавить курс
+                </a>
+                <a href="{% url 'staff:employee_detail' employee.id %}" class="btn btn-outline-light staff-btn">
+                    <i class="fas fa-arrow-left"></i> Назад
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <!-- Статистика -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="staff-stat-card position-relative">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <p class="stat-value">{{ courses.count }}</p>
+                <p class="stat-label">Всего курсов</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="staff-stat-card position-relative" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <i class="fas fa-clock"></i>
+                <p class="stat-value">{{ courses|length }}</p>
+                <p class="stat-label">За последние 3 года</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="staff-stat-card position-relative" style="background: linear-gradient(135deg, #fad961 0%, #f76b1c 100%);">
+                <i class="fas fa-hourglass-half"></i>
+                <p class="stat-value">{{ courses.0.hours|default:"0" }}</p>
+                <p class="stat-label">Всего часов</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Список курсов -->
+    <div class="staff-card">
+        <div class="card-header">
+            <i class="fas fa-list"></i>
+            Пройденные курсы
+        </div>
+        <div class="card-body p-0">
+            {% for course in courses %}
+            <div class="border-bottom {% if not forloop.last %}mb-0{% endif %}">
+                <div class="p-4">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="staff-avatar staff-avatar-md me-3" style="background: linear-gradient(135deg, #fad961 0%, #f76b1c 100%);">
+                                    <i class="fas fa-certificate"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">{{ course.course_name }}</h5>
+                                    <p class="text-muted mb-2">{{ course.provider }}</p>
+                                </div>
+                            </div>
+                            
+                            <table class="table table-sm" style="width: auto;">
+                                <tr>
+                                    <th class="text-muted pe-3">Период:</th>
+                                    <td>{{ course.start_date|date:"d.m.Y" }} - {{ course.end_date|date:"d.m.Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted pe-3">Количество часов:</th>
+                                    <td>{{ course.hours }} ч.</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted pe-3">Документ:</th>
+                                    <td>{{ course.document_number }} от {{ course.document_date|date:"d.m.Y" }}</td>
+                                </tr>
+                            </table>
+                            
+                            {% if course.scan %}
+                            <a href="{{ course.scan.url }}" class="btn btn-sm btn-outline-primary mt-2" target="_blank">
+                                <i class="fas fa-file-pdf"></i> Просмотреть удостоверение
+                            </a>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 text-md-end">
+                            <div class="btn-group">
+                                <a href="{% url 'staff:course_edit' course.id %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i> Редактировать
+                                </a>
+                                <a href="{% url 'staff:course_delete' course.id %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i> Удалить
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5">
+                <i class="fas fa-chalkboard-teacher fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">Нет пройденных курсов</h4>
+                <p class="text-muted mb-3">Добавьте первый курс повышения квалификации</p>
+                <a href="{% url 'staff:course_add' employee.id %}" class="btn staff-btn-primary">
+                    <i class="fas fa-plus"></i> Добавить курс
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Рекомендации -->
+    <div class="staff-card mt-4">
+        <div class="card-header">
+            <i class="fas fa-lightbulb"></i>
+            Рекомендуемые курсы
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="fw-600">ФГОС ДО</h6>
+                            <p class="small text-muted">Реализация ФГОС дошкольного образования</p>
+                            <span class="badge bg-primary">72 ч.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="fw-600">Инклюзивное образование</h6>
+                            <p class="small text-muted">Организация инклюзивного образования в ДОУ</p>
+                            <span class="badge bg-primary">36 ч.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="fw-600">ИКТ в образовании</h6>
+                            <p class="small text-muted">Современные информационные технологии</p>
+                            <span class="badge bg-primary">48 ч.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

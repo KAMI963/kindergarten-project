@@ -1,0 +1,199 @@
+{% extends 'payroll/base_payroll.html' %}
+{% load static %}
+
+{% block page_title %}Приказ о приеме №{{ hire.document_number }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'payroll:hire_document_list' %}">Прием на работу</a></li>
+<li class="breadcrumb-item active">№{{ hire.document_number }}</li>
+{% endblock %}
+
+{% block header_actions %}
+<a href="#" class="btn btn-outline-primary me-2">
+    <i class="fas fa-print"></i> Печать
+</a>
+<a href="#" class="btn btn-outline-success me-2">
+    <i class="fas fa-file-pdf"></i> PDF
+</a>
+<a href="#" class="btn btn-warning">
+    <i class="fas fa-edit"></i> Редактировать
+</a>
+{% endblock %}
+
+{% block page_content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Основная информация -->
+        <div class="payroll-card">
+            <div class="payroll-card-header">
+                <span><i class="fas fa-info-circle me-2"></i>Основная информация</span>
+            </div>
+            <div class="payroll-card-body">
+                <table class="table">
+                    <tr>
+                        <th style="width: 200px;">Номер документа:</th>
+                        <td><strong>{{ hire.document_number }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Дата документа:</th>
+                        <td>{{ hire.document_date|date:"d.m.Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Сотрудник:</th>
+                        <td>
+                            <h5>{{ hire.employee.get_full_name }}</h5>
+                            <small class="text-muted">{{ hire.employee.email }}</small>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Дата приема:</th>
+                        <td>{{ hire.hire_date|date:"d.m.Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Должность:</th>
+                        <td>{{ hire.position }}</td>
+                    </tr>
+                    <tr>
+                        <th>Подразделение:</th>
+                        <td>{{ hire.department|default:"—" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Вид занятости:</th>
+                        <td>
+                            <span class="badge bg-info">
+                                {{ hire.get_employment_type_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>График работы:</th>
+                        <td>
+                            {% if hire.schedule %}
+                            {{ hire.schedule.name }}
+                            <small class="text-muted d-block">{{ hire.schedule.hours_per_week }} ч/нед</small>
+                            {% else %}
+                            <span class="text-muted">Не указан</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Статус:</th>
+                        <td>
+                            {% if hire.is_active %}
+                            <span class="status-badge status-active">
+                                <i class="fas fa-check-circle me-1"></i>Действующий
+                            </span>
+                            {% else %}
+                            <span class="status-badge status-inactive">
+                                <i class="fas fa-times-circle me-1"></i>Завершен
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Плановые начисления -->
+        <div class="payroll-card mt-4">
+            <div class="payroll-card-header">
+                <span><i class="fas fa-calculator me-2"></i>Плановые начисления</span>
+            </div>
+            <div class="payroll-card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Вид начисления</th>
+                            <th>Значение</th>
+                            <th>Тип</th>
+                            <th>Параметры</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for accrual in planned_accruals %}
+                        <tr>
+                            <td>
+                                <strong>{{ accrual.accrual_type.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ accrual.accrual_type.code }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">
+                                    {{ accrual.value }}{% if accrual.is_percent %}%{% else %} ₽{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if accrual.is_percent %}
+                                <span class="badge bg-warning">Процент</span>
+                                {% else %}
+                                <span class="badge bg-success">Сумма</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>{{ accrual.parameters|default:"—" }}</small>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-3">
+                                <p class="text-muted mb-0">Нет плановых начислений</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Налоговые вычеты -->
+        <div class="payroll-card mt-4">
+            <div class="payroll-card-header">
+                <span><i class="fas fa-file-invoice-dollar me-2"></i>Налоговые вычеты (НДФЛ)</span>
+            </div>
+            <div class="payroll-card-body">
+                <pre class="mb-0">{{ hire.tax_deductions|pprint }}</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Документ -->
+        <div class="payroll-card">
+            <div class="payroll-card-header">
+                <span><i class="fas fa-file-pdf me-2"></i>Документ</span>
+            </div>
+            <div class="payroll-card-body text-center">
+                {% if hire.document_file %}
+                <i class="fas fa-file-pdf fa-4x mb-3" style="color: #e74c3c;"></i>
+                <p>{{ hire.document_file.name }}</p>
+                <a href="{{ hire.document_file.url }}" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-download me-2"></i>Скачать
+                </a>
+                {% else %}
+                <i class="fas fa-file fa-4x mb-3" style="color: #bdc3c7;"></i>
+                <p class="text-muted">Документ не загружен</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Системная информация -->
+        <div class="payroll-card mt-4">
+            <div class="payroll-card-header">
+                <span><i class="fas fa-history me-2"></i>Системная информация</span>
+            </div>
+            <div class="payroll-card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Создано:</th>
+                        <td>{{ hire.created_at|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Обновлено:</th>
+                        <td>{{ hire.updated_at|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

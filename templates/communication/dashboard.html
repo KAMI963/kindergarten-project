@@ -1,0 +1,1181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Мессенджер{% endblock %}
+
+{% block extra_css %}
+<style>
+    * {
+        box-sizing: border-box;
+    }
+    
+    .messenger-container {
+        display: flex;
+        height: calc(100vh - 70px);
+        background: #f0f2f5;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+    
+    /* ===== ЛЕВАЯ ПАНЕЛЬ - СПИСОК ЧАТОВ ===== */
+    .conversations-sidebar {
+        width: 340px;
+        background: white;
+        border-right: 1px solid #e4e6eb;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .conversations-header {
+        padding: 20px;
+        background: white;
+        border-bottom: 1px solid #e4e6eb;
+    }
+    
+    .conversations-header h3 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0;
+        color: #1f2b38;
+    }
+    
+    .new-chat-btn {
+        width: 100%;
+        margin-top: 15px;
+        padding: 12px 16px;
+        border-radius: 40px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .new-chat-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+    }
+    
+    .search-chat {
+        margin-top: 15px;
+        padding: 8px 15px;
+        border: 1px solid #e4e6eb;
+        border-radius: 30px;
+        width: 100%;
+        font-size: 0.85rem;
+    }
+    
+    .search-chat:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .conversations-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+    
+    .conversation-item {
+        display: flex;
+        align-items: center;
+        padding: 14px 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-bottom: 1px solid #f0f2f5;
+        position: relative;
+    }
+    
+    .conversation-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .conversation-item.active {
+        background: #e7f3ff;
+        border-left: 3px solid #667eea;
+    }
+    
+    .conversation-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.2rem;
+        margin-right: 14px;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    
+    .conversation-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .conversation-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .conversation-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #1f2b38;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .conversation-last-message {
+        font-size: 0.75rem;
+        color: #6c757d;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .conversation-time {
+        font-size: 0.65rem;
+        color: #9ca3af;
+    }
+    
+    .unread-badge {
+        background: #dc3545;
+        color: white;
+        border-radius: 20px;
+        padding: 2px 8px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        min-width: 20px;
+        text-align: center;
+    }
+    
+    /* ===== ПРАВАЯ ПАНЕЛЬ - ЧАТ ===== */
+    .chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #f8f9fa;
+    }
+    
+    .chat-header {
+        padding: 15px 25px;
+        background: white;
+        border-bottom: 1px solid #e4e6eb;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .chat-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-right: 15px;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    
+    .chat-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .chat-info {
+        flex: 1;
+    }
+    
+    .chat-name {
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: #1f2b38;
+    }
+    
+    .chat-role {
+        font-size: 0.7rem;
+        color: #6c757d;
+    }
+    
+    /* Сообщения */
+    .messages-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 25px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: #f8f9fa;
+    }
+    
+    .message {
+        display: flex;
+        margin-bottom: 12px;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .message-own {
+        justify-content: flex-end;
+    }
+    
+    .message-other {
+        justify-content: flex-start;
+    }
+    
+    .message-bubble {
+        max-width: 65%;
+        padding: 10px 14px;
+        border-radius: 18px;
+        position: relative;
+        word-wrap: break-word;
+    }
+    
+    .message-own .message-bubble {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+    
+    .message-other .message-bubble {
+        background: white;
+        color: #1f2b38;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    }
+    
+    .message-text {
+        font-size: 0.85rem;
+        line-height: 1.45;
+    }
+    
+    .message-file {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        background: rgba(0,0,0,0.06);
+        border-radius: 12px;
+        margin-top: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .message-file:hover {
+        background: rgba(0,0,0,0.12);
+    }
+    
+    .message-file-icon {
+        font-size: 1.8rem;
+    }
+    
+    .message-file-info {
+        flex: 1;
+    }
+    
+    .message-file-name {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .message-file-size {
+        font-size: 0.65rem;
+        opacity: 0.7;
+    }
+    
+    .message-image {
+        max-width: 250px;
+        max-height: 250px;
+        border-radius: 12px;
+        margin-top: 8px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .message-image:hover {
+        transform: scale(1.02);
+    }
+    
+    .message-time {
+        font-size: 0.6rem;
+        opacity: 0.6;
+        margin-top: 5px;
+        text-align: right;
+    }
+    
+    /* Форма отправки */
+    .message-form-container {
+        padding: 15px 25px;
+        background: white;
+        border-top: 1px solid #e4e6eb;
+    }
+    
+    .message-input-wrapper {
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        background: #f0f2f5;
+        border-radius: 30px;
+        padding: 5px 8px 5px 18px;
+    }
+    
+    .message-input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        padding: 10px 0;
+        resize: none;
+        max-height: 100px;
+        font-size: 0.9rem;
+        font-family: inherit;
+    }
+    
+    .message-input:focus {
+        outline: none;
+    }
+    
+    .attach-btn {
+        background: none;
+        border: none;
+        color: #6c757d;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .attach-btn:hover {
+        background: rgba(0,0,0,0.05);
+        color: #667eea;
+    }
+    
+    .send-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    
+    .send-btn:hover {
+        transform: scale(1.05);
+    }
+    
+    .send-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .file-preview {
+        margin-top: 12px;
+        padding: 10px 15px;
+        background: #f0f2f5;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .empty-chat {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: #9ca3af;
+        flex-direction: column;
+    }
+    
+    .empty-chat i {
+        font-size: 4rem;
+        margin-bottom: 15px;
+        opacity: 0.4;
+    }
+    
+    /* ===== МОДАЛЬНОЕ ОКНО ===== */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 100000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+    
+    .modal-overlay.active {
+        display: flex;
+    }
+    
+    .modal-container {
+        background: white;
+        border-radius: 24px;
+        width: 90%;
+        max-width: 450px;
+        overflow: hidden;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease;
+    }
+    
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-30px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    .modal-header-custom {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        padding: 18px 24px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-header-custom h4 {
+        margin: 0;
+        font-size: 1.1rem;
+    }
+    
+    .modal-close-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .modal-close-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+    }
+    
+    .modal-body-custom {
+        padding: 24px;
+    }
+    
+    .modal-footer-custom {
+        padding: 16px 24px;
+        border-top: 1px solid #e4e6eb;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .form-select-custom {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 12px;
+        border: 2px solid #e4e6eb;
+        font-size: 0.9rem;
+        background: white;
+    }
+    
+    .form-select-custom:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .info-alert {
+        background: #e3f2fd;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        color: #1565c0;
+        margin-top: 15px;
+    }
+    
+    .btn-cancel {
+        padding: 10px 24px;
+        border-radius: 40px;
+        border: 1px solid #cbd5e0;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-cancel:hover {
+        background: #f8f9fa;
+    }
+    
+    .btn-submit {
+        padding: 10px 24px;
+        border-radius: 40px;
+        border: none;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .conversations-sidebar {
+            width: 280px;
+        }
+        
+        .message-bubble {
+            max-width: 85%;
+        }
+        
+        .chat-header {
+            padding: 12px 15px;
+        }
+        
+        .messages-container {
+            padding: 15px;
+        }
+        
+        .message-form-container {
+            padding: 12px 15px;
+        }
+    }
+    
+    /* Скроллбары */
+    .messages-container::-webkit-scrollbar,
+    .conversations-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .messages-container::-webkit-scrollbar-track {
+        background: #e4e6eb;
+        border-radius: 3px;
+    }
+    
+    .messages-container::-webkit-scrollbar-thumb {
+        background: #b0b3b8;
+        border-radius: 3px;
+    }
+    
+    .messages-container::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="messenger-container">
+    <!-- ЛЕВАЯ ПАНЕЛЬ - СПИСОК ЧАТОВ -->
+    <div class="conversations-sidebar">
+        <div class="conversations-header">
+            <h3><i class="fas fa-comments me-2"></i>Сообщения</h3>
+            <button class="new-chat-btn" id="newChatBtn">
+                <i class="fas fa-plus-circle"></i> Новый чат
+            </button>
+            <input type="text" class="search-chat" id="searchChat" placeholder="Поиск чата...">
+        </div>
+        <div class="conversations-list" id="conversationsList">
+            {% for conv in conversations %}
+            <div class="conversation-item {% if selected_conversation and selected_conversation.id == conv.id %}active{% endif %}" 
+                 data-conversation-id="{{ conv.id }}"
+                 data-conversation-name="{{ conv.display_name }}"
+                 onclick="selectConversation({{ conv.id }})">
+                <div class="conversation-avatar">
+                    {% if conv.avatar_url %}
+                        <img src="{{ conv.avatar_url }}" alt="{{ conv.display_name }}">
+                    {% else %}
+                        {{ conv.display_name|first|upper }}
+                    {% endif %}
+                </div>
+                <div class="conversation-info">
+                    <div class="conversation-name">
+                        <span>{{ conv.display_name }}</span>
+                        {% if conv.unread_count > 0 %}
+                            <span class="unread-badge" id="unread-{{ conv.id }}">{{ conv.unread_count }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="conversation-last-message">
+                        {% if conv.last_message %}
+                            {% if conv.last_message.content %}
+                                {{ conv.last_message.content|truncatechars:35 }}
+                            {% else %}
+                                <i class="fas fa-paperclip"></i> Файл
+                            {% endif %}
+                        {% else %}
+                            Новый чат
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="conversation-time">
+                    {% if conv.last_message %}
+                        {{ conv.last_message.timestamp|date:"H:i" }}
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5 px-3">
+                <i class="fas fa-comments fa-3x mb-3 opacity-25"></i>
+                <p class="text-muted">Нет чатов</p>
+                <small>Нажмите "Новый чат" чтобы начать общение</small>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- ПРАВАЯ ПАНЕЛЬ - ОБЛАСТЬ ЧАТА -->
+    <div class="chat-area">
+        {% if selected_conversation %}
+            <!-- Шапка чата -->
+            <div class="chat-header">
+                <div class="chat-avatar">
+                    {% if conversation_partner.photo_url %}
+                        <img src="{{ conversation_partner.photo_url }}" alt="{{ conversation_partner.full_name }}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;">
+                    {% else %}
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 1.1rem;">
+                            {{ conversation_partner.full_name|first|upper|default:"?" }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="chat-info">
+                    <div class="chat-name">
+                        {% if conversation_partner %}
+                            {{ conversation_partner.full_name }}
+                        {% else %}
+                            {% if selected_conversation.parent %}
+                                {{ selected_conversation.parent.user.get_full_name }}
+                            {% elif selected_conversation.teacher %}
+                                {{ selected_conversation.teacher.get_full_name }}
+                            {% elif selected_conversation.director %}
+                                {{ selected_conversation.director.get_full_name }}
+                            {% else %}
+                                Чат
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="chat-role">{{ conversation_partner.role|default:"" }}</div>
+                </div>
+            </div>
+            
+            <!-- Сообщения -->
+            <div class="messages-container" id="messagesContainer">
+                {% for message in messages %}
+                <div class="message {% if message.sender == user %}message-own{% else %}message-other{% endif %}" data-message-id="{{ message.id }}">
+                    <div class="message-bubble">
+                        {% if message.content %}
+                            <div class="message-text">{{ message.content|linebreaksbr }}</div>
+                        {% endif %}
+                        {% if message.file %}
+                            {% if message.file_type == 'image' %}
+                                <img src="{{ message.file.url }}" class="message-image" onclick="window.open('{{ message.file.url }}', '_blank')">
+                            {% else %}
+                                <div class="message-file" onclick="window.location.href='{% url 'communication:download_file' message.id %}'">
+                                    <i class="{{ message.get_file_icon }} message-file-icon"></i>
+                                    <div class="message-file-info">
+                                        <div class="message-file-name">{{ message.file_name }}</div>
+                                        <div class="message-file-size">{{ message.get_file_size_display }}</div>
+                                    </div>
+                                    <i class="fas fa-download"></i>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                        <div class="message-time">{{ message.timestamp|date:"H:i" }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Форма отправки сообщения -->
+            <div class="message-form-container">
+                <form id="messageForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="message-input-wrapper">
+                        <button type="button" class="attach-btn" id="attachBtn" title="Прикрепить файл">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <textarea name="content" class="message-input" id="messageInput" placeholder="Введите сообщение..." rows="1"></textarea>
+                        <button type="submit" class="send-btn" id="sendBtn" title="Отправить">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                        <input type="file" name="file" id="fileInput" style="display: none;" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt">
+                    </div>
+                    <div id="filePreview" style="display: none;" class="file-preview">
+                        <i class="fas fa-file"></i>
+                        <span id="fileName"></span>
+                        <button type="button" class="btn-sm btn-link" onclick="clearFile()" style="background: none; border: none; color: #dc3545;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        {% else %}
+            <div class="empty-chat">
+                <i class="fas fa-comment-dots"></i>
+                <h5>Выберите чат</h5>
+                <p class="text-muted">Выберите разговор из списка слева<br>или начните новый чат</p>
+                <button class="new-chat-btn" style="width: auto; padding: 10px 24px; margin-top: 15px;" onclick="openNewChatModal()">
+                    <i class="fas fa-plus-circle"></i> Новый чат
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО НОВОГО ЧАТА -->
+<div id="newChatModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header-custom">
+            <h4><i class="fas fa-comment-dots me-2"></i>Новый чат</h4>
+            <button type="button" class="modal-close-btn" onclick="closeNewChatModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="newChatForm" method="post" action="{% url 'communication:start_conversation' %}">
+            {% csrf_token %}
+            <div class="modal-body-custom">
+                <div class="form-group">
+                    <label><i class="fas fa-user me-2" style="color: #667eea;"></i>Выберите получателя</label>
+                    {{ new_conversation_form.recipient }}
+                </div>
+                <div class="info-alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Вы можете начать чат с воспитателем вашего ребенка или с заведующей.
+                </div>
+            </div>
+            <div class="modal-footer-custom">
+                <button type="button" class="btn-cancel" onclick="closeNewChatModal()">Отмена</button>
+                <button type="submit" class="btn-submit" id="submitNewChatBtn">
+                    <i class="fas fa-paper-plane me-2"></i>Начать чат
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Глобальные переменные
+let currentConversationId = {{ selected_conversation.id|default:'null' }};
+let autoRefreshInterval = null;
+
+// Выбор чата
+function selectConversation(conversationId) {
+    window.location.href = `/communication/?conversation=${conversationId}`;
+}
+
+// Открытие модального окна
+function openNewChatModal() {
+    const modal = document.getElementById('newChatModal');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Закрытие модального окна
+function closeNewChatModal() {
+    const modal = document.getElementById('newChatModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Очистка выбранного файла
+function clearFile() {
+    document.getElementById('fileInput').value = '';
+    document.getElementById('filePreview').style.display = 'none';
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Прокрутка вниз
+function scrollToBottom() {
+    const container = document.getElementById('messagesContainer');
+    if (container) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+// Создание HTML сообщения
+function createMessageHtml(msg) {
+    let fileHtml = '';
+    
+    if (msg.has_file) {
+        if (msg.file_type === 'image') {
+            fileHtml = `<img src="${msg.file_url}" class="message-image" onclick="window.open('${msg.file_url}', '_blank')">`;
+        } else {
+            fileHtml = `
+                <div class="message-file" onclick="window.location.href='/communication/download/${msg.id}/'">
+                    <i class="${msg.file_icon} message-file-icon"></i>
+                    <div class="message-file-info">
+                        <div class="message-file-name">${escapeHtml(msg.file_name)}</div>
+                        <div class="message-file-size">${msg.file_size_display}</div>
+                    </div>
+                    <i class="fas fa-download"></i>
+                </div>
+            `;
+        }
+    }
+    
+    return `
+        <div class="message ${msg.is_own ? 'message-own' : 'message-other'}" data-message-id="${msg.id}">
+            <div class="message-bubble">
+                ${msg.content ? `<div class="message-text">${escapeHtml(msg.content)}</div>` : ''}
+                ${fileHtml}
+                <div class="message-time">${msg.timestamp}</div>
+            </div>
+        </div>
+    `;
+}
+
+// Добавление сообщения в DOM
+function appendMessage(msg, isNew) {
+    const container = document.getElementById('messagesContainer');
+    const messageHtml = createMessageHtml(msg);
+    
+    if (isNew) {
+        container.insertAdjacentHTML('beforeend', messageHtml);
+        const lastMessage = container.lastElementChild;
+        lastMessage.style.opacity = '0';
+        lastMessage.style.transform = 'translateY(10px)';
+        setTimeout(() => {
+            lastMessage.style.transition = 'all 0.3s ease';
+            lastMessage.style.opacity = '1';
+            lastMessage.style.transform = 'translateY(0)';
+        }, 10);
+    } else {
+        container.insertAdjacentHTML('beforeend', messageHtml);
+    }
+}
+
+// Отправка сообщения
+function sendMessage() {
+    console.log('sendMessage called, conversationId:', currentConversationId);
+    
+    if (!currentConversationId) {
+        alert('Чат не выбран');
+        return;
+    }
+    
+    const content = document.getElementById('messageInput').value.trim();
+    const fileInput = document.getElementById('fileInput');
+    const formData = new FormData();
+    
+    if (content) {
+        formData.append('content', content);
+    }
+    if (fileInput.files.length > 0) {
+        formData.append('file', fileInput.files[0]);
+    }
+    
+    if (!content && fileInput.files.length === 0) {
+        console.log('No content and no file');
+        return;
+    }
+    
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    fetch(`/communication/${currentConversationId}/send/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response:', data);
+        if (data.success) {
+            appendMessage(data.message, true);
+            document.getElementById('messageInput').value = '';
+            document.getElementById('messageInput').style.height = 'auto';
+            clearFile();
+            scrollToBottom();
+            
+            // Обновляем последнее сообщение в списке чатов
+            const convItem = document.querySelector(`.conversation-item[data-conversation-id="${currentConversationId}"]`);
+            if (convItem) {
+                const shortMessage = (data.message.content || 'Файл').substring(0, 35);
+                convItem.querySelector('.conversation-last-message').textContent = shortMessage;
+                convItem.querySelector('.conversation-time').textContent = new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
+                
+                // Перемещаем чат вверх
+                const parent = convItem.parentNode;
+                parent.insertBefore(convItem, parent.firstChild);
+            }
+        } else {
+            alert(data.error || 'Ошибка отправки сообщения');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ошибка отправки сообщения');
+    })
+    .finally(() => {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+    });
+}
+
+// Загрузка сообщений
+function loadMessages() {
+    if (!currentConversationId) return;
+    
+    fetch(`/communication/${currentConversationId}/messages/`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const container = document.getElementById('messagesContainer');
+            const currentCount = container.querySelectorAll('.message').length;
+            
+            if (data.messages.length !== currentCount) {
+                container.innerHTML = '';
+                data.messages.forEach(msg => {
+                    appendMessage(msg, false);
+                });
+                scrollToBottom();
+            }
+        }
+    })
+    .catch(error => console.error('Error loading messages:', error));
+}
+
+// Обновление счетчика непрочитанных
+function updateUnreadBadge() {
+    fetch('/communication/get-unread-count/')
+    .then(response => response.json())
+    .then(data => {
+        const badges = document.querySelectorAll('.unread-badge');
+        if (data.count > 0) {
+            badges.forEach(badge => {
+                badge.textContent = data.count;
+                badge.style.display = 'inline-block';
+            });
+        } else {
+            badges.forEach(badge => {
+                badge.style.display = 'none';
+            });
+        }
+    })
+    .catch(error => console.error('Error updating badge:', error));
+}
+
+// Авто-обновление
+function startAutoRefresh() {
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    autoRefreshInterval = setInterval(loadMessages, 3000);
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, conversationId:', currentConversationId);
+    
+    if (currentConversationId) {
+        startAutoRefresh();
+        scrollToBottom();
+    }
+    
+    // Кнопка нового чата
+    const newChatBtn = document.getElementById('newChatBtn');
+    if (newChatBtn) {
+        newChatBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            openNewChatModal();
+        });
+    }
+    
+    // Форма отправки сообщения
+    const messageForm = document.getElementById('messageForm');
+    if (messageForm) {
+        messageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            sendMessage();
+        });
+    }
+    
+    // Кнопка прикрепления файла
+    const attachBtn = document.getElementById('attachBtn');
+    const fileInput = document.getElementById('fileInput');
+    if (attachBtn && fileInput) {
+        attachBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const maxSize = 10 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    alert('Файл слишком большой. Максимальный размер 10MB.');
+                    this.value = '';
+                    return;
+                }
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('filePreview').style.display = 'flex';
+            }
+        });
+    }
+    
+    // Отправка по Enter
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        });
+    }
+    
+    // Поиск чатов
+    const searchChat = document.getElementById('searchChat');
+    if (searchChat) {
+        searchChat.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const items = document.querySelectorAll('.conversation-item');
+            items.forEach(item => {
+                const name = item.dataset.conversationName?.toLowerCase() || '';
+                if (name.includes(searchTerm) || searchTerm === '') {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Форма нового чата
+    const newChatForm = document.getElementById('newChatForm');
+    if (newChatForm) {
+        newChatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = document.getElementById('submitNewChatBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Отправка...';
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    closeNewChatModal();
+                    window.location.href = data.redirect_url || `/communication/?conversation=${data.conversation_id}`;
+                } else {
+                    alert(data.error || 'Ошибка при создании чата');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при создании чата');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+    
+    // Закрытие модального окна по Escape и клику на фон
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeNewChatModal();
+        }
+    });
+    
+    const modal = document.getElementById('newChatModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeNewChatModal();
+            }
+        });
+    }
+});
+
+// Остановка авто-обновления при уходе со страницы
+window.addEventListener('beforeunload', function() {
+    stopAutoRefresh();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Расчет оплаты - {{ child.full_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-calculator me-2"></i>Расчет оплаты
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Информация о ребенке и периоде -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Информация о ребенке</h5>
+                                <p class="mb-1"><strong>Ребенок:</strong> {{ child.full_name }}</p>
+                                <p class="mb-1"><strong>Группа:</strong> 
+                                    {% if child.group %}
+                                        {{ child.group.name }}
+                                    {% else %}
+                                        <span class="text-muted">Не распределен</span>
+                                    {% endif %}
+                                </p>
+                                <p class="mb-0"><strong>Возраст:</strong> {{ child.get_age }} лет</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Период расчета</h5>
+                                <p class="mb-1"><strong>Месяц:</strong> 
+                                    {% with month_names="Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь" %}
+                                        {{ month_names.split|slice:month|last }}
+                                    {% endwith %}
+                                </p>
+                                <p class="mb-1"><strong>Год:</strong> {{ year }}</p>
+                                <p class="mb-0"><strong>Всего дней в месяце:</strong> {{ payment.total_days }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Детали расчета -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>Детали расчета
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center mb-4">
+                            <div class="col-md-3">
+                                <div class="border rounded p-3">
+                                    <h3 class="text-primary">{{ payment.attendance_days }}</h3>
+                                    <small class="text-muted">Дней посещения</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="border rounded p-3">
+                                    <h3 class="text-success">{{ payment.food_days }}</h3>
+                                    <small class="text-muted">Дней питания</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="border rounded p-3">
+                                    <h3 class="text-warning">{{ payment.total_days }}</h3>
+                                    <small class="text-muted">Всего дней</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="border rounded p-3">
+                                    <h3 class="text-danger">{{ payment.attendance_days|default:0|add:payment.food_days|default:0 }}</h3>
+                                    <small class="text-muted">Всего учтено</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Таблица расчета -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Показатель</th>
+                                        <th>Значение</th>
+                                        <th>Сумма</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Базовая ставка (содержание)</td>
+                                        <td>{{ payment.attendance_days }} дней</td>
+                                        <td class="text-end">{{ payment.base_amount|floatformat:2 }} ₽</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Питание</td>
+                                        <td>{{ payment.food_days }} дней</td>
+                                        <td class="text-end">Включено в базовую ставку</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Компенсация (скидка)</td>
+                                        <td>20%</td>
+                                        <td class="text-end text-danger">-{{ payment.discount|floatformat:2 }} ₽</td>
+                                    </tr>
+                                    <tr class="table-success">
+                                        <td><strong>ИТОГО К ОПЛАТЕ</strong></td>
+                                        <td></td>
+                                        <td class="text-end fw-bold fs-5">{{ payment.amount|floatformat:2 }} ₽</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Расчет основан на фактических данных о посещаемости и питании за указанный период.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Кнопки действий -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <button class="btn btn-outline-primary w-100" id="recalculateBtn">
+                            <i class="fas fa-sync-alt me-2"></i>Пересчитать
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'payments:payment_page' child.id %}" class="btn btn-success w-100">
+                            <i class="fas fa-credit-card me-2"></i>Перейти к оплате
+                        </a>
+                    </div>
+                </div>
+
+                <!-- История расчетов -->
+                {% if calculations %}
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2"></i>История расчетов
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Дата расчета</th>
+                                        <th>Дни посещения</th>
+                                        <th>Дни питания</th>
+                                        <th>Базовая сумма</th>
+                                        <th>Скидка</th>
+                                        <th>Итог</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for calc in calculations %}
+                                    <tr>
+                                        <td>{{ calc.calculation_date|date:"d.m.Y H:i" }}</td>
+                                        <td>{{ calc.details.attendance_days }}</td>
+                                        <td>{{ calc.details.food_days }}</td>
+                                        <td>{{ calc.details.base_amount|floatformat:2 }} ₽</td>
+                                        <td class="text-danger">-{{ calc.details.discount|floatformat:2 }} ₽</td>
+                                        <td class="fw-bold">{{ calc.details.base_amount|add:calc.details.discount|floatformat:2 }} ₽</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const recalculateBtn = document.getElementById('recalculateBtn');
+    
+    recalculateBtn.addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Пересчет...';
+        this.disabled = true;
+        
+        fetch('{% url "payments:recalculate_payment_ajax" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                payment_id: {{ payment.id }}
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Ошибка пересчета: ' + data.error);
+                this.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Пересчитать';
+                this.disabled = false;
+            }
+        })
+        .catch(error => {
+            alert('Ошибка пересчета');
+            this.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Пересчитать';
+            this.disabled = false;
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Управление тарифами{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-money-bill-wave me-2"></i>Управление тарифами
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Текущие тарифы
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if tariffs %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Год</th>
+                                <th>Возрастная категория</th>
+                                <th>Общая сумма</th>
+                                <th>Содержание</th>
+                                <th>Питание</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tariff in tariffs %}
+                            <tr>
+                                <td><strong>{{ tariff.year }}</strong></td>
+                                <td>{{ tariff.get_age_category_display }}</td>
+                                <td class="fw-bold text-success">{{ tariff.total_amount }} ₽</td>
+                                <td>{{ tariff.content_amount }} ₽</td>
+                                <td>{{ tariff.food_amount }} ₽</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-warning" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editTariffModal"
+                                            data-tariff-id="{{ tariff.id }}"
+                                            data-age-category="{{ tariff.age_category }}"
+                                            data-year="{{ tariff.year }}"
+                                            data-total-amount="{{ tariff.total_amount }}"
+                                            data-content-amount="{{ tariff.content_amount }}"
+                                            data-food-amount="{{ tariff.food_amount }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Тарифы не настроены</h5>
+                    <p class="text-muted">Добавьте тарифы для расчета оплаты</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>Добавить тариф
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Год</label>
+                        <input type="number" class="form-control" name="year" value="{% now 'Y' %}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Возрастная категория</label>
+                        <select class="form-select" name="age_category" required>
+                            <option value="nursery">Ясельная (1.5-3 года)</option>
+                            <option value="kindergarten">Сад (3-7 лет)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Общая сумма (₽)</label>
+                        <input type="number" class="form-control" name="total_amount" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Содержание (₽)</label>
+                        <input type="number" class="form-control" name="content_amount" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Питание (₽)</label>
+                        <input type="number" class="form-control" name="food_amount" step="0.01" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-save me-2"></i>Сохранить тариф
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Информация
+                </h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Расчет оплаты:</strong></p>
+                <p class="small">Оплата = (Содержание × Дни посещения / Рабочие дни + Питание × Дни питания / Рабочие дни) - Компенсация</p>
+                
+                <p><strong>Единый тариф:</strong></p>
+                <p class="small">Тарифы устанавливаются для всех детей одинаково в зависимости от возрастной категории и года.</p>
+                
+                <p><strong>Федеральная компенсация (возврат после оплаты):</strong></p>
+                <ul class="small">
+                    <li>Первый ребенок: 20%</li>
+                    <li>Второй ребенок: 50%</li>
+                    <li>Третий и последующие дети: 70%</li>
+                </ul>
+                <p class="small text-muted">Компенсация начисляется только на стоимость содержания и питания (не на кружки).</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования тарифа -->
+<div class="modal fade" id="editTariffModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title">Редактирование тарифа</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editTariffForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_tariff_id" name="tariff_id">
+                    <div class="mb-3">
+                        <label class="form-label">Год</label>
+                        <input type="number" class="form-control" id="edit_year" name="year" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Возрастная категория</label>
+                        <input type="text" class="form-control" id="edit_age_category_display" readonly>
+                        <input type="hidden" id="edit_age_category" name="age_category">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Общая сумма (₽)</label>
+                        <input type="number" class="form-control" id="edit_total_amount" name="total_amount" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Содержание (₽)</label>
+                        <input type="number" class="form-control" id="edit_content_amount" name="content_amount" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Питание (₽)</label>
+                        <input type="number" class="form-control" id="edit_food_amount" name="food_amount" step="0.01" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-warning" onclick="submitEditForm()">Сохранить изменения</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editModal = document.getElementById('editTariffModal');
+    
+    editModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        
+        document.getElementById('edit_tariff_id').value = button.getAttribute('data-tariff-id');
+        document.getElementById('edit_year').value = button.getAttribute('data-year');
+        
+        const ageCategory = button.getAttribute('data-age-category');
+        document.getElementById('edit_age_category').value = ageCategory;
+        document.getElementById('edit_age_category_display').value = 
+            ageCategory === 'nursery' ? 'Ясельная (1.5-3 года)' : 'Сад (3-7 лет)';
+        
+        document.getElementById('edit_total_amount').value = button.getAttribute('data-total-amount');
+        document.getElementById('edit_content_amount').value = button.getAttribute('data-content-amount');
+        document.getElementById('edit_food_amount').value = button.getAttribute('data-food-amount');
+    });
+});
+
+function submitEditForm() {
+    document.getElementById('editTariffForm').submit();
+}
+</script>
+{% endblock %}

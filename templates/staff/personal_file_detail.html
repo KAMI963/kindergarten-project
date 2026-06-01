@@ -1,0 +1,135 @@
+<!-- staff/templates/staff/personal_file_detail.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Личное дело{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-folder-open"></i>
+                    Личное дело №{{ personal_file.file_number }}
+                </h1>
+                <p class="mb-0 opacity-75">{{ employee.full_name }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'staff:personal_file_edit' employee.id %}" class="btn btn-light staff-btn">
+                    <i class="fas fa-edit"></i> Редактировать
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="staff-card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-user"></i>
+                    Информация о сотруднике
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th>ФИО:</th>
+                            <td>{{ employee.full_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Должность:</th>
+                            <td>{{ employee.position }}</td>
+                        </tr>
+                        <tr>
+                            <th>Дата приема:</th>
+                            <td>{{ employee.hire_date|date:"d.m.Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Номер дела:</th>
+                            <td>{{ personal_file.file_number }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="staff-card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-file"></i>
+                    Документы
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Личная карточка Т-2
+                            {% if personal_file.personal_card %}
+                            <a href="{{ personal_file.personal_card.url }}" class="btn btn-sm btn-outline-success" target="_blank">
+                                <i class="fas fa-download"></i> Скачать
+                            </a>
+                            {% else %}
+                            <span class="badge bg-secondary">Не загружено</span>
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Трудовая книжка
+                            {% if personal_file.employment_history %}
+                            <a href="{{ personal_file.employment_history.url }}" class="btn btn-sm btn-outline-success" target="_blank">
+                                <i class="fas fa-download"></i> Скачать
+                            </a>
+                            {% else %}
+                            <span class="badge bg-secondary">Не загружено</span>
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Заявление о приеме
+                            {% if personal_file.application %}
+                            <a href="{{ personal_file.application.url }}" class="btn btn-sm btn-outline-success" target="_blank">
+                                <i class="fas fa-download"></i> Скачать
+                            </a>
+                            {% else %}
+                            <span class="badge bg-secondary">Не загружено</span>
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Приказ о приеме
+                            {% if personal_file.order %}
+                            <a href="{{ personal_file.order.url }}" class="btn btn-sm btn-outline-success" target="_blank">
+                                <i class="fas fa-download"></i> Скачать
+                            </a>
+                            {% else %}
+                            <span class="badge bg-secondary">Не загружено</span>
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Воинский учет
+                            {% if personal_file.military_registration %}
+                            <a href="{{ personal_file.military_registration.url }}" class="btn btn-sm btn-outline-success" target="_blank">
+                                <i class="fas fa-download"></i> Скачать
+                            </a>
+                            {% else %}
+                            <span class="badge bg-secondary">Не загружено</span>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        {% if personal_file.notes %}
+        <div class="col-12">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-sticky-note"></i>
+                    Примечания
+                </div>
+                <div class="card-body">
+                    {{ personal_file.notes|linebreaks }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+<!-- staff/templates/staff/position_form.html -->
+{% extends 'staff/base_staff.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <h1>
+            <i class="fas fa-briefcase"></i>
+            {{ title }}
+        </h1>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-edit"></i>
+                    {% if position %}Редактирование должности{% else %}Новая должность{% endif %}
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                {{ form.code|as_crispy_field }}
+                                <small class="text-muted">Уникальный код должности (например: VOS-01)</small>
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.title|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.category|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.tariff_category|as_crispy_field }}
+                                <small class="text-muted">Тарифный разряд (если применимо)</small>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                {{ form.base_salary|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.hazardous_bonus|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.irregular_bonus|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-12">
+                                {{ form.education_requirements|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-12">
+                                {{ form.description|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        Должность активна (используется в штатном расписании)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'staff:position_list' %}" class="btn btn-secondary px-4">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn staff-btn-primary px-5">
+                                <i class="fas fa-save"></i> {% if position %}Сохранить{% else %}Создать{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

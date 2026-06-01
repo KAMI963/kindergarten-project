@@ -1,0 +1,220 @@
+<!-- staff/templates/staff/vacancy_detail.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}{{ vacancy.staff_unit.position.title }}{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-briefcase"></i>
+                    {{ vacancy.staff_unit.position.title }}
+                </h1>
+                <p class="mb-0 opacity-75">Код должности: {{ vacancy.staff_unit.position.code }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'staff:vacancy_edit' vacancy.id %}" class="btn btn-light staff-btn me-2">
+                    <i class="fas fa-edit"></i> Редактировать
+                </a>
+                <a href="{% url 'staff:vacancy_list' %}" class="btn btn-outline-light staff-btn">
+                    <i class="fas fa-arrow-left"></i> Назад
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Основная информация -->
+            <div class="staff-card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle"></i>
+                    Описание вакансии
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="fw-600">Статус</h6>
+                            <p>
+                                {% if vacancy.is_published %}
+                                <span class="badge bg-success">Опубликована</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Черновик</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-600">Дата публикации</h6>
+                            <p>{{ vacancy.publish_date|date:"d.m.Y"|default:"не указана" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-600">Плановая дата закрытия</h6>
+                            <p>{{ vacancy.closing_date|date:"d.m.Y"|default:"не указана" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-600">Количество ставок</h6>
+                            <p>{{ vacancy.staff_unit.quantity }}</p>
+                        </div>
+                    </div>
+                    
+                    <h6 class="fw-600 mb-2">Требования к кандидату:</h6>
+                    <p class="mb-4">{{ vacancy.requirements|linebreaks }}</p>
+                    
+                    <h6 class="fw-600 mb-2">Обязанности:</h6>
+                    <p class="mb-4">{{ vacancy.responsibilities|linebreaks }}</p>
+                    
+                    <h6 class="fw-600 mb-2">Условия работы:</h6>
+                    <p>{{ vacancy.conditions|linebreaks }}</p>
+                </div>
+            </div>
+            
+            <!-- Кандидаты -->
+            <div class="staff-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-users"></i>
+                        Кандидаты ({{ candidates.count }})
+                    </div>
+                    <a href="{% url 'staff:candidate_add' vacancy.id %}" class="btn btn-sm btn-success">
+                        <i class="fas fa-plus"></i> Добавить кандидата
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="staff-table table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ФИО</th>
+                                    <th>Телефон</th>
+                                    <th>Email</th>
+                                    <th>Дата подачи</th>
+                                    <th>Статус</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for candidate in candidates %}
+                                <tr>
+                                    <td>{{ candidate.full_name }}</td>
+                                    <td>{{ candidate.phone }}</td>
+                                    <td>{{ candidate.email }}</td>
+                                    <td>{{ candidate.created_at|date:"d.m.Y" }}</td>
+                                    <td>
+                                        {% if candidate.status == 'new' %}
+                                        <span class="badge bg-info">Новый</span>
+                                        {% elif candidate.status == 'interview' %}
+                                        <span class="badge bg-warning">Собеседование</span>
+                                        {% elif candidate.status == 'accepted' %}
+                                        <span class="badge bg-success">Принят</span>
+                                        {% elif candidate.status == 'rejected' %}
+                                        <span class="badge bg-danger">Отказ</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#candidateModal{{ candidate.id }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Модальное окно кандидата -->
+                                <div class="modal fade staff-modal" id="candidateModal{{ candidate.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">{{ candidate.full_name }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p><strong>Телефон:</strong> {{ candidate.phone }}</p>
+                                                <p><strong>Email:</strong> {{ candidate.email }}</p>
+                                                <p><strong>Дата подачи:</strong> {{ candidate.created_at|date:"d.m.Y H:i" }}</p>
+                                                <p><strong>Статус:</strong> {{ candidate.get_status_display }}</p>
+                                                {% if candidate.interview_date %}
+                                                <p><strong>Дата собеседования:</strong> {{ candidate.interview_date|date:"d.m.Y H:i" }}</p>
+                                                {% endif %}
+                                                {% if candidate.notes %}
+                                                <p><strong>Заметки:</strong> {{ candidate.notes }}</p>
+                                                {% endif %}
+                                                {% if candidate.resume %}
+                                                <a href="{{ candidate.resume.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                    <i class="fas fa-file-pdf"></i> Резюме
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">Нет кандидатов</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Информация о должности -->
+            <div class="staff-card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info"></i>
+                    Информация о должности
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Категория:</th>
+                            <td>{{ vacancy.staff_unit.position.get_category_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>Тарифный разряд:</th>
+                            <td>{{ vacancy.staff_unit.position.tariff_category|default:"—" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Базовый оклад:</th>
+                            <td>{{ vacancy.staff_unit.position.base_salary|floatformat:2 }} ₽</td>
+                        </tr>
+                        <tr>
+                            <th>Надбавка за вредность:</th>
+                            <td>{{ vacancy.staff_unit.position.hazardous_bonus }}%</td>
+                        </tr>
+                        <tr>
+                            <th>Надбавка за ненормированный день:</th>
+                            <td>{{ vacancy.staff_unit.position.irregular_bonus }}%</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Быстрые действия -->
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-bolt"></i>
+                    Быстрые действия
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'staff:candidate_add' vacancy.id %}" class="btn staff-btn-primary">
+                            <i class="fas fa-user-plus"></i> Добавить кандидата
+                        </a>
+                        <a href="{% url 'staff:vacancy_edit' vacancy.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit"></i> Редактировать вакансию
+                        </a>
+                        <a href="{% url 'staff:vacancy_close' vacancy.id %}" class="btn btn-outline-danger">
+                            <i class="fas fa-times"></i> Закрыть вакансию
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

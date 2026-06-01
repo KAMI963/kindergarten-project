@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Отметить посещаемость - {{ child.full_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Отметить посещаемость</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'attendance:attendance_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Назад к списку
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ child.full_name }}</h5>
+                <small class="text-muted">{{ today|date:"d E Y" }}</small>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Статус</label>
+                        {{ form.status }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Время прихода</label>
+                                {{ form.arrival_time }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Время ухода</label>
+                                {{ form.departure_time }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Примечания</label>
+                        {{ form.notes }}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <a href="{% url 'attendance:attendance_list' %}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Информация о ребенке</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Группа:</strong> {{ child.group.name|default:"Не назначена" }}</p>
+                <p><strong>Возраст:</strong> {{ child.get_age }} лет</p>
+                <p><strong>Дата рождения:</strong> {{ child.birth_date|date:"d.m.Y" }}</p>
+                
+                {% if attendance %}
+                <hr>
+                <h6>Текущая отметка:</h6>
+                <p><strong>Статус:</strong> 
+                    {% if attendance.status == 'present' %}
+                        <span class="badge bg-success">Присутствует</span>
+                    {% elif attendance.status == 'absent' %}
+                        <span class="badge bg-danger">Отсутствует</span>
+                    {% elif attendance.status == 'sick' %}
+                        <span class="badge bg-warning">Болеет</span>
+                    {% else %}
+                        <span class="badge bg-info">Отпуск</span>
+                    {% endif %}
+                </p>
+                {% if attendance.arrival_time %}
+                <p><strong>Пришел:</strong> {{ attendance.arrival_time|time:"H:i" }}</p>
+                {% endif %}
+                {% if attendance.departure_time %}
+                <p><strong>Ушел:</strong> {{ attendance.departure_time|time:"H:i" }}</p>
+                {% endif %}
+                {% if attendance.notes %}
+                <p><strong>Примечания:</strong> {{ attendance.notes }}</p>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Быстрые действия</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'attendance:mark_meal' child.id %}" class="btn btn-outline-success">
+                        <i class="fas fa-utensils me-1"></i> Отметить питание
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

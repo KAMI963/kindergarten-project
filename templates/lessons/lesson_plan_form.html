@@ -1,0 +1,129 @@
+<!-- lessons/templates/lessons/lesson_plan_form.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - Детский сад{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4>{{ title }}</h4>
+                        <a href="{% if lesson_plan %}{% url 'lessons:lesson_plan_detail' lesson_plan.id %}{% else %}{% url 'lessons:lesson_plan_list' %}{% endif %}" 
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i> Назад
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if template %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Используется шаблон: <strong>"{{ template.title }}"</strong>
+                    </div>
+                    {% endif %}
+
+                    <form method="post" id="lessonForm">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.title|as_crispy_field }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.lesson_type|as_crispy_field }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.group|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.description|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.objectives|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.materials|as_crispy_field }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.duration|as_crispy_field }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.difficulty|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.planned_date|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.planned_time|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    {{ form.age_appropriate }}
+                                    <label class="form-check-label" for="{{ form.age_appropriate.id_for_label }}">
+                                        Соответствует возрастной группе
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Убедитесь, что занятие подходит для возрастной категории группы
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> {{ submit_text }}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                                        <i class="fas fa-times me-1"></i> Отмена
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Автоматическая установка минимальной даты на сегодня
+        const dateField = document.getElementById('{{ form.planned_date.id_for_label }}');
+        if (dateField && !dateField.value) {
+            const today = new Date().toISOString().split('T')[0];
+            dateField.value = today;
+        }
+
+        // Валидация формы
+        document.getElementById('lessonForm').addEventListener('submit', function(e) {
+            const duration = document.getElementById('{{ form.duration.id_for_label }}').value;
+            if (duration < 5 || duration > 120) {
+                e.preventDefault();
+                alert('Продолжительность занятия должна быть от 5 до 120 минут');
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid #4a6fa5;
+    }
+    .form-section h5 {
+        color: #4a6fa5;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    .schedule-types-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    .schedule-type-item {
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .schedule-type-item:hover {
+        background-color: #e9ecef;
+        border-color: #4a6fa5;
+    }
+    .schedule-type-item.selected {
+        background-color: #4a6fa5;
+        color: white;
+        border-color: #4a6fa5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 text-gray-800">{{ title }}</h1>
+        <a href="{% url 'staff:schedule_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Назад к списку
+        </a>
+    </div>
+
+    <!-- Форма -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Основная информация -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-info-circle me-2"></i>Основная информация</h5>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    {{ form.name.label }} *
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.schedule_type.id_for_label }}" class="form-label">
+                                    {{ form.schedule_type.label }} *
+                                </label>
+                                {{ form.schedule_type }}
+                                {% if form.schedule_type.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.schedule_type.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.employee_types.id_for_label }}" class="form-label">
+                                    {{ form.employee_types.label }}
+                                </label>
+                                {{ form.employee_types }}
+                                {% if form.employee_types.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.employee_types.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text text-muted">
+                                    Укажите категории сотрудников через запятую (например: teacher, assistant, guard)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Нормы часов -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-clock me-2"></i>Нормы рабочего времени</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.weekly_hours.id_for_label }}" class="form-label">
+                                        {{ form.weekly_hours.label }} *
+                                    </label>
+                                    {{ form.weekly_hours }}
+                                    {% if form.weekly_hours.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.weekly_hours.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text text-muted">Норма часов в неделю</div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.daily_hours.id_for_label }}" class="form-label">
+                                        {{ form.daily_hours.label }} *
+                                    </label>
+                                    {{ form.daily_hours }}
+                                    {% if form.daily_hours.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.daily_hours.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text text-muted">Норма часов в день</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Описание и статус -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-align-left me-2"></i>Дополнительно</h5>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    {{ form.description.label }}
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3 form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    {{ form.is_active.label }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Кнопки -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'staff:schedule_list' %}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times me-2"></i>Отмена
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Сохранить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Боковая панель с подсказками -->
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-lightbulb me-2"></i>Типы графиков
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><strong>5x2</strong> - Пятидневка (5/2)</li>
+                        <li><strong>6x1</strong> - Шестидневка (6/1)</li>
+                        <li><strong>2x2</strong> - Два через два</li>
+                        <li><strong>1x3</strong> - Сутки через трое</li>
+                        <li><strong>shift</strong> - Сменный график</li>
+                        <li><strong>individual</strong> - Индивидуальный</li>
+                    </ul>
+                </div>
+            </div>
+            
+            {% if schedule %}
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <i class="fas fa-history me-2"></i>Информация
+                </div>
+                <div class="card-body">
+                    <p><strong>Создан:</strong> {{ schedule.created_at|date:"d.m.Y H:i" }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Подсказки для выбора типа графика
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('{{ form.schedule_type.id_for_label }}');
+        const weeklyHours = document.getElementById('{{ form.weekly_hours.id_for_label }}');
+        const dailyHours = document.getElementById('{{ form.daily_hours.id_for_label }}');
+        
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function() {
+                const selectedType = this.value;
+                
+                // Автоматически подставляем нормы часов в зависимости от типа
+                if (selectedType === '5x2') {
+                    weeklyHours.value = 40;
+                    dailyHours.value = 8;
+                } else if (selectedType === '6x1') {
+                    weeklyHours.value = 40;
+                    dailyHours.value = 6.67;
+                } else if (selectedType === '2x2') {
+                    weeklyHours.value = 42;
+                    dailyHours.value = 12;
+                } else if (selectedType === '1x3') {
+                    weeklyHours.value = 56;
+                    dailyHours.value = 24;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

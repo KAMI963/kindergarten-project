@@ -1,0 +1,833 @@
+<!-- templates/children/children_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Личные дела детей{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Основной контейнер */
+    .personal-files-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 15px;
+    }
+    
+    /* Заголовок */
+    .header-section {
+        background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+        color: white;
+    }
+    
+    .kindergarten-name {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    
+    .kindergarten-name small {
+        font-size: 11px;
+        opacity: 0.9;
+    }
+    
+    .page-subtitle {
+        font-size: 12px;
+        opacity: 0.95;
+    }
+    
+    /* Навигация */
+    .nav-menu {
+        background: white;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 15px;
+        display: flex;
+        gap: 5px;
+        padding: 0 15px;
+        overflow-x: auto;
+    }
+    
+    .nav-item {
+        padding: 10px 15px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #5f6368;
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        white-space: nowrap;
+        background: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .nav-item:hover {
+        color: #1a73e8;
+    }
+    
+    .nav-item.active {
+        color: #1a73e8;
+        border-bottom-color: #1a73e8;
+    }
+    
+    /* Карточка контента */
+    .content-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    /* Документы */
+    .documents-list {
+        background: #f8f9fa;
+        padding: 12px 15px;
+        border-bottom: 1px solid #e8eaed;
+    }
+    
+    .documents-title {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .doc-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 8px;
+    }
+    
+    .doc-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #e8eaed;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .doc-item:hover {
+        border-color: #1a73e8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .doc-icon {
+        width: 24px;
+        height: 24px;
+        background: #e8f0fe;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #1a73e8;
+        font-size: 11px;
+    }
+    
+    .doc-name {
+        flex: 1;
+        font-size: 11px;
+        color: #202124;
+    }
+    
+    .doc-status {
+        font-size: 9px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        background: #e8eaed;
+        color: #5f6368;
+    }
+    
+    .doc-status.uploaded {
+        background: #e6f4ea;
+        color: #1e8e3e;
+    }
+    
+    .doc-status.missing {
+        background: #fce8e6;
+        color: #d93025;
+    }
+    
+    /* Статистика */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        padding: 12px 15px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e8eaed;
+    }
+    
+    .stat-card {
+        text-align: center;
+        padding: 8px;
+        background: white;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .stat-number {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a73e8;
+    }
+    
+    .stat-label {
+        font-size: 10px;
+        color: #5f6368;
+        margin-top: 3px;
+    }
+    
+    /* Фильтры */
+    .filter-panel {
+        padding: 10px 15px;
+        background: white;
+        border-bottom: 1px solid #e8eaed;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .search-box {
+        flex: 1;
+        min-width: 180px;
+        position: relative;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9aa0a6;
+        font-size: 11px;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 6px 8px 6px 28px;
+        border: 1px solid #dadce0;
+        border-radius: 6px;
+        font-size: 12px;
+        transition: all 0.2s;
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        border-color: #1a73e8;
+        box-shadow: 0 0 0 2px rgba(26,115,232,0.1);
+    }
+    
+    .filter-select {
+        padding: 6px 8px;
+        border: 1px solid #dadce0;
+        border-radius: 6px;
+        font-size: 12px;
+        background: white;
+        cursor: pointer;
+        min-width: 100px;
+    }
+    
+    .filter-select:focus {
+        outline: none;
+        border-color: #1a73e8;
+    }
+    
+    .btn-add {
+        background: #1a73e8;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-add:hover {
+        background: #1557b0;
+        transform: translateY(-1px);
+        color: white;
+    }
+    
+    /* Таблица */
+    .table-wrapper {
+        overflow-x: auto;
+        padding: 0 15px 15px 15px;
+    }
+    
+    .children-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+    
+    .children-table th {
+        text-align: left;
+        padding: 10px 8px;
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #5f6368;
+        border-bottom: 1px solid #e8eaed;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .children-table td {
+        padding: 10px 8px;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+    }
+    
+    .children-table tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .child-name {
+        font-weight: 500;
+        font-size: 12px;
+        color: #1e293b;
+    }
+    
+    .group-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        background: #e8f0fe;
+        color: #1a73e8;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 500;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background: #e6f4ea;
+        color: #1e8e3e;
+    }
+    
+    .status-inactive {
+        background: #fce8e6;
+        color: #d93025;
+    }
+    
+    .doc-status-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 500;
+    }
+    
+    .doc-status-complete {
+        background: #e6f4ea;
+        color: #1e8e3e;
+    }
+    
+    .doc-status-partial {
+        background: #fef7e0;
+        color: #e37400;
+    }
+    
+    .doc-status-missing {
+        background: #fce8e6;
+        color: #d93025;
+    }
+    
+    /* Кнопки действий */
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+    }
+    
+    .btn-action {
+        padding: 5px 8px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        transition: all 0.2s;
+    }
+    
+    .btn-view {
+        background: #e8f0fe;
+        color: #1a73e8;
+    }
+    
+    .btn-view:hover {
+        background: #d2e3fc;
+        color: #1a73e8;
+    }
+    
+    .btn-edit {
+        background: #fef7e0;
+        color: #e37400;
+    }
+    
+    .btn-edit:hover {
+        background: #feefc8;
+        color: #e37400;
+    }
+    
+    /* Пустое состояние */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+    }
+    
+    .empty-icon {
+        font-size: 48px;
+        color: #dadce0;
+        margin-bottom: 12px;
+    }
+    
+    .empty-title {
+        font-size: 14px;
+        color: #5f6368;
+        margin-bottom: 6px;
+    }
+    
+    .empty-text {
+        font-size: 12px;
+        color: #9aa0a6;
+        margin-bottom: 12px;
+    }
+    
+    /* Дата рождения */
+    .birth-date {
+        font-size: 11px;
+        line-height: 1.3;
+    }
+    
+    .birth-date small {
+        font-size: 9px;
+        color: #5f6368;
+    }
+    
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .personal-files-container {
+            padding: 10px;
+        }
+        
+        .header-section {
+            padding: 10px 15px;
+        }
+        
+        .kindergarten-name {
+            font-size: 16px;
+        }
+        
+        .stats-row {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            padding: 10px 12px;
+        }
+        
+        .filter-panel {
+            padding: 8px 12px;
+        }
+        
+        .table-wrapper {
+            padding: 0 10px 10px 10px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .btn-action {
+            justify-content: center;
+        }
+        
+        .doc-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .nav-item {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .stat-number {
+            font-size: 18px;
+        }
+        
+        .filter-select {
+            min-width: 80px;
+            font-size: 11px;
+        }
+        
+        .search-box {
+            min-width: 150px;
+        }
+        
+        .search-box input {
+            font-size: 11px;
+        }
+    }
+    
+    /* Печать */
+    @media print {
+        .nav-menu, .filter-panel, .action-buttons, .btn-add,
+        .system-sidebar, .system-navbar {
+            display: none;
+        }
+        
+        .personal-files-container {
+            padding: 0;
+        }
+        
+        .header-section {
+            background: #1a73e8;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="personal-files-container">
+    <!-- Заголовок -->
+    <div class="header-section">
+        <div class="kindergarten-name">
+            Детский сад "Рябинушка"
+            <small>Личные дела детей</small>
+        </div>
+        <div class="page-subtitle">
+            Управление личными делами воспитанников
+        </div>
+    </div>
+    
+    <!-- Навигационное меню -->
+    <div class="nav-menu">
+        <button class="nav-item" data-no-pjax>Главная</button>
+        <a href="{% url 'children:children_list' %}" class="nav-item active" data-pjax>Дети</a>
+        <button class="nav-item" data-no-pjax>Архив</button>
+        <button class="nav-item" data-no-pjax>Отчеты</button>
+        <button class="nav-item" data-no-pjax>Настройки</button>
+    </div>
+    
+    <div class="content-card">
+        <!-- Список документов -->
+        <div class="documents-list">
+            <div class="documents-title">
+                <i class="fas fa-folder-open"></i>
+                Личное дело
+            </div>
+            <div class="doc-grid">
+                <div class="doc-item" onclick="window.location.href='{% url 'applications:applications_list' %}'">
+                    <div class="doc-icon"><i class="fas fa-file-alt"></i></div>
+                    <span class="doc-name">Заявление о приеме</span>
+                    {% if applications_count > 0 %}
+                    <span class="doc-status uploaded">{{ applications_count }}</span>
+                    {% else %}
+                    <span class="doc-status missing">0</span>
+                    {% endif %}
+                </div>
+                
+                <div class="doc-item">
+                    <div class="doc-icon"><i class="fas fa-id-card"></i></div>
+                    <span class="doc-name">Личная карточка</span>
+                    {% if children.count > 0 %}
+                    <span class="doc-status uploaded">{{ children.count }}</span>
+                    {% else %}
+                    <span class="doc-status missing">0</span>
+                    {% endif %}
+                </div>
+                
+                <div class="doc-item">
+                    <div class="doc-icon"><i class="fas fa-birthday-cake"></i></div>
+                    <span class="doc-name">Свид-во о рождении</span>
+                    {% if birth_certificates_count > 0 %}
+                    <span class="doc-status uploaded">{{ birth_certificates_count }}</span>
+                    {% else %}
+                    <span class="doc-status missing">0</span>
+                    {% endif %}
+                </div>
+                
+                <div class="doc-item">
+                    <div class="doc-icon"><i class="fas fa-notes-medical"></i></div>
+                    <span class="doc-name">Мед. карта ф.026/у</span>
+                    {% if medical_cards_count > 0 %}
+                    <span class="doc-status uploaded">{{ medical_cards_count }}</span>
+                    {% else %}
+                    <span class="doc-status missing">0</span>
+                    {% endif %}
+                </div>
+                
+                <div class="doc-item">
+                    <div class="doc-icon"><i class="fas fa-file-medical"></i></div>
+                    <span class="doc-name">Полис ОМС</span>
+                    {% if policy_oms_count > 0 %}
+                    <span class="doc-status uploaded">{{ policy_oms_count }}</span>
+                    {% else %}
+                    <span class="doc-status missing">0</span>
+                    {% endif %}
+                </div>
+                
+                <div class="doc-item">
+                    <div class="doc-icon"><i class="fas fa-shield-alt"></i></div>
+                    <span class="doc-name">Согласие на ПД</span>
+                    {% if consents_count > 0 %}
+                    <span class="doc-status uploaded">{{ consents_count }}</span>
+                    {% else %}
+                    <span class="doc-status missing">0</span>
+                    {% endif %}
+                </div>
+                
+                <div class="doc-item">
+                    <div class="doc-icon"><i class="fas fa-ticket-alt"></i></div>
+                    <span class="doc-name">Док-ты на льготы</span>
+                    {% if benefits_count > 0 %}
+                    <span class="doc-status uploaded">{{ benefits_count }}</span>
+                    {% else %}
+                    <span class="doc-status missing">0</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Статистика -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-number">{{ children.count }}</div>
+                <div class="stat-label">Всего детей</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ average_age|default:"0" }}</div>
+                <div class="stat-label">Ср. возраст</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ boys_count|default:"0" }}</div>
+                <div class="stat-label">Мальчиков</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ girls_count|default:"0" }}</div>
+                <div class="stat-label">Девочек</div>
+            </div>
+        </div>
+        
+        <!-- Фильтры -->
+        <div class="filter-panel">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Поиск по ФИО..." id="searchInput">
+            </div>
+            <select class="filter-select" id="groupFilter">
+                <option value="">Все группы</option>
+                {% for group in groups %}
+                <option value="{{ group.id }}">{{ group.name }}</option>
+                {% endfor %}
+            </select>
+            <select class="filter-select" id="statusFilter">
+                <option value="">Все статусы</option>
+                <option value="active">Активен</option>
+                <option value="inactive">Неактивен</option>
+            </select>
+            {% if request.user.role == 'director' %}
+            <a href="{% url 'children:child_create' %}" class="btn-add" data-pjax>
+                <i class="fas fa-plus"></i> Добавить
+            </a>
+            {% endif %}
+        </div>
+        
+        <!-- Таблица детей -->
+        <div class="table-wrapper">
+            <table class="children-table" id="childrenTable">
+                <thead>
+                    <tr>
+                        <th>ФИО ребенка</th>
+                        <th>Группа</th>
+                        <th>Дата рождения</th>
+                        <th>Документы</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for child in children %}
+                    <tr data-child-id="{{ child.id }}">
+                        <td class="child-name">{{ child.full_name }}</td>
+                        <td>
+                            {% if child.group %}
+                            <span class="group-badge">{{ child.group.name }}</span>
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+                        <td class="birth-date">
+                            {{ child.birth_date|date:"d.m.Y" }}<br>
+                            <small>{{ child.age_display }}</small>
+                        </td>
+                        <td>
+                            {% with doc_count=child.birth_certificate|yesno:"1,0"|add:child.policy_oms_number|yesno:"1,0"|add:child.medical_card_number|yesno:"1,0" %}
+                                {% if doc_count >= 3 %}
+                                <span class="doc-status-badge doc-status-complete">Полный</span>
+                                {% elif doc_count >= 1 %}
+                                <span class="doc-status-badge doc-status-partial">Частичный</span>
+                                {% else %}
+                                <span class="doc-status-badge doc-status-missing">Нет</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% if child.is_active %}
+                            <span class="status-badge status-active">Активен</span>
+                            {% else %}
+                            <span class="status-badge status-inactive">Неактивен</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'children:child_detail' child.id %}" class="btn-action btn-view" data-pjax title="Просмотр">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if request.user.role == 'director' %}
+                                <a href="{% url 'children:child_edit' child.id %}" class="btn-action btn-edit" data-pjax title="Редактировать">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-child"></i>
+                                </div>
+                                <div class="empty-title">Нет добавленных детей</div>
+                                <div class="empty-text">Добавьте первого ребенка в систему</div>
+                                {% if request.user.role == 'director' %}
+                                <a href="{% url 'children:child_create' %}" class="btn-add" data-pjax>
+                                    <i class="fas fa-plus"></i> Добавить ребенка
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// Поиск и фильтрация
+(function() {
+    function initFilters() {
+        const searchInput = document.getElementById('searchInput');
+        const groupFilter = document.getElementById('groupFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const table = document.getElementById('childrenTable');
+        
+        if (!searchInput || !groupFilter || !statusFilter || !table) return;
+        
+        function filterTable() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const groupValue = groupFilter.value;
+            const statusValue = statusFilter.value;
+            
+            const rows = table.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                // Пропускаем строку с empty-state
+                if (row.querySelector('.empty-state')) return;
+                
+                const nameCell = row.cells[0];
+                const groupCell = row.cells[1];
+                const statusCell = row.cells[4];
+                
+                if (!nameCell) return;
+                
+                const name = nameCell.textContent.toLowerCase();
+                const group = groupCell.textContent.trim();
+                const statusText = statusCell.textContent.trim();
+                const isActive = statusText === 'Активен';
+                
+                let show = true;
+                
+                if (searchTerm && !name.includes(searchTerm)) {
+                    show = false;
+                }
+                
+                if (groupValue && group !== groupValue && !group.includes(groupValue) && groupValue !== '') {
+                    show = false;
+                }
+                
+                if (statusValue) {
+                    if (statusValue === 'active' && !isActive) show = false;
+                    if (statusValue === 'inactive' && isActive) show = false;
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
+        }
+        
+        searchInput.addEventListener('keyup', filterTable);
+        groupFilter.addEventListener('change', filterTable);
+        statusFilter.addEventListener('change', filterTable);
+        
+        // Добавляем быстрый поиск по Ctrl+F
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+            }
+        });
+    }
+    
+    // Инициализация при загрузке
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initFilters);
+    } else {
+        initFilters();
+    }
+    
+    // Повторная инициализация после PJAX
+    document.addEventListener('pjax:complete', function() {
+        setTimeout(initFilters, 50);
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,743 @@
+<!-- staff/templates/staff/document_reminders.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Напоминания о документах{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Современные стили */
+.reminders-container {
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    min-height: calc(100vh - 60px);
+}
+
+/* Анимации */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.reminders-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease;
+}
+
+.reminders-header::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -10%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: pulse 8s ease-in-out infinite;
+}
+
+.reminders-header::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: pulse 6s ease-in-out infinite reverse;
+}
+
+.reminders-header h2 {
+    font-size: 1.3rem;
+    margin: 0 0 0.3rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+}
+
+.reminders-header p {
+    font-size: 0.75rem;
+    opacity: 0.95;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+
+/* Статистика */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 0.8rem;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(102,126,234,0.1);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    animation: fadeInUp 0.5s ease;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.05s; }
+.stat-card:nth-child(2) { animation-delay: 0.1s; }
+.stat-card:nth-child(3) { animation-delay: 0.15s; }
+.stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(102,126,234,0.2);
+    border-color: rgba(102,126,234,0.3);
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+}
+
+.stat-card:hover::after {
+    transform: scaleX(1);
+}
+
+.stat-icon {
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.stat-icon i {
+    font-size: 1.3rem;
+}
+
+.stat-card:nth-child(1) .stat-icon i { color: #ef4444; }
+.stat-card:nth-child(2) .stat-icon i { color: #f59e0b; }
+.stat-card:nth-child(3) .stat-icon i { color: #10b981; }
+.stat-card:nth-child(4) .stat-icon i { color: #667eea; }
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0.2rem 0;
+    background: linear-gradient(135deg, #1e293b, #334155);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.stat-label {
+    font-size: 0.65rem;
+    color: #64748b;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* Карточка с табами */
+.tabs-card {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    animation: fadeInUp 0.5s ease 0.25s both;
+}
+
+.tabs-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 0.25rem 0.5rem;
+}
+
+.tab-btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    border-radius: 12px;
+    margin: 0.25rem;
+}
+
+.tab-btn:hover {
+    color: #667eea;
+    background: rgba(102,126,234,0.08);
+    transform: translateY(-1px);
+}
+
+.tab-btn.active {
+    color: #667eea;
+    background: linear-gradient(135deg, rgba(102,126,234,0.12), rgba(118,75,162,0.12));
+}
+
+.tab-btn.active::before {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 2px;
+}
+
+.tab-btn .badge {
+    margin-left: 0.4rem;
+    font-size: 0.55rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+    color: #475569;
+    font-weight: 600;
+}
+
+.tab-btn.active .badge {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.tab-content {
+    padding: 0;
+}
+
+.tab-pane {
+    display: none;
+    animation: fadeInUp 0.3s ease;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Таблица с дизайном */
+.table-responsive {
+    overflow-x: auto;
+    max-height: 500px;
+    scrollbar-width: thin;
+}
+
+.reminders-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.75rem;
+}
+
+.reminders-table th {
+    background: #f8fafc;
+    padding: 0.8rem 0.8rem;
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #475569;
+    border-bottom: 2px solid #e9ecef;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.reminders-table td {
+    padding: 0.7rem 0.8rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    transition: all 0.2s;
+}
+
+.reminders-table tbody tr {
+    transition: all 0.2s;
+}
+
+.reminders-table tbody tr:hover {
+    background: linear-gradient(90deg, rgba(102,126,234,0.03), rgba(118,75,162,0.03));
+    transform: scale(1.01);
+}
+
+.reminders-table tbody tr.expired {
+    background: linear-gradient(90deg, #fef2f2, #fef2f2);
+    border-left: 3px solid #ef4444;
+}
+
+.reminders-table tbody tr.expiring {
+    background: linear-gradient(90deg, #fffbeb, #fffbeb);
+    border-left: 3px solid #f59e0b;
+}
+
+/* Стилизованные бейджи */
+.badge-status {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.badge-expired {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #991b1b;
+}
+
+.badge-expiring {
+    background: linear-gradient(135deg, #fed7aa, #fde68a);
+    color: #92400e;
+}
+
+.badge-valid {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+}
+
+/* Кнопки действий */
+.btn-action {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.65rem;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #4b5563;
+    transition: all 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.btn-action:hover {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: transparent;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(102,126,234,0.3);
+}
+
+.btn-action i {
+    font-size: 0.6rem;
+}
+
+/* Пустое состояние с дизайном */
+.empty-state {
+    text-align: center;
+    padding: 2.5rem;
+    color: #94a3b8;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.empty-state p {
+    font-size: 0.75rem;
+    margin: 0;
+}
+
+/* Скроллбар */
+.table-responsive::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 3px;
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .reminders-container {
+        padding: 0.75rem;
+    }
+    
+    .reminders-header {
+        padding: 0.9rem 1.2rem;
+    }
+    
+    .reminders-header h2 {
+        font-size: 1.1rem;
+    }
+    
+    .tab-btn {
+        padding: 0.45rem 0.8rem;
+        font-size: 0.7rem;
+    }
+    
+    .reminders-table th,
+    .reminders-table td {
+        padding: 0.5rem 0.5rem;
+    }
+    
+    .stat-icon {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .stat-icon i {
+        font-size: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.2rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reminders-container">
+    <!-- Заголовок -->
+    <div class="reminders-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h2><i class="fas fa-bell me-2"></i>📋 Напоминания о документах</h2>
+                <p>🔔 Контроль сроков действия документов сотрудников</p>
+            </div>
+            <div class="small" style="background: rgba(255,255,255,0.15); padding: 0.3rem 0.8rem; border-radius: 20px;">
+                <i class="fas fa-sync-alt me-1"></i> Автообновление: ежедневно
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-value">{{ expired_medical.count|add:expired_criminal.count|add:expired_attestations.count|default:0 }}</div>
+            <div class="stat-label">⚠️ Просрочено</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+            <div class="stat-value">{{ expiring_medical.count|add:expiring_criminal.count|add:expiring_attestations.count|add:expiring_contracts.count|default:0 }}</div>
+            <div class="stat-label">⏰ Истекают</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-check-double"></i></div>
+            <div class="stat-value">{{ total_valid|default:0 }}</div>
+            <div class="stat-label">✅ Действительны</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-value">{{ total_employees|default:0 }}</div>
+            <div class="stat-label">👥 Сотрудников</div>
+        </div>
+    </div>
+
+    <!-- Табы -->
+    <div class="tabs-card">
+        <div class="tabs-header">
+            <button class="tab-btn active" data-tab="all">
+                <i class="fas fa-list-ul me-1"></i> Все
+                <span class="badge">{{ total_expiring|default:0 }}</span>
+            </button>
+            <button class="tab-btn" data-tab="medical">
+                <i class="fas fa-stethoscope me-1"></i> Медосмотры
+                <span class="badge">{{ expiring_medical.count|add:expired_medical.count|default:0 }}</span>
+            </button>
+            <button class="tab-btn" data-tab="criminal">
+                <i class="fas fa-shield-alt me-1"></i> Несудимость
+                <span class="badge">{{ expiring_criminal.count|add:expired_criminal.count|default:0 }}</span>
+            </button>
+            <button class="tab-btn" data-tab="attestations">
+                <i class="fas fa-certificate me-1"></i> Аттестации
+                <span class="badge">{{ expiring_attestations.count|add:expired_attestations.count|default:0 }}</span>
+            </button>
+            <button class="tab-btn" data-tab="contracts">
+                <i class="fas fa-file-signature me-1"></i> Договоры
+                <span class="badge">{{ expiring_contracts.count|default:0 }}</span>
+            </button>
+        </div>
+
+        <div class="tab-content">
+            <!-- Вкладка: Все -->
+            <div class="tab-pane active" id="tab-all">
+                <div class="table-responsive">
+                    <table class="reminders-table">
+                        <thead>
+                            <tr>
+                                <th>👤 Сотрудник</th>
+                                <th>📄 Документ</th>
+                                <th>📅 Действителен до</th>
+                                <th>📊 Статус</th>
+                                <th>⚡ Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exam in expired_medical|slice:":8" %}
+                            <tr class="expired">
+                                <td><a href="{% url 'staff:employee_detail' exam.employee.id %}" class="text-decoration-none fw-bold">{{ exam.employee.full_name|truncatechars:30 }}</a></td>
+                                <td>Медицинский осмотр</td>
+                                <td><strong>{{ exam.valid_until|date:"d.m.Y" }}</strong></td>
+                                <td><span class="badge-status badge-expired"><i class="fas fa-times-circle"></i> Просрочен</span></td>
+                                <td><a href="{% url 'staff:medical_examination_edit' exam.id %}" class="btn-action"><i class="fas fa-edit"></i> Обновить</a></td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% for exam in expiring_medical|slice:":8" %}
+                            <tr class="expiring">
+                                <td><a href="{% url 'staff:employee_detail' exam.employee.id %}" class="text-decoration-none fw-bold">{{ exam.employee.full_name|truncatechars:30 }}</a></td>
+                                <td>Медицинский осмотр</td>
+                                <td>{{ exam.valid_until|date:"d.m.Y" }}</td>
+                                <td><span class="badge-status badge-expiring"><i class="fas fa-hourglass-start"></i> {{ exam.days_until_expiry }} дн.</span></td>
+                                <td><a href="{% url 'staff:medical_examination_edit' exam.id %}" class="btn-action"><i class="fas fa-edit"></i> Обновить</a></td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% if not expired_medical and not expiring_medical %}
+                            <tr><td colspan="5" class="empty-state"><i class="fas fa-check-circle"></i><p>✨ Все документы в порядке! ✨</p><small class="text-muted">Нет истекающих или просроченных документов</small></td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Вкладка: Медосмотры -->
+            <div class="tab-pane" id="tab-medical">
+                <div class="table-responsive">
+                    <table class="reminders-table">
+                        <thead>
+                            <tr>
+                                <th>👤 Сотрудник</th>
+                                <th>🏥 Тип осмотра</th>
+                                <th>📅 Действителен до</th>
+                                <th>📊 Статус</th>
+                                <th>⚡ Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exam in expired_medical %}
+                            <tr class="expired">
+                                <td><a href="{% url 'staff:employee_detail' exam.employee.id %}" class="text-decoration-none">{{ exam.employee.full_name|truncatechars:35 }}</a></td>
+                                <td>{{ exam.get_examination_type_display|truncatechars:30 }}</td>
+                                <td><strong class="text-danger">{{ exam.valid_until|date:"d.m.Y" }}</strong></td>
+                                <td><span class="badge-status badge-expired"><i class="fas fa-times-circle"></i> Просрочен</span></td>
+                                <td><a href="{% url 'staff:medical_examination_edit' exam.id %}" class="btn-action"><i class="fas fa-edit"></i> Обновить</a></td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% for exam in expiring_medical %}
+                            <tr class="expiring">
+                                <td><a href="{% url 'staff:employee_detail' exam.employee.id %}" class="text-decoration-none">{{ exam.employee.full_name|truncatechars:35 }}</a></td>
+                                <td>{{ exam.get_examination_type_display|truncatechars:30 }}</td>
+                                <td>{{ exam.valid_until|date:"d.m.Y" }}</td>
+                                <td><span class="badge-status badge-expiring"><i class="fas fa-hourglass-start"></i> {{ exam.days_until_expiry }} дн.</span></td>
+                                <td><a href="{% url 'staff:medical_examination_edit' exam.id %}" class="btn-action"><i class="fas fa-edit"></i> Обновить</a></td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% if not expired_medical and not expiring_medical %}
+                            <tr><td colspan="5" class="empty-state"><i class="fas fa-check-circle"></i><p>✅ Все медосмотры актуальны</p><small class="text-muted">Нет истекающих или просроченных записей</small></td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Вкладка: Справки о несудимости -->
+            <div class="tab-pane" id="tab-criminal">
+                <div class="table-responsive">
+                    <table class="reminders-table">
+                        <thead>
+                            <tr>
+                                <th>👤 Сотрудник</th>
+                                <th>📅 Действительна до</th>
+                                <th>📊 Статус</th>
+                                <th>⚡ Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for check in expired_criminal %}
+                            <tr class="expired">
+                                <td><a href="{% url 'staff:employee_detail' check.employee.id %}" class="text-decoration-none">{{ check.employee.full_name|truncatechars:40 }}</a></td>
+                                <td><strong class="text-danger">{{ check.valid_until|date:"d.m.Y" }}</strong></td>
+                                <td><span class="badge-status badge-expired"><i class="fas fa-times-circle"></i> Просрочена</span></td>
+                                <td><a href="{% url 'staff:criminal_check_edit' check.employee.id %}" class="btn-action"><i class="fas fa-edit"></i> Обновить</a></td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% for check in expiring_criminal %}
+                            <tr class="expiring">
+                                <td><a href="{% url 'staff:employee_detail' check.employee.id %}" class="text-decoration-none">{{ check.employee.full_name|truncatechars:40 }}</a></td>
+                                <td>{{ check.valid_until|date:"d.m.Y" }}</td>
+                                <td><span class="badge-status badge-expiring"><i class="fas fa-hourglass-start"></i> {{ check.days_until_expiry }} дн.</span></td>
+                                <td><a href="{% url 'staff:criminal_check_edit' check.employee.id %}" class="btn-action"><i class="fas fa-edit"></i> Обновить</a></td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% if not expired_criminal and not expiring_criminal %}
+                            <tr><td colspan="4" class="empty-state"><i class="fas fa-shield-alt"></i><p>🛡️ Все справки действительны</p><small class="text-muted">Нет истекающих справок о несудимости</small></td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Вкладка: Аттестации -->
+            <div class="tab-pane" id="tab-attestations">
+                <div class="table-responsive">
+                    <table class="reminders-table">
+                        <thead>
+                            <tr>
+                                <th>👤 Сотрудник</th>
+                                <th>🎓 Категория</th>
+                                <th>📅 Действительна до</th>
+                                <th>📊 Статус</th>
+                                <th>⚡ Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for att in expired_attestations %}
+                            <tr class="expired">
+                                <td><a href="{% url 'staff:employee_detail' att.employee.id %}" class="text-decoration-none">{{ att.employee.full_name|truncatechars:35 }}</a></td>
+                                <td>{{ att.get_category_display|default:"—"|truncatechars:25 }}</td>
+                                <td><strong class="text-danger">{{ att.valid_until|date:"d.m.Y" }}</strong></td>
+                                <td><span class="badge-status badge-expired"><i class="fas fa-times-circle"></i> Просрочена</span></td>
+                                <td><a href="{% url 'staff:attestation_edit' att.id %}" class="btn-action"><i class="fas fa-edit"></i> Обновить</a></td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% for att in expiring_attestations %}
+                            <tr class="expiring">
+                                <td><a href="{% url 'staff:employee_detail' att.employee.id %}" class="text-decoration-none">{{ att.employee.full_name|truncatechars:35 }}</a></td>
+                                <td>{{ att.get_category_display|default:"—"|truncatechars:25 }}</td>
+                                <td>{{ att.valid_until|date:"d.m.Y" }}</td>
+                                <td><span class="badge-status badge-expiring"><i class="fas fa-hourglass-start"></i> {{ att.days_until_expiry }} дн.</span></td>
+                                <td><a href="{% url 'staff:attestation_edit' att.id %}" class="btn-action"><i class="fas fa-edit"></i> Обновить</a></td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% if not expired_attestations and not expiring_attestations %}
+                            <tr><td colspan="5" class="empty-state"><i class="fas fa-certificate"></i><p>🏆 Все аттестации актуальны</p><small class="text-muted">Нет истекающих аттестаций</small></td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Вкладка: Договоры -->
+            <div class="tab-pane" id="tab-contracts">
+                <div class="table-responsive">
+                    <table class="reminders-table">
+                        <thead>
+                            <tr>
+                                <th>👤 Сотрудник</th>
+                                <th>📄 № договора</th>
+                                <th>📅 Действителен до</th>
+                                <th>📊 Статус</th>
+                                <th>⚡ Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for contract in expiring_contracts %}
+                            <tr class="expiring">
+                                <td><a href="{% url 'staff:employee_detail' contract.employee.id %}" class="text-decoration-none">{{ contract.employee.full_name|truncatechars:35 }}</a></td>
+                                <td><strong>№{{ contract.contract_number }}</strong></td>
+                                <td>{{ contract.end_date|date:"d.m.Y" }}</td>
+                                <td><span class="badge-status badge-expiring"><i class="fas fa-hourglass-start"></i> {{ contract.days_until_expiry }} дн.</span></td>
+                                <td><a href="{% url 'staff:contract_detail' contract.id %}" class="btn-action"><i class="fas fa-eye"></i> Просмотр</a></td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% if not expiring_contracts %}
+                            <td><td colspan="5" class="empty-state"><i class="fas fa-file-contract"></i><p>📑 Нет истекающих договоров</p><small class="text-muted">Все договоры актуальны</small></td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Переключение вкладок с анимацией
+document.addEventListener('DOMContentLoaded', function() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabId = this.dataset.tab;
+            
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabPanes.forEach(p => p.classList.remove('active'));
+            
+            this.classList.add('active');
+            const activePane = document.getElementById(`tab-${tabId}`);
+            if (activePane) {
+                activePane.classList.add('active');
+                activePane.style.animation = 'none';
+                setTimeout(() => {
+                    activePane.style.animation = 'fadeInUp 0.3s ease';
+                }, 10);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

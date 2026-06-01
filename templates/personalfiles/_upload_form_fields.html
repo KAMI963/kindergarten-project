@@ -1,0 +1,38 @@
+<!-- templates/personalfiles/_upload_form_fields.html -->
+{% load widget_tweaks %}
+
+<div class="mb-3">
+    <label class="form-label">Файл</label>
+    {{ form.file|add_class:"form-control" }}
+    {% if form.file.errors %}
+        <div class="text-danger small mt-1">{{ form.file.errors }}</div>
+    {% endif %}
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Номер документа</label>
+    {{ form.document_number|add_class:"form-control"|attr:"placeholder:Введите номер документа" }}
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Кем выдан</label>
+    {{ form.issued_by|add_class:"form-control"|attr:"placeholder:Кто выдал документ" }}
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Дата выдачи</label>
+        {{ form.issue_date|add_class:"form-control"|attr:"type:date" }}
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Срок действия</label>
+        {{ form.expiry_date|add_class:"form-control"|attr:"type:date" }}
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Примечания</label>
+    {{ form.notes|add_class:"form-control"|attr:"rows:3"|attr:"placeholder:Дополнительная информация" }}
+</div>
+
+<input type="hidden" name="document_type" value="{{ doc_type }}">

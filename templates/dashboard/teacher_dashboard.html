@@ -1,0 +1,554 @@
+<!-- templates/dashboard/teacher_dashboard.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Панель воспитателя{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Панель воспитателя</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <span class="badge bg-primary fs-6">
+                <i class="fas fa-clock me-1"></i>{{ current_time|time:"H:i" }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Приветствие -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="welcome-section">
+            <h3 class="welcome-title">Добро пожаловаccccть, {{ user.get_full_name }}!</h3>
+            <p class="welcome-subtitle">Сегодня {{ current_date|date:"d E Y" }}, {{ current_day_name }}</p>
+            {% if user.teacherprofile.group %}
+            <p class="welcome-subtitle mb-0">Группа: <strong>{{ user.teacherprofile.group.name }}</strong></p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Статистика -->
+<div class="row mb-4">
+    <div class="col-xl-2 col-md-4 mb-3">
+        <div class="stat-card dashboard-card">
+            <div class="text-primary mb-2">
+                <i class="fas fa-child fa-2x"></i>
+            </div>
+            <h4 class="text-dark mb-1">
+                {{ group_children.count }}
+            </h4>
+            <p class="text-muted mb-0">Дети в группе</p>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-3">
+        <div class="stat-card dashboard-card">
+            <div class="text-success mb-2">
+                <i class="fas fa-user-check fa-2x"></i>
+            </div>
+            <h4 class="text-dark mb-1">
+                {{ today_attendance.present_count }}
+            </h4>
+            <p class="text-muted mb-0">Присутствуют</p>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-3">
+        <div class="stat-card dashboard-card">
+            <div class="text-warning mb-2">
+                <i class="fas fa-user-times fa-2x"></i>
+            </div>
+            <h4 class="text-dark mb-1">
+                {{ today_attendance.absent_count }}
+            </h4>
+            <p class="text-muted mb-0">Отсутствуют</p>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-3">
+        <div class="stat-card dashboard-card">
+            <div class="text-info mb-2">
+                <i class="fas fa-birthday-cake fa-2x"></i>
+            </div>
+            <h4 class="text-dark mb-1">
+                {{ birthdays_this_month|length }}
+            </h4>
+            <p class="text-muted mb-0">Дни рождения</p>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-3">
+        <div class="stat-card dashboard-card">
+            <div class="text-danger mb-2">
+                <i class="fas fa-notes-medical fa-2x"></i>
+            </div>
+            <h4 class="text-dark mb-1">
+                {{ children_with_notes|length }}
+            </h4>
+            <p class="text-muted mb-0">С заметками</p>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-3">
+        <div class="stat-card dashboard-card">
+            <div class="text-secondary mb-2">
+                <i class="fas fa-calendar-alt fa-2x"></i>
+            </div>
+            <h4 class="text-dark mb-1">
+                {{ upcoming_events|length }}
+            </h4>
+            <p class="text-muted mb-0">Мероприятия</p>
+        </div>
+    </div>
+</div>
+
+<!-- Быстрые действия -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Быстрые действия</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <a href="{% url 'children:children_list' %}" class="btn btn-outline-primary w-100 h-100 py-3 action-btn">
+                            <i class="fas fa-child fa-2x mb-2"></i><br>
+                            Список детей
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="" class="btn btn-outline-success w-100 h-100 py-3 action-btn">
+                            <i class="fas fa-clipboard-check fa-2x mb-2"></i><br>
+                            Отметить посещаемость
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="#" class="btn btn-outline-info w-100 h-100 py-3 action-btn">
+                            <i class="fas fa-calendar-alt fa-2x mb-2"></i><br>
+                            Расписание
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="#" class="btn btn-outline-warning w-100 h-100 py-3 action-btn">
+                            <i class="fas fa-tasks fa-2x mb-2"></i><br>
+                            Занятия
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Основная информация о группе -->
+    <div class="col-lg-8 mb-4">
+        <div class="dashboard-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    {% if user.teacherprofile.group %}
+                        Группа: {{ user.teacherprofile.group.name }}
+                    {% else %}
+                        Дети
+                    {% endif %}
+                </h5>
+                <div>
+                    <span class="badge bg-primary me-2">
+                        {{ group_children.count }} детей
+                    </span>
+                    <span class="badge bg-success">
+                        {% if today_attendance_rate %}
+                            {{ today_attendance_rate }}% посещаемости
+                        {% else %}
+                            Посещаемость не отмечена
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if group_children %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ФИО ребенка</th>
+                                <th>Возраст</th>
+                                <th>Статус сегодня</th>
+                                <th>Родители</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for child in group_children %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-light rounded-circle me-3 d-flex align-items-center justify-content-center">
+                                            {% if child.gender == 'M' %}
+                                                <i class="fas fa-male text-primary"></i>
+                                            {% else %}
+                                                <i class="fas fa-female text-danger"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            {% if 'children' in INSTALLED_APPS %}
+                                            <a href="{% url 'children:child_detail' child.id %}" class="fw-bold text-dark text-decoration-none">
+                                                {{ child.full_name }}
+                                            </a>
+                                            {% else %}
+                                            <span class="fw-bold text-dark">{{ child.full_name }}</span>
+                                            {% endif %}
+                                            {% if child in birthdays_today %}
+                                            <span class="badge bg-danger ms-1" title="День рождения сегодня!">
+                                                <i class="fas fa-birthday-cake"></i>
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-bold">{{ child.get_age_display }}</span>
+                                    <br>
+                                    <small class="text-muted">{{ child.birth_date|date:"d.m.Y" }}</small>
+                                </td>
+                                <td>
+                                    {% if child.id in today_attendance.present_ids %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Присутствует
+                                    </span>
+                                    {% elif child.id in today_attendance.absent_ids %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times me-1"></i>Отсутствует
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-question me-1"></i>Не отмечен
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>
+                                        {% for parent_relation in child.childparent_set.all|slice:":2" %}
+                                            {{ parent_relation.parent.user.get_full_name }}<br>
+                                        {% empty %}
+                                            <span class="text-muted">Не указаны</span>
+                                        {% endfor %}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        {% if 'children' in INSTALLED_APPS %}
+                                        <a href="{% url 'children:child_detail' child.id %}" class="btn btn-outline-primary" title="Профиль">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% endif %}
+                                        {% if 'attendance' in INSTALLED_APPS %}
+                                        <a href="{% url 'attendance:mark_attendance' child.id %}" class="btn btn-outline-success" title="Отметить посещаемость">
+                                            <i class="fas fa-calendar-check"></i>
+                                        </a>
+                                        {% endif %}
+                                        <button class="btn btn-outline-info note-btn" 
+                                                data-child-id="{{ child.id }}"
+                                                data-child-name="{{ child.full_name }}"
+                                                title="Добавить заметку">
+                                            <i class="fas fa-sticky-note"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-users fa-2x text-muted mb-3"></i>
+                    <p class="text-muted">В группе пока нет детей</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Боковая панель -->
+    <div class="col-lg-4 mb-4">
+        <!-- Посещаемость за неделю -->
+        <div class="dashboard-card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Посещаемость за неделю</h5>
+            </div>
+            <div class="card-body">
+                {% if weekly_attendance.days %}
+                <div class="text-center">
+                    <h4 class="text-primary">{{ weekly_attendance.average_rate }}%</h4>
+                    <p class="text-muted mb-3">Средняя посещаемость</p>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for day in weekly_attendance.days %}
+                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                        <span>{{ day.date }}</span>
+                        <span class="fw-bold {% if day.rate >= 80 %}text-success{% elif day.rate >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                            {{ day.rate }}%
+                        </span>
+                        <small class="text-muted">{{ day.present }}/{{ day.total }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">Нет данных о посещаемости</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Ближайшие дни рождения -->
+        <div class="dashboard-card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-birthday-cake me-2"></i>Ближайшие дни рождения</h5>
+            </div>
+            <div class="card-body">
+                {% if birthdays_this_month %}
+                <div class="list-group list-group-flush">
+                    {% for child in birthdays_this_month|slice:":5" %}
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm bg-light rounded-circle me-3 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-birthday-cake text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">{{ child.full_name }}</h6>
+                                <small class="text-muted">
+                                    {{ child.birth_date|date:"d E" }}
+                                    {% if child.birth_date.day == current_date.day %}
+                                    <span class="badge bg-danger ms-1">Сегодня!</span>
+                                    {% elif child.birth_date.day == current_date.day|add:1 %}
+                                    <span class="badge bg-warning ms-1">Завтра</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">Нет дней рождения в этом месяце</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Быстрая заметка -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Быстрая заметка</h5>
+            </div>
+            <div class="card-body">
+                <form id="quick-note-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Для ребенка</label>
+                        <select class="form-select" id="note-child" required>
+                            <option value="">Выберите ребенка</option>
+                            {% for child in group_children %}
+                            <option value="{{ child.id }}">{{ child.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Текст заметки</label>
+                        <textarea class="form-control" id="note-text" rows="3" placeholder="Введите текст заметки..." required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Тип заметки</label>
+                        <select class="form-select" id="note-type">
+                            <option value="general">Общая</option>
+                            <option value="health">Здоровье</option>
+                            <option value="behavior">Поведение</option>
+                            <option value="achievement">Достижения</option>
+                        </select>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Сохранить заметку
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для посещаемости -->
+<div class="modal fade" id="attendanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Отметить посещаемость</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="attendance-form">
+                    {% csrf_token %}
+                    <input type="hidden" id="attendance-child-id">
+                    <div class="mb-3">
+                        <label class="form-label">Ребенок</label>
+                        <input type="text" class="form-control" id="attendance-child-name" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Статус</label>
+                        <select class="form-select" id="attendance-status" required>
+                            <option value="present">Присутствует</option>
+                            <option value="absent">Отсутствует</option>
+                            <option value="sick">Болеет</option>
+                            <option value="vacation">Отпуск</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Примечание (необязательно)</label>
+                        <textarea class="form-control" id="attendance-notes" rows="2" placeholder="Дополнительная информация..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="save-attendance-btn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация модальных окон
+    const attendanceModal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+    
+    // Обработка кнопок посещаемости
+    document.querySelectorAll('.attendance-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const childId = this.getAttribute('data-child-id');
+            const childName = this.getAttribute('data-child-name');
+            
+            document.getElementById('attendance-child-id').value = childId;
+            document.getElementById('attendance-child-name').value = childName;
+            
+            attendanceModal.show();
+        });
+    });
+    
+    // Сохранение посещаемости через AJAX
+    document.getElementById('save-attendance-btn').addEventListener('click', function() {
+        const childId = document.getElementById('attendance-child-id').value;
+        const status = document.getElementById('attendance-status').value;
+        const notes = document.getElementById('attendance-notes').value;
+        
+        fetch('', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: `child_id=${childId}&status=${status}&notes=${encodeURIComponent(notes)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                attendanceModal.hide();
+                // Обновляем страницу через 1 секунду
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            showAlert('Ошибка сети', 'danger');
+        });
+    });
+    
+    // Обработка быстрой заметки через AJAX
+    const quickNoteForm = document.getElementById('quick-note-form');
+    if (quickNoteForm) {
+        quickNoteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const childId = document.getElementById('note-child').value;
+            const noteText = document.getElementById('note-text').value;
+            const noteType = document.getElementById('note-type').value;
+            
+            if (childId && noteText) {
+                fetch('', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: `child_id=${childId}&note_text=${encodeURIComponent(noteText)}&note_type=${noteType}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert(data.message, 'success');
+                        this.reset();
+                    } else {
+                        showAlert(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    showAlert('Ошибка сети', 'danger');
+                });
+            }
+        });
+    }
+    
+    function showAlert(message, type) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const alert = document.createElement('div');
+        alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+        alert.style.zIndex = '1060';
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alert);
+        
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 3000);
+    }
+});
+</script>
+
+<style>
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+}
+.action-btn {
+    transition: all 0.3s ease;
+    border: 2px solid;
+}
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.attendance-btn:hover, .note-btn:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #eee;
+}
+.list-group-item:last-child {
+    border-bottom: none;
+}
+</style>
+{% endblock %}

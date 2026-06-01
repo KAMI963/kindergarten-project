@@ -1,0 +1,697 @@
+{% extends 'base.html' %}
+
+{% block title %}Список групп{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Компактная версия */
+    .groups-page {
+        padding: 10px 12px;
+        max-width: 100%;
+    }
+    
+    /* Заголовок */
+    .page-header {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        border-radius: 10px;
+        padding: 14px 18px;
+        color: white;
+        margin-bottom: 14px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(99,102,241,0.2);
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -40px;
+        right: -30px;
+        width: 140px;
+        height: 140px;
+        background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .page-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .page-title i {
+        font-size: 1rem;
+    }
+    
+    .page-subtitle {
+        font-size: 0.75rem;
+        opacity: 0.85;
+        margin: 0;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 6px;
+    }
+    
+    .btn-custom {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        white-space: nowrap;
+    }
+    
+    .btn-primary-custom {
+        background: white;
+        color: #6366f1;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    
+    .btn-outline-custom {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.25);
+        color: white;
+    }
+    
+    .btn-outline-custom:hover {
+        background: rgba(255,255,255,0.1);
+    }
+    
+    /* Статистика */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+    
+    @media (max-width: 640px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 10px 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    }
+    
+    .stat-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 4px;
+        font-size: 0.8rem;
+    }
+    
+    .stat-icon.blue { background: rgba(99,102,241,0.08); color: #6366f1; }
+    .stat-icon.green { background: rgba(16,185,129,0.08); color: #10b981; }
+    .stat-icon.yellow { background: rgba(245,158,11,0.08); color: #f59e0b; }
+    .stat-icon.purple { background: rgba(139,92,246,0.08); color: #8b5cf6; }
+    
+    .stat-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    
+    .stat-label {
+        font-size: 0.6rem;
+        color: #64748b;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    
+    /* Основная карточка */
+    .main-card {
+        background: white;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        margin-bottom: 12px;
+        overflow: hidden;
+    }
+    
+    .card-header-custom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .card-header-custom h3 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .card-header-custom h3 i {
+        color: #6366f1;
+    }
+    
+    .filter-bar {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .search-input {
+        padding: 5px 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        background: white;
+        min-width: 160px;
+        transition: all 0.2s ease;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 2px rgba(99,102,241,0.08);
+    }
+    
+    .filter-select {
+        padding: 5px 24px 5px 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        background: white;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 6px center;
+        cursor: pointer;
+        min-width: 120px;
+    }
+    
+    .filter-select:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 2px rgba(99,102,241,0.08);
+    }
+    
+    .table-wrapper {
+        overflow-x: auto;
+    }
+    
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.75rem;
+    }
+    
+    .table-modern thead th {
+        background: #f8fafc;
+        padding: 8px 10px;
+        font-weight: 600;
+        color: #64748b;
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .table-modern tbody td {
+        padding: 8px 10px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #f8fafc;
+    }
+    
+    .group-name {
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    .group-meta {
+        font-size: 0.65rem;
+        color: #94a3b8;
+    }
+    
+    .badge-custom {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.6rem;
+        font-weight: 600;
+    }
+    
+    .badge-age { background: rgba(59,130,246,0.08); color: #3b82f6; }
+    .badge-room { background: rgba(16,185,129,0.08); color: #10b981; }
+    
+    .teacher-info {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .teacher-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.65rem;
+        flex-shrink: 0;
+    }
+    
+    .teacher-name {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .teacher-unassigned {
+        color: #94a3b8;
+        font-style: italic;
+        font-size: 0.7rem;
+    }
+    
+    .children-count {
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+    
+    .children-total {
+        font-size: 0.65rem;
+        color: #94a3b8;
+    }
+    
+    .progress-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 80px;
+    }
+    
+    .progress-track {
+        flex: 1;
+        height: 5px;
+        background: #e2e8f0;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        border-radius: 8px;
+        transition: width 0.4s ease;
+    }
+    
+    .progress-fill.low { background: #22c55e; }
+    .progress-fill.medium { background: #f59e0b; }
+    .progress-fill.high { background: #ef4444; }
+    
+    .progress-value {
+        font-weight: 600;
+        font-size: 0.7rem;
+        min-width: 32px;
+        text-align: right;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 3px;
+        justify-content: flex-end;
+    }
+    
+    .btn-action {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        background: #f1f5f9;
+        transition: all 0.15s ease;
+        text-decoration: none;
+        font-size: 0.7rem;
+    }
+    
+    .btn-action:hover {
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .btn-action.view:hover { background: #3b82f6; }
+    .btn-action.edit:hover { background: #f59e0b; }
+    .btn-action.children:hover { background: #10b981; }
+    
+    .empty-state {
+        text-align: center;
+        padding: 30px 10px;
+        color: #94a3b8;
+    }
+    
+    .empty-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 1.2rem;
+        color: #6366f1;
+    }
+    
+    .empty-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0 0 4px;
+    }
+    
+    .empty-description {
+        margin: 0 0 12px;
+        font-size: 0.75rem;
+    }
+    
+    /* Распределение по возрастам */
+    .age-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 6px;
+        padding: 10px 14px;
+    }
+    
+    .age-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 6px 8px;
+        background: #f8fafc;
+        border-radius: 6px;
+        text-align: center;
+    }
+    
+    .age-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    
+    .age-label {
+        font-size: 0.6rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+    
+    @media (max-width: 768px) {
+        .table-modern thead { display: none; }
+        .table-modern tbody tr {
+            display: block;
+            padding: 8px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+        .table-modern tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border: none;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .table-modern tbody td:last-child {
+            border-bottom: none;
+        }
+        .table-modern tbody td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: #64748b;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .action-buttons {
+            justify-content: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="groups-page">
+    <!-- Заголовок -->
+    <header class="page-header">
+        <div class="page-header-content">
+            <div>
+                <h1 class="page-title">
+                    <i class="fas fa-users"></i>
+                    Группы
+                </h1>
+                <p class="page-subtitle">Управление группами и распределение детей</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'children:group_create' %}" class="btn-custom btn-primary-custom">
+                    <i class="fas fa-plus"></i> Добавить
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Статистика -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+            <div class="stat-value">{{ groups.count }}</div>
+            <div class="stat-label">Групп</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fas fa-child"></i></div>
+            <div class="stat-value">{{ total_children }}</div>
+            <div class="stat-label">Детей</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon yellow"><i class="fas fa-door-open"></i></div>
+            <div class="stat-value">{{ total_free_spaces }}</div>
+            <div class="stat-label">Свободно мест</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="fas fa-chart-pie"></i></div>
+            <div class="stat-value">{{ avg_fill_percentage }}%</div>
+            <div class="stat-label">Заполненность</div>
+        </div>
+    </div>
+
+    <!-- Таблица групп -->
+    <div class="main-card">
+        <div class="card-header-custom">
+            <h3><i class="fas fa-list"></i> Список групп</h3>
+            <div class="filter-bar">
+                <input type="text" class="search-input" placeholder="Поиск..." id="groupSearch">
+                <select class="filter-select" id="ageFilter">
+                    <option value="">Все возрасты</option>
+                    <option value="infant">0-1</option>
+                    <option value="toddler">1-3</option>
+                    <option value="preschool">3-7</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="table-wrapper">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th>Группа</th>
+                        <th>Возраст</th>
+                        <th>Воспитатель</th>
+                        <th>Дети</th>
+                        <th>Заполненность</th>
+                        <th>Комната</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in group_stats %}
+                    <tr data-age="{{ stat.group.age_category }}" data-name="{{ stat.group.name|lower }}">
+                        <td data-label="Группа">
+                            <div class="group-name">{{ stat.group.name }}</div>
+                            <div class="group-meta">ID #{{ stat.group.id }}</div>
+                        </td>
+                        <td data-label="Возраст">
+                            <span class="badge-custom badge-age">
+                                {{ stat.group.get_age_category_display }}
+                            </span>
+                        </td>
+                        <td data-label="Воспитатель">
+                            {% if stat.group.teacher %}
+                            <div class="teacher-info">
+                                <div class="teacher-avatar">
+                                    {{ stat.group.teacher.get_full_name|first|upper }}
+                                </div>
+                                <span class="teacher-name">{{ stat.group.teacher.get_full_name }}</span>
+                            </div>
+                            {% else %}
+                            <span class="teacher-unassigned">Не назначен</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Дети">
+                            <div class="children-count">{{ stat.children_count }}</div>
+                            <div class="children-total">из {{ stat.group.capacity }}</div>
+                        </td>
+                        <td data-label="Заполненность">
+                            <div class="progress-wrapper">
+                                <div class="progress-track">
+                                    <div class="progress-fill {% if stat.fill_percentage >= 90 %}high{% elif stat.fill_percentage >= 70 %}medium{% else %}low{% endif %}" 
+                                         style="width: {{ stat.fill_percentage }}%"></div>
+                                </div>
+                                <span class="progress-value {% if stat.fill_percentage >= 90 %}high{% elif stat.fill_percentage >= 70 %}medium{% else %}low{% endif %}">
+                                    {{ stat.fill_percentage }}%
+                                </span>
+                            </div>
+                        </td>
+                        <td data-label="Комната">
+                            <span class="badge-custom badge-room">№{{ stat.group.room_number }}</span>
+                        </td>
+                        <td data-label="Действия">
+                            <div class="action-buttons">
+                                <a href="{% url 'children:group_detail' stat.group.id %}" class="btn-action view" title="Просмотр">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'children:group_children' stat.group.id %}" class="btn-action children" title="Дети">
+                                    <i class="fas fa-child"></i>
+                                </a>
+                                <a href="{% url 'children:group_edit' stat.group.id %}" class="btn-action edit" title="Ред.">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-icon"><i class="fas fa-users"></i></div>
+                                <h4 class="empty-title">Группы не найдены</h4>
+                                <p class="empty-description">Создайте первую группу</p>
+                                <a href="{% url 'children:group_create' %}" class="btn-custom btn-primary-custom">
+                                    <i class="fas fa-plus"></i> Создать
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Распределение по возрастам -->
+    {% if age_categories %}
+    <div class="main-card">
+        <div class="card-header-custom">
+            <h3><i class="fas fa-chart-pie"></i> По возрастам</h3>
+        </div>
+        <div class="age-grid">
+            {% for age_category in age_categories %}
+            <div class="age-item">
+                <div class="age-value">{{ age_category.count }}</div>
+                <div class="age-label">{{ age_category.name }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Анимация прогресс-баров
+    document.querySelectorAll('.progress-fill').forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 200);
+    });
+
+    // Поиск и фильтрация
+    const searchInput = document.getElementById('groupSearch');
+    const ageFilter = document.getElementById('ageFilter');
+    const tableRows = document.querySelectorAll('tbody tr');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const ageValue = ageFilter.value;
+
+        tableRows.forEach(row => {
+            const name = row.dataset.name || '';
+            const age = row.dataset.age || '';
+            
+            const matchesSearch = name.includes(searchTerm);
+            const matchesAge = !ageValue || age === ageValue;
+            
+            row.style.display = matchesSearch && matchesAge ? '' : 'none';
+        });
+    }
+
+    searchInput?.addEventListener('input', filterTable);
+    ageFilter?.addEventListener('change', filterTable);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,83 @@
+<!-- staff/templates/staff/salary_calculate_form.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Расчет заработной платы{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <h1>
+            <i class="fas fa-calculator"></i>
+            Расчет заработной платы
+        </h1>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-clock"></i>
+                    Выберите период для расчета
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4 text-center">
+                            <i class="fas fa-money-bill-wave fa-4x text-success mb-3"></i>
+                            <p class="text-muted">Расчет будет выполнен на основании данных табеля за выбранный месяц</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-600">Месяц</label>
+                            <select name="month" class="form-select form-select-lg" required>
+                                <option value="">Выберите месяц</option>
+                                {% for month_num, month_name in months %}
+                                <option value="{{ month_num }}" {% if month_num == current_month %}selected{% endif %}>
+                                    {{ month_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-600">Год</label>
+                            <select name="year" class="form-select form-select-lg" required>
+                                <option value="">Выберите год</option>
+                                {% for year in years %}
+                                <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>
+                                    {{ year }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Важно!</strong> Перед расчетом убедитесь, что:
+                            <ul class="mb-0 mt-2">
+                                <li>Табель за выбранный месяц создан и заполнен</li>
+                                <li>Все сотрудники имеют назначенные штатные единицы</li>
+                                <li>Установлены актуальные тарифы и оклады</li>
+                            </ul>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn staff-btn-primary btn-lg">
+                                <i class="fas fa-calculator"></i> Выполнить расчет
+                            </button>
+                            <a href="{% url 'staff:salary_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Назад
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

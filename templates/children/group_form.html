@@ -1,0 +1,151 @@
+<!-- templates/children/group_form.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ title }}</h1>
+    <a href="{% url 'children:group_list' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Назад к списку групп
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Основная информация
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.name|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.age_category|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.teacher|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.capacity|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.room_number|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Совет:</strong> Выберите основного воспитателя для группы
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="{% url 'children:group_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>{{ submit_text }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        {% if group %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Статистика группы
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="text-primary">
+                            <h4 class="mb-0">{{ group.children_count }}</h4>
+                            <small>Детей в группе</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-success">
+                            <h4 class="mb-0">{{ group.free_spaces }}</h4>
+                            <small>Свободных мест</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="progress mb-3" style="height: 20px;">
+                    <div class="progress-bar {% if group.fill_percentage > 80 %}bg-danger{% elif group.fill_percentage > 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                         role="progressbar" 
+                         style="width: {{ group.fill_percentage }}%"
+                         aria-valuenow="{{ group.fill_percentage }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                        {{ group.fill_percentage }}%
+                    </div>
+                </div>
+                <small class="text-muted">Заполненность: {{ group.children_count }}/{{ group.capacity }}</small>
+                
+                {% if group.teacher %}
+                <hr>
+                <h6>Воспитатель:</h6>
+                <ul class="list-unstyled">
+                    <li>
+                        <i class="fas fa-user me-2 text-primary"></i>
+                        {{ group.teacher.get_full_name|default:group.teacher.username }}
+                    </li>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-question-circle me-2"></i>Подсказки
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>Возрастные категории:</h6>
+                <ul class="small list-unstyled">
+                    <li><strong>Ясельная:</strong> 1.5-3 года</li>
+                    <li><strong>Младшая:</strong> 3-4 года</li>
+                    <li><strong>Средняя:</strong> 4-5 лет</li>
+                    <li><strong>Старшая:</strong> 5-6 лет</li>
+                    <li><strong>Подготовительная:</strong> 6-7 лет</li>
+                </ul>
+                
+                <h6 class="mt-3">Рекомендации:</h6>
+                <ul class="small list-unstyled">
+                    <li>• Стандартная вместимость: 15-20 детей</li>
+                    <li>• Для ясельных групп: 10-15 детей</li>
+                    <li>• Указывайте реальный номер комнаты</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

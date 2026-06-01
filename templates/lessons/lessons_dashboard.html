@@ -1,0 +1,473 @@
+<!-- lessons/templates/lessons/lessons_dashboard.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Занятия - Детский сад{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Современные стили */
+    .lessons-dashboard {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        min-height: calc(100vh - 60px);
+    }
+    
+    /* Карточки статистики */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1rem;
+        transition: all 0.3s;
+        border: 1px solid rgba(102,126,234,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transform: scaleX(0);
+        transition: transform 0.3s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .stat-icon.primary { background: linear-gradient(135deg, #667eea20, #764ba220); color: #667eea; }
+    .stat-icon.success { background: linear-gradient(135deg, #10b98120, #34d39920); color: #10b981; }
+    .stat-icon.warning { background: linear-gradient(135deg, #f59e0b20, #fbbf2420); color: #f59e0b; }
+    .stat-icon.info { background: linear-gradient(135deg, #3b82f620, #60a5fa20); color: #3b82f6; }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+        line-height: 1.2;
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
+        color: #64748b;
+        margin: 0.25rem 0 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    /* Карточка контента */
+    .content-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        transition: all 0.3s;
+        height: 100%;
+    }
+    
+    .content-card:hover {
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+    }
+    
+    .card-header-custom {
+        background: #f8fafc;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .card-header-custom h6 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin: 0;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* Список занятий */
+    .lesson-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f5f9;
+        transition: all 0.2s;
+    }
+    
+    .lesson-item:last-child {
+        border-bottom: none;
+    }
+    
+    .lesson-item:hover {
+        transform: translateX(5px);
+        background: #f8fafc;
+    }
+    
+    .lesson-title {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+        font-size: 0.85rem;
+    }
+    
+    .lesson-meta {
+        font-size: 0.7rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .badge-type {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 20px;
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    /* Кнопки */
+    .btn-icon-sm {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.7rem;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    
+    .btn-complete {
+        background: #10b981;
+        color: white;
+        border: none;
+    }
+    
+    .btn-complete:hover {
+        background: #059669;
+        transform: translateY(-2px);
+    }
+    
+    .btn-view {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .btn-view:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    
+    /* Напоминания */
+    .reminder-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .reminder-item:last-child {
+        border-bottom: none;
+    }
+    
+    .reminder-priority-high { border-left: 3px solid #ef4444; padding-left: 0.75rem; }
+    .reminder-priority-medium { border-left: 3px solid #f59e0b; padding-left: 0.75rem; }
+    .reminder-priority-low { border-left: 3px solid #3b82f6; padding-left: 0.75rem; }
+    
+    .reminder-title {
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+    }
+    
+    /* Быстрые ссылки */
+    .quick-links {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .quick-link-card {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.3s;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .quick-link-card:hover {
+        transform: translateY(-4px);
+        background: white;
+        border-color: #667eea;
+        box-shadow: 0 10px 20px -5px rgba(102,126,234,0.2);
+    }
+    
+    .quick-link-card i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .quick-link-card span {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #475569;
+    }
+    
+    .quick-link-card:hover span,
+    .quick-link-card:hover i {
+        color: #667eea;
+    }
+    
+    /* Пустое состояние */
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #94a3b8;
+    }
+    
+    .empty-state i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.4;
+    }
+    
+    /* Адаптивность */
+    @media (max-width: 992px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .quick-links {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .stats-grid {
+            gap: 0.75rem;
+        }
+        .stat-value {
+            font-size: 1.3rem;
+        }
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+        }
+        .lesson-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lessons-dashboard py-3">
+    <div class="container-fluid px-3">
+        
+        <!-- Статистика -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="fas fa-book fa-lg"></i>
+                </div>
+                <div class="stat-value">{{ total_lessons|default:"0" }}</div>
+                <div class="stat-label">Всего занятий</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="fas fa-check-circle fa-lg"></i>
+                </div>
+                <div class="stat-value">{{ completed_lessons|default:"0" }}</div>
+                <div class="stat-label">Проведено</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="fas fa-clock fa-lg"></i>
+                </div>
+                <div class="stat-value">{{ pending_lessons|default:"0" }}</div>
+                <div class="stat-label">Предстоит</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon info">
+                    <i class="fas fa-users fa-lg"></i>
+                </div>
+                <div class="stat-value">{{ teacher_group.name|default:"—" }}</div>
+                <div class="stat-label">Моя группа</div>
+            </div>
+        </div>
+
+        <!-- Заголовок с кнопками -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h5 class="mb-0 fw-bold text-dark">
+                <i class="fas fa-chalkboard-teacher me-2 text-primary"></i>Панель занятий
+            </h5>
+            <div class="d-flex gap-2">
+                <a href="{% url 'lessons:lesson_plan_create' %}" class="btn btn-primary btn-sm px-3">
+                    <i class="fas fa-plus me-1"></i> Новое занятие
+                </a>
+                <a href="{% url 'lessons:reminder_create' %}" class="btn btn-outline-primary btn-sm px-3">
+                    <i class="fas fa-bell me-1"></i> Напоминание
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <!-- Сегодняшние занятия -->
+            <div class="col-lg-6">
+                <div class="content-card">
+                    <div class="card-header-custom">
+                        <h6>
+                            <i class="fas fa-calendar-day text-primary"></i>
+                            Сегодняшние занятия
+                            <span class="badge bg-primary ms-2">{{ todays_lessons|length }}</span>
+                        </h6>
+                    </div>
+                    <div class="card-body p-3">
+                        {% if todays_lessons %}
+                            {% for lesson in todays_lessons %}
+                            <div class="lesson-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="lesson-title">{{ lesson.title }}</div>
+                                        <div class="lesson-meta">
+                                            <span><i class="fas fa-clock fa-xs me-1"></i>{{ lesson.planned_time|time:"H:i" }} ({{ lesson.duration }} мин)</span>
+                                            <span class="badge-type">{{ lesson.get_lesson_type_display }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-1 ms-2">
+                                        {% if not lesson.completed %}
+                                        <a href="{% url 'lessons:lesson_plan_complete' lesson.id %}" class="btn-icon-sm btn-complete" title="Отметить проведенным">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                        {% endif %}
+                                        <a href="{% url 'lessons:lesson_plan_detail' lesson.id %}" class="btn-icon-sm btn-view" title="Просмотр">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-calendar-day"></i>
+                                <p>На сегодня занятий не запланировано</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ближайшие напоминания -->
+            <div class="col-lg-6">
+                <div class="content-card">
+                    <div class="card-header-custom">
+                        <h6>
+                            <i class="fas fa-bell text-warning"></i>
+                            Ближайшие напоминания
+                            <span class="badge bg-warning ms-2">{{ upcoming_reminders|length }}</span>
+                        </h6>
+                    </div>
+                    <div class="card-body p-3">
+                        {% if upcoming_reminders %}
+                            {% for reminder in upcoming_reminders %}
+                            <div class="reminder-item 
+                                {% if reminder.priority == 1 %}reminder-priority-high
+                                {% elif reminder.priority == 2 %}reminder-priority-medium
+                                {% else %}reminder-priority-low{% endif %}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="reminder-title">
+                                            <i class="fas fa-bell fa-xs me-1 
+                                                {% if reminder.priority == 1 %}text-danger
+                                                {% elif reminder.priority == 2 %}text-warning
+                                                {% else %}text-info{% endif %}"></i>
+                                            {{ reminder.title }}
+                                        </div>
+                                        <div class="lesson-meta mt-1">
+                                            <span><i class="fas fa-calendar-alt fa-xs me-1"></i>{{ reminder.due_date|date:"d.m.Y" }}</span>
+                                            {% if reminder.due_time %}
+                                            <span><i class="fas fa-clock fa-xs me-1"></i>{{ reminder.due_time|time:"H:i" }}</span>
+                                            {% endif %}
+                                            <span class="text-muted">{{ reminder.description|truncatewords:8 }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="ms-2">
+                                        <form method="post" action="{% url 'lessons:reminder_toggle' reminder.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-icon-sm btn-view" title="{% if reminder.completed %}Вернуть{% else %}Отметить выполненным{% endif %}">
+                                                <i class="fas fa-{% if reminder.completed %}undo{% else %}check{% endif %}"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            <div class="text-center mt-3 pt-2">
+                                <a href="{% url 'lessons:reminders_list' %}" class="btn btn-sm btn-outline-primary px-3">
+                                    Все напоминания <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-bell-slash"></i>
+                                <p>Нет активных напоминаний</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Быстрые ссылки -->
+        <div class="quick-links mt-3">
+            <a href="{% url 'lessons:lesson_plan_list' %}" class="quick-link-card">
+                <i class="fas fa-list-alt text-primary"></i>
+                <span>Все занятия</span>
+            </a>
+            <a href="{% url 'lessons:schedule_view' %}" class="quick-link-card">
+                <i class="fas fa-calendar-alt text-success"></i>
+                <span>Расписание</span>
+            </a>
+            <a href="{% url 'lessons:calendar_view' %}" class="quick-link-card">
+                <i class="fas fa-calendar text-warning"></i>
+                <span>Календарь</span>
+            </a>
+            <a href="{% url 'lessons:templates_list' %}" class="quick-link-card">
+                <i class="fas fa-copy text-info"></i>
+                <span>Шаблоны</span>
+            </a>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Принятие приглашения | МБДОУ "Рябинушка"</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Ваши существующие стили без изменений */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            border: 4px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+            background: #f8f9fa;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            color: #a0aec0;
+            font-size: 1rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 20px 14px 45px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input[readonly] {
+            background: #f7fafc;
+            color: #4a5568;
+            cursor: not-allowed;
+            border-color: #e2e8f0;
+        }
+
+        .requirements {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .requirements-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .requirements-title i {
+            color: #667eea;
+        }
+
+        .requirement {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .requirement i {
+            width: 20px;
+            color: #cbd5e0;
+        }
+
+        .requirement.valid {
+            color: #48bb78;
+        }
+
+        .requirement.valid i {
+            color: #48bb78;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            font-family: 'Inter', sans-serif;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #cbd5e0;
+            box-shadow: none;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 25px;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .security-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 10px;
+            background: #f7fafc;
+            border-radius: 30px;
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .security-badge i {
+            color: #667eea;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            color: #991b1b;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-message i {
+            color: #ef4444;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 30px 20px;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+
+            .avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 2.5rem;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка -->
+        <div class="header">
+            <div class="avatar">
+                {{ employee.full_name|first|upper }}
+            </div>
+            <h1>Добро пожаловать!</h1>
+            <p>Создайте учетную запись для входа в систему</p>
+        </div>
+
+        <!-- Основное содержание -->
+        <div class="content">
+            <!-- Сообщения об ошибках -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Информация о сотруднике -->
+            <div class="info-card">
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Сотрудник</div>
+                        <div class="info-value">{{ employee.full_name }}</div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Должность</div>
+                        <div class="info-value">{{ employee.position }}</div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Email</div>
+                        <div class="info-value">{{ employee.email }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Форма создания аккаунта -->
+            <form method="post" action="{% url 'staff:accept_invite' token=token %}">
+                {% csrf_token %}
+                
+                <!-- Имя и Фамилия (исправленная обработка) -->
+                {% with name_parts=employee.full_name.split %}
+                    <input type="hidden" name="first_name" value="{% if name_parts|length > 1 %}{{ name_parts.1 }}{% else %}{{ employee.full_name }}{% endif %}">
+                    <input type="hidden" name="last_name" value="{{ name_parts.0 }}">
+                {% endwith %}
+                
+                <input type="hidden" name="email" value="{{ employee.email }}">
+
+                <!-- Логин -->
+                <div class="form-group">
+                    <label>Логин *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-at input-icon"></i>
+                        <input type="text" 
+                               name="username" 
+                               id="username"
+                               placeholder="Придумайте логин" 
+                               value="{{ employee.email|cut:'@'|cut:'.' }}" 
+                               pattern="[a-zA-Z0-9_]+" 
+                               title="Только латинские буквы, цифры и знак подчеркивания"
+                               required>
+                    </div>
+                </div>
+
+                <!-- Пароль (исправлено name="password1") -->
+                <div class="form-group">
+                    <label>Пароль *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" 
+                               name="password1" 
+                               id="password1" 
+                               placeholder="Придумайте пароль" 
+                               required>
+                    </div>
+                </div>
+
+                <!-- Подтверждение пароля (исправлено name="password2") -->
+                <div class="form-group">
+                    <label>Подтверждение пароля *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-check-circle input-icon"></i>
+                        <input type="password" 
+                               name="password2" 
+                               id="password2" 
+                               placeholder="Повторите пароль" 
+                               required>
+                    </div>
+                </div>
+
+                <!-- Требования к паролю -->
+                <div class="requirements">
+                    <div class="requirements-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Требования к паролю
+                    </div>
+                    <div class="requirement" id="reqLength">
+                        <i class="fas fa-circle"></i> Минимум 8 символов
+                    </div>
+                    <div class="requirement" id="reqNumber">
+                        <i class="fas fa-circle"></i> Хотя бы одна цифра
+                    </div>
+                    <div class="requirement" id="reqUpper">
+                        <i class="fas fa-circle"></i> Хотя бы одна заглавная буква
+                    </div>
+                    <div class="requirement" id="reqMatch">
+                        <i class="fas fa-circle"></i> Пароли совпадают
+                    </div>
+                </div>
+
+                <!-- Кнопка -->
+                <button type="submit" id="submitBtn" disabled>
+                    <i class="fas fa-check-circle"></i>
+                    Создать аккаунт и войти
+                </button>
+            </form>
+
+            <!-- Бейдж безопасности -->
+            <div class="security-badge">
+                <i class="fas fa-shield-alt"></i>
+                <span>Пароль надежно зашифрован</span>
+                <i class="fas fa-lock"></i>
+            </div>
+
+            <!-- Ссылка на вход -->
+            <div class="login-link">
+                Уже есть аккаунт? <a href="{% url 'accounts:login' %}">Войти</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const password1 = document.getElementById('password1');
+            const password2 = document.getElementById('password2');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            const reqLength = document.getElementById('reqLength');
+            const reqNumber = document.getElementById('reqNumber');
+            const reqUpper = document.getElementById('reqUpper');
+            const reqMatch = document.getElementById('reqMatch');
+
+            function checkPassword() {
+                let isValid = true;
+                const pwd = password1.value;
+                
+                // Проверка длины
+                if (pwd.length >= 8) {
+                    reqLength.classList.add('valid');
+                    reqLength.innerHTML = '<i class="fas fa-check-circle"></i> Минимум 8 символов ✓';
+                } else {
+                    reqLength.classList.remove('valid');
+                    reqLength.innerHTML = '<i class="fas fa-circle"></i> Минимум 8 символов';
+                    isValid = false;
+                }
+                
+                // Проверка наличия цифр
+                if (/\d/.test(pwd)) {
+                    reqNumber.classList.add('valid');
+                    reqNumber.innerHTML = '<i class="fas fa-check-circle"></i> Хотя бы одна цифра ✓';
+                } else {
+                    reqNumber.classList.remove('valid');
+                    reqNumber.innerHTML = '<i class="fas fa-circle"></i> Хотя бы одна цифра';
+                    isValid = false;
+                }
+                
+                // Проверка наличия заглавных букв
+                if (/[A-Z]/.test(pwd)) {
+                    reqUpper.classList.add('valid');
+                    reqUpper.innerHTML = '<i class="fas fa-check-circle"></i> Хотя бы одна заглавная буква ✓';
+                } else {
+                    reqUpper.classList.remove('valid');
+                    reqUpper.innerHTML = '<i class="fas fa-circle"></i> Хотя бы одна заглавная буква';
+                    isValid = false;
+                }
+                
+                // Проверка совпадения паролей
+                if (pwd && password2.value && pwd === password2.value) {
+                    reqMatch.classList.add('valid');
+                    reqMatch.innerHTML = '<i class="fas fa-check-circle"></i> Пароли совпадают ✓';
+                } else {
+                    reqMatch.classList.remove('valid');
+                    reqMatch.innerHTML = '<i class="fas fa-circle"></i> Пароли совпадают';
+                    isValid = false;
+                }
+                
+                // Активация кнопки
+                submitBtn.disabled = !isValid;
+            }
+            
+            password1.addEventListener('input', checkPassword);
+            password2.addEventListener('input', checkPassword);
+            
+            // Блокируем кнопку изначально
+            submitBtn.disabled = true;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Счета на оплату{% endblock %}
+
+{% block extra_css %}
+<style>
+    .invoice-card {
+        border-left: 4px solid #4e73df;
+        transition: all 0.3s ease;
+    }
+    
+    .invoice-card.overdue {
+        border-left-color: #e74a3b;
+        background: rgba(231, 74, 59, 0.05);
+    }
+    
+    .invoice-card.paid {
+        border-left-color: #1cc88a;
+        background: rgba(28, 200, 138, 0.05);
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок и фильтры -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-file-invoice-dollar text-primary me-2"></i>Счета на оплату
+        </h1>
+        {% if user.role == 'director' %}
+        <a href="{% url 'payments:generate_invoices' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Сгенерировать счета
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Статистика -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stat-card text-center">
+                <div class="text-primary fs-2 fw-bold">{{ total_invoices }}</div>
+                <div class="text-muted">Всего счетов</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stat-card text-center">
+                <div class="text-success fs-2 fw-bold">{{ paid_amount }} ₽</div>
+                <div class="text-muted">Оплачено</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stat-card text-center">
+                <div class="text-warning fs-2 fw-bold">{{ total_amount }} ₽</div>
+                <div class="text-muted">Общая сумма</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="stat-card text-center">
+                <div class="text-danger fs-2 fw-bold">{{ overdue_count }}</div>
+                <div class="text-muted">Просрочено</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Фильтры</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Статус</label>
+                    <select name="status" class="form-select">
+                        <option value="">Все статусы</option>
+                        <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Черновик</option>
+                        <option value="issued" {% if status_filter == 'issued' %}selected{% endif %}>Выставлен</option>
+                        <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Оплачен</option>
+                        <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Просрочен</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Месяц</label>
+                    <select name="month" class="form-select">
+                        <option value="">Все месяцы</option>
+                        {% for i in "123456789101112" %}
+                        <option value="{{ i }}" {% if month_filter == i %}selected{% endif %}>{{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Год</label>
+                    <input type="number" name="year" class="form-control" value="{{ year_filter }}" placeholder="Год">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i>Применить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Список счетов -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {% if user.role == 'parent' %}Мои счета{% else %}Все счета{% endif %}
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if invoices %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Номер квитанции</th>
+                            <th>Ребенок</th>
+                            <th>Период</th>
+                            <th>Рабочих дней</th>
+                            <th>Посещено</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                            <th>Срок оплаты</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                        <tr class="{% if invoice.is_overdue %}table-danger{% elif invoice.status == 'paid' %}table-success{% endif %}">
+                            <td>
+                                <strong>{{ invoice.invoice_number }}</strong>
+                            </td>
+                            <td>{{ invoice.child.full_name }}</td>
+                            <td>{{ invoice.month }}.{{ invoice.year }}</td>
+                            <td>{{ invoice.working_days_count }}</td>
+                            <td>
+                                {{ invoice.attended_days_count }}
+                                <small class="text-muted">({{ invoice.attendance_percentage }}%)</small>
+                            </td>
+                            <td>
+                                <strong>{{ invoice.final_amount }} ₽</strong>
+                                {% if invoice.attended_days_count < invoice.working_days_count %}
+                                <br>
+                                <small class="text-muted">
+                                    из {{ invoice.base_amount }} ₽
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if invoice.status == 'paid' %}bg-success
+                                    {% elif invoice.is_overdue %}bg-danger
+                                    {% elif invoice.status == 'issued' %}bg-warning
+                                    {% else %}bg-secondary{% endif %}">
+                                    {% if invoice.is_overdue %}Просрочен
+                                    {% else %}{{ invoice.get_status_display }}{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {{ invoice.due_date|date:"d.m.Y" }}
+                                {% if invoice.is_overdue %}
+                                <br>
+                                <small class="text-danger">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Просрочен на {{ invoice.due_date|timesince }}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'payments:invoice_detail' invoice.id %}" 
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if invoice.status in ['issued', 'overdue'] and user.role == 'parent' %}
+                                    <a href="{% url 'payments:payment_page' invoice.id %}" 
+                                       class="btn btn-success">
+                                        <i class="fas fa-credit-card"></i> Оплатить
+                                    </a>
+                                    {% endif %}
+                                    {% if user.role == 'director' and invoice.status == 'issued' %}
+                                    <button class="btn btn-outline-info simulate-payment" 
+                                            data-invoice-id="{{ invoice.id }}">
+                                        <i class="fas fa-bolt"></i> Тест
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-invoice-dollar fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">Счета не найдены</h4>
+                <p class="text-muted">
+                    {% if user.role == 'parent' %}
+                    У вас пока нет счетов для оплаты
+                    {% else %}
+                    В системе пока нет сгенерированных счетов
+                    {% endif %}
+                </p>
+                {% if user.role == 'director' %}
+                <a href="{% url 'payments:generate_invoices' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Сгенерировать первые счета
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Имитация оплаты для тестирования (только для директора)
+    document.querySelectorAll('.simulate-payment').forEach(button => {
+        button.addEventListener('click', function() {
+            const invoiceId = this.getAttribute('data-invoice-id');
+            simulatePayment(invoiceId);
+        });
+    });
+    
+    function simulatePayment(invoiceId) {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+        
+        fetch("{% url 'payments:simulate_payment_ajax' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                invoice_id: invoiceId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Тестовый платеж успешно проведен!', 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showNotification('Ошибка: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Ошибка сети', 'error');
+        })
+        .finally(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+    
+    function showNotification(message, type) {
+        // Реализация уведомлений
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const alert = document.createElement('div');
+        alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+        alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(alert);
+        
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}

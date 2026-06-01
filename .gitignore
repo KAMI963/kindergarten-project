@@ -1,0 +1,83 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Виртуальное окружение
+venv/
+env/
+ENV/
+.env
+.venv
+kindergarten_env/
+ENV/
+env/
+
+# Django
+*.log
+*.pot
+*.pyc
+*.pyo
+db.sqlite3
+db.sqlite3-journal
+/staticfiles
+/static/
+/media/
+/mediafiles
+
+# Конфигурационные файлы с секретами
+.env.local
+.env.production
+config.local.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Миграции (раскомментируйте если хотите игнорировать миграции)
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+*.pid
+
+# Railway
+.railway/
+
+# Docker
+*.pid
+Dockerfile.dev
+.dockerignore
+
+# Логи
+*.log
+log/
+logs/
+
+# Временные файлы
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Документы (если генерируются)
+*.pdf
+*.docx
+*.xlsx
+
+# Media загруженные файлы (важно для Railway)
+media/
+mediafiles/

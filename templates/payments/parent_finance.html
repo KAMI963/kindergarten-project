@@ -1,0 +1,567 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Мои финансы{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --pf-primary: #6366f1;
+        --pf-primary-dark: #4f46e5;
+        --pf-secondary: #8b5cf6;
+        --pf-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+        --pf-success: #10b981;
+        --pf-danger: #ef4444;
+        --pf-warning: #f59e0b;
+        --pf-bg: #f8fafc;
+        --pf-card: #ffffff;
+        --pf-text: #1e293b;
+        --pf-muted: #64748b;
+        --pf-border: #e2e8f0;
+        --card-radius: 16px;
+    }
+
+    .pf-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    .pf-grid { display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 1100px) { .pf-grid { grid-template-columns: 1fr; } }
+
+    /* === ВИРТУАЛЬНЫЙ КОШЕЛЕК === */
+    .wallet-card {
+        background: var(--pf-gradient);
+        border-radius: 24px;
+        padding: 28px;
+        color: white;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.4);
+    }
+    .wallet-card::before {
+        content: '';
+        position: absolute;
+        top: -50%; right: -50%; width: 100%; height: 100%;
+        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+        pointer-events: none;
+    }
+    .wallet-label { font-size: 0.75rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 600; }
+    .wallet-balance { font-size: 2.5rem; font-weight: 800; margin-bottom: 20px; letter-spacing: -0.5px; text-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .wallet-stats { display: flex; gap: 30px; margin-bottom: 24px; position: relative; z-index: 1; }
+    .wallet-stat small { display: block; font-size: 0.65rem; opacity: 0.75; margin-bottom: 4px; }
+    .wallet-stat span { font-size: 1.1rem; font-weight: 700; }
+
+    /* === СЕКЦИЯ КАРТ === */
+    .cards-section {
+        background: var(--pf-card);
+        border-radius: 20px;
+        margin-bottom: 24px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border: 1px solid var(--pf-border);
+    }
+    .cards-header {
+        padding: 18px 24px;
+        background: #fff;
+        border-bottom: 1px solid var(--pf-border);
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .cards-header h3 { font-size: 1rem; font-weight: 700; color: var(--pf-text); margin: 0; display: flex; align-items: center; gap: 10px; }
+    
+    /* Стиль кнопки добавления */
+    .btn-toggle-form {
+        background: #eef2ff; color: var(--pf-primary); border: none; padding: 8px 16px;
+        border-radius: 10px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+        transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+    }
+    .btn-toggle-form:hover { background: #e0e7ff; transform: translateY(-1px); }
+    .btn-toggle-form.active { background: #fee2e2; color: #ef4444; }
+
+    /* Реалистичная карта в списке */
+    .saved-cards-list { padding: 20px; display: grid; gap: 16px; }
+    .real-card {
+        width: 100%; height: 140px;
+        border-radius: var(--card-radius);
+        padding: 20px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        display: flex; flex-direction: column; justify-content: space-between;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2);
+        border: 2px solid transparent;
+    }
+    /* Градиенты для разных типов карт */
+    .real-card.visa { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+    .real-card.mastercard { background: linear-gradient(135deg, #eb001b 0%, #f79e1b 100%); }
+    .real-card.mir { background: linear-gradient(135deg, #0077c8 0%, #00aeef 50%, #8cc63f 100%); }
+    .real-card.default { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
+
+    .real-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 20px 30px -10px rgba(0,0,0,0.3); }
+    .real-card.selected { border-color: white; box-shadow: 0 0 0 4px var(--pf-primary), 0 20px 30px -10px rgba(0,0,0,0.3); z-index: 2; }
+
+    .rc-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .rc-chip { width: 40px; height: 30px; background: linear-gradient(135deg, #ffd700 0%, #fdb931 100%); border-radius: 6px; opacity: 0.9; position: relative; }
+    .rc-chip::after { content: ''; position: absolute; inset: 4px; border: 1px solid rgba(0,0,0,0.2); border-radius: 2px; }
+    .rc-type { font-size: 1.8rem; opacity: 0.9; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    
+    .rc-number { font-family: 'Courier New', monospace; font-size: 1.3rem; letter-spacing: 2px; font-weight: 600; text-shadow: 0 2px 2px rgba(0,0,0,0.3); margin: 10px 0; }
+    
+    .rc-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+    .rc-holder { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+    .rc-expiry-block { text-align: right; }
+    .rc-expiry-label { font-size: 0.5rem; text-transform: uppercase; opacity: 0.7; line-height: 1; }
+    .rc-expiry-val { font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; }
+
+    .rc-actions { position: absolute; top: 15px; right: 60px; display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; }
+    .real-card:hover .rc-actions { opacity: 1; }
+    .rc-btn { width: 28px; height: 28px; border-radius: 50%; border: none; background: rgba(255,255,255,0.2); color: white; cursor: pointer; backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .rc-btn:hover { background: white; color: var(--pf-text); }
+    .rc-btn.del:hover { background: #fee2e2; color: #ef4444; }
+    .default-badge-abs { position: absolute; bottom: 15px; right: 20px; background: rgba(255,255,255,0.25); padding: 2px 8px; border-radius: 4px; font-size: 0.6rem; font-weight: 700; backdrop-filter: blur(4px); }
+
+    /* Форма добавления (скрытая) */
+    .add-card-wrapper {
+        max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out;
+        background: #f8fafc; border-top: 1px solid transparent;
+    }
+    .add-card-wrapper.open { max-height: 600px; border-top-color: var(--pf-border); }
+    .add-card-form { padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 768px) { .add-card-form { grid-template-columns: 1fr; } }
+
+    .preview-col { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .form-col { display: flex; flex-direction: column; justify-content: center; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label { font-size: 0.7rem; font-weight: 700; color: var(--pf-muted); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--pf-border); border-radius: 12px; font-size: 0.9rem; background: white; transition: all 0.2s; box-sizing: border-box; }
+    .form-group input:focus { outline: none; border-color: var(--pf-primary); box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    
+    .btn-add-card {
+        width: 100%; padding: 14px; background: var(--pf-gradient); color: white; border: none;
+        border-radius: 12px; font-weight: 700; font-size: 0.9rem; cursor: pointer; margin-top: 8px;
+        transition: all 0.2s; box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+    }
+    .btn-add-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,0.4); }
+
+    /* Пустое состояние */
+    .empty-cards { text-align: center; padding: 40px 20px; color: var(--pf-muted); }
+    .empty-cards i { font-size: 3rem; margin-bottom: 16px; opacity: 0.3; }
+    .empty-cards p { margin: 0 0 8px; font-weight: 600; color: var(--pf-text); }
+    .empty-cards small { font-size: 0.8rem; }
+
+    /* Остальные элементы */
+    .quick-actions { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .quick-action {
+        display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+        background: var(--pf-card); border: 1px solid var(--pf-border); border-radius: 14px;
+        text-decoration: none; color: var(--pf-text); transition: all 0.2s; font-weight: 600; font-size: 0.9rem;
+    }
+    .quick-action:hover { border-color: var(--pf-primary); background: #eef2ff; transform: translateX(4px); }
+    .quick-action i { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    
+    .compensation-banner {
+        background: linear-gradient(to right, #ecfdf5, #d1fae5); border: 1px solid #a7f3d0; border-radius: 14px;
+        padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px;
+    }
+    .comp-badge { background: #10b981; color: white; padding: 3px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 700; margin: 0 2px; }
+    
+    .months-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding: 20px; }
+    .month-card { background: var(--pf-bg); border: 1px solid var(--pf-border); border-radius: 12px; padding: 14px; transition: 0.2s; }
+    .month-card:hover { border-color: var(--pf-primary); }
+    .mc-pending { border-left: 4px solid #f59e0b; }
+    .mc-paid { border-left: 4px solid #10b981; }
+    .badge-paid { background: #d1fae5; color: #065f46; padding: 3px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 700; }
+    .badge-pending { background: #fef3c7; color: #92400e; padding: 3px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 700; }
+    
+    .btn-pay-sm { background: var(--pf-primary); color: white; padding: 5px 14px; border-radius: 20px; font-size: 0.7rem; text-decoration: none; font-weight: 600; }
+    .btn-receipt { background: white; color: var(--pf-primary); border: 1px solid var(--pf-border); padding: 5px 14px; border-radius: 20px; font-size: 0.7rem; text-decoration: none; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pf-container">
+    <div class="pf-grid">
+        <!-- ЛЕВАЯ КОЛОНКА -->
+        <div>
+            <!-- Виртуальный кошелек -->
+            <div class="wallet-card">
+                <div class="wallet-label">Мой кошелек</div>
+                <div class="wallet-balance">
+                    {% if current_balance < 0 %}−{{ current_balance|floatformat:2|cut:"-" }}{% else %}{{ current_balance|floatformat:2 }}{% endif %} ₽
+                </div>
+                <div class="wallet-stats">
+                    <div class="wallet-stat"><small>Всего начислено</small><span>{{ total_charged|floatformat:2 }} ₽</span></div>
+                    <div class="wallet-stat"><small>Всего оплачено</small><span>{{ total_paid|floatformat:2 }} ₽</span></div>
+                </div>
+                {% if current_month_payment %}
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; justify-content: space-between; align-items: center;">
+                    <div><small style="opacity:0.8;">Оплата за месяц</small><div style="font-weight:700; font-size: 1.1rem;">{{ current_month_payment.amount|floatformat:2 }} ₽</div></div>
+                    <a href="{% url 'payments:payment_page' current_month_payment.child.id %}" class="btn-vc-white" style="background:white; color:#6366f1; padding:8px 18px; border-radius:20px; font-size:0.75rem; text-decoration:none; font-weight:700;">Оплатить</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Компенсация -->
+            <div class="compensation-banner">
+                <div style="width:40px; height:40px; background:#10b981; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size: 1.1rem;"><i class="fas fa-gift"></i></div>
+                <div style="font-size:0.8rem; line-height: 1.4;">После оплаты вы получите компенсацию <span class="comp-badge">20%</span> <span class="comp-badge">50%</span> или <span class="comp-badge">70%</span></div>
+            </div>
+
+            <!-- Быстрые действия -->
+            <div class="quick-actions">
+                <a href="{% url 'payments:payment_history' %}" class="quick-action"><i style="background:#dbeafe; color:#2563eb;"><i class="fas fa-history"></i></i> История платежей</a>
+                <a href="{% url 'payments:services_catalog' %}" class="quick-action"><i style="background:#fef3c7; color:#f59e0b;"><i class="fas fa-palette"></i></i> Дополнительные услуги</a>
+            </div>
+        </div>
+
+        <!-- ПРАВАЯ КОЛОНКА -->
+        <div>
+            <!-- Банковские карты -->
+            <div class="cards-section">
+                <div class="cards-header">
+                    <h3><i class="fas fa-credit-card" style="color:var(--pf-primary);"></i> Мои карты</h3>
+                    <button class="btn-toggle-form" id="toggleFormBtn" onclick="toggleAddForm()">
+                        <i class="fas fa-plus"></i> Добавить карту
+                    </button>
+                </div>
+                
+                <!-- Сохранённые карты -->
+                <div class="saved-cards-list" id="savedCardsList">
+                    {% if saved_cards %}
+                        {% for card in saved_cards %}
+                        <div class="real-card {% if card.card_type == 'visa' %}visa{% elif card.card_type == 'mastercard' %}mastercard{% elif card.card_type == 'mir' %}mir{% else %}default{% endif %} {% if card.is_default %}selected{% endif %}" 
+                             data-card-id="{{ card.id }}" onclick="selectCard(this, {{ card.id }})">
+                            <div class="rc-top">
+                                <div class="rc-chip"></div>
+                                <div class="rc-type">
+                                    {% if card.card_type == 'visa' %}<i class="fab fa-cc-visa"></i>
+                                    {% elif card.card_type == 'mastercard' %}<i class="fab fa-cc-mastercard"></i>
+                                    {% elif card.card_type == 'mir' %}<i class="fas fa-university"></i>
+                                    {% else %}<i class="fas fa-credit-card"></i>{% endif %}
+                                </div>
+                                <div class="rc-actions">
+                                    {% if not card.is_default %}
+                                    <button class="rc-btn" onclick="event.stopPropagation(); setDefaultCard({{ card.id }})" title="Сделать основной"><i class="fas fa-star"></i></button>
+                                    {% endif %}
+                                    <button class="rc-btn del" onclick="event.stopPropagation(); deleteCard({{ card.id }})" title="Удалить"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="rc-number">{{ card.card_number_masked }}</div>
+                            <div class="rc-bottom">
+                                <div class="rc-holder">{{ card.card_holder }}</div>
+                                <div class="rc-expiry-block">
+                                    <div class="rc-expiry-label">Expires</div>
+                                    <div class="rc-expiry-val">{{ card.expiry_month|stringformat:"02d" }}/{{ card.expiry_year|stringformat:"02d"|slice:"-2:" }}</div>
+                                </div>
+                            </div>
+                            {% if card.is_default %}<div class="default-badge-abs">ОСНОВНАЯ</div>{% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-cards">
+                            <i class="fas fa-wallet"></i>
+                            <p>Нет сохранённых карт</p>
+                            <small>Добавьте карту для быстрой оплаты услуг</small>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Скрытая форма добавления карты -->
+                <div class="add-card-wrapper" id="addCardWrapper">
+                    <div class="add-card-form">
+                        <div class="preview-col">
+                            <div class="real-card visa" id="livePreviewCard" style="pointer-events: none; width: 100%; max-width: 340px;">
+                                <div class="rc-top">
+                                    <div class="rc-chip"></div>
+                                    <div class="rc-type" id="previewCardType"><i class="fab fa-cc-visa"></i></div>
+                                </div>
+                                <div class="rc-number" id="previewCardNumber">•••• •••• •••• ••••</div>
+                                <div class="rc-bottom">
+                                    <div class="rc-holder" id="previewCardHolder">ИМЯ ВЛАДЕЛЬЦА</div>
+                                    <div class="rc-expiry-block">
+                                        <div class="rc-expiry-label">Expires</div>
+                                        <div class="rc-expiry-val" id="previewCardExpiry">ММ/ГГ</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label>Владелец карты</label>
+                                <input type="text" id="cardHolderInput" placeholder="IVANOV IVAN" style="text-transform:uppercase" oninput="updatePreview()">
+                            </div>
+                            <div class="form-group">
+                                <label>Номер карты</label>
+                                <input type="text" id="cardNumberInput" placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatCardNumber(this); updatePreview()">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Срок действия</label>
+                                    <input type="text" id="cardExpiryInput" placeholder="ММ/ГГ" maxlength="5" oninput="formatExpiry(this); updatePreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label>CVV/CVC</label>
+                                    <input type="password" id="cardCvvInput" placeholder="***" maxlength="4">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 16px;">
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; text-transform:none; font-size:0.8rem;">
+                                    <input type="checkbox" id="setDefaultCheckbox" style="width:auto;"> Сделать основной картой
+                                </label>
+                            </div>
+                            <button class="btn-add-card" onclick="addCard()">
+                                <i class="fas fa-lock me-1"></i> Безопасно добавить карту
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Детализация по месяцам -->
+            <div class="cards-section">
+                <div class="cards-header">
+                    <h3><i class="fas fa-calendar-alt"></i> Детализация по месяцам</h3>
+                </div>
+                <div class="months-grid">
+                    {% for md in monthly_details %}
+                    <div class="month-card {% if md.status == 'pending' %}mc-pending{% elif md.status == 'paid' %}mc-paid{% endif %}">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div><strong>{{ md.name }}</strong><div style="font-size:0.65rem; color:var(--pf-muted);">{{ md.year }}</div></div>
+                            {% if md.status == 'paid' %}<span class="badge-paid">✓ Оплачено</span>{% elif md.status == 'pending' %}<span class="badge-pending">Ожидает</span>{% endif %}
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.75rem; font-weight: 600;">
+                            <span>Начислено: {{ md.charged|floatformat:2 }} ₽</span>
+                            <span>Оплачено: {{ md.paid|floatformat:2 }} ₽</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- История платежей -->
+            <div class="cards-section">
+                <div class="cards-header">
+                    <h3><i class="fas fa-history"></i> История платежей</h3>
+                </div>
+                <div style="overflow-x:auto; padding: 20px;">
+                    <table style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--pf-border);">
+                                <th style="text-align:left; padding:10px; color:var(--pf-muted); font-weight:600;">Дата</th>
+                                <th style="text-align:left; color:var(--pf-muted); font-weight:600;">Ребёнок</th>
+                                <th style="text-align:left; color:var(--pf-muted); font-weight:600;">Период</th>
+                                <th style="text-align:right; color:var(--pf-muted); font-weight:600;">Сумма</th>
+                                <th style="text-align:center; color:var(--pf-muted); font-weight:600;">Статус</th>
+                                <th style="text-align:center; color:var(--pf-muted); font-weight:600;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in all_history|slice:":10" %}
+                            {% with p=item.payment %}
+                            <tr style="border-bottom: 1px solid var(--pf-border);">
+                                <td style="padding:12px 10px;">{{ p.paid_at|date:"d.m.Y"|default:"—" }}</td>
+                                <td>{{ p.child.full_name }}</td>
+                                <td>{{ p.get_month_name }} {{ p.year }}</td>
+                                <td style="text-align:right; font-weight:700;">{{ p.amount|floatformat:2 }} ₽</td>
+                                <td style="text-align:center;">{% if p.status == 'completed' %}<span class="badge-paid">Оплачено</span>{% else %}<span class="badge-pending">Ожидает</span>{% endif %}</td>
+                                <td style="text-align:center;">{% if p.status == 'completed' %}<a href="{% url 'payments:generate_receipt' p.id %}" class="btn-receipt"><i class="fas fa-download"></i></a>{% else %}<a href="{% url 'payments:payment_page' p.child.id %}" class="btn-pay-sm">Оплатить</a>{% endif %}</td>
+                            </tr>
+                            {% endwith %}
+                            {% empty %}
+                            <tr><td colspan="6" style="padding:40px; text-align:center; color:var(--pf-muted);">Нет платежей</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedCardId = null;
+
+// Управление видимостью формы
+function toggleAddForm() {
+    const wrapper = document.getElementById('addCardWrapper');
+    const btn = document.getElementById('toggleFormBtn');
+    const isOpen = wrapper.classList.contains('open');
+    
+    if (isOpen) {
+        wrapper.classList.remove('open');
+        btn.innerHTML = '<i class="fas fa-plus"></i> Добавить карту';
+        btn.classList.remove('active');
+    } else {
+        wrapper.classList.add('open');
+        btn.innerHTML = '<i class="fas fa-times"></i> Отмена';
+        btn.classList.add('active');
+        // Небольшая задержка для фокуса после анимации
+        setTimeout(() => document.getElementById('cardHolderInput').focus(), 300);
+    }
+}
+
+function updatePreview() {
+    let cardNumber = document.getElementById('cardNumberInput').value || '•••• •••• •••• ••••';
+    let cardHolder = document.getElementById('cardHolderInput').value || 'ИМЯ ВЛАДЕЛЬЦА';
+    let cardExpiry = document.getElementById('cardExpiryInput').value || 'ММ/ГГ';
+    let cleanNumber = cardNumber.replace(/\s/g, '');
+    
+    document.getElementById('previewCardNumber').innerText = cardNumber || '•••• •••• •••• ••••';
+    document.getElementById('previewCardHolder').innerText = cardHolder.toUpperCase() || 'ИМЯ ВЛАДЕЛЬЦА';
+    document.getElementById('previewCardExpiry').innerText = cardExpiry || 'ММ/ГГ';
+    
+    // Меняем стиль карты в зависимости от BIN
+    const previewCard = document.getElementById('livePreviewCard');
+    const typeIcon = document.getElementById('previewCardType');
+    
+    previewCard.className = 'real-card'; // сброс
+    if (cleanNumber.startsWith('4')) {
+        previewCard.classList.add('visa');
+        typeIcon.innerHTML = '<i class="fab fa-cc-visa"></i>';
+    } else if (cleanNumber.startsWith('5') || cleanNumber.startsWith('2')) {
+        previewCard.classList.add('mastercard');
+        typeIcon.innerHTML = '<i class="fab fa-cc-mastercard"></i>';
+    } else if (cleanNumber.startsWith('6')) {
+        previewCard.classList.add('mir');
+        typeIcon.innerHTML = '<i class="fas fa-university"></i>';
+    } else {
+        previewCard.classList.add('visa'); // дефолт
+        typeIcon.innerHTML = '<i class="fab fa-cc-visa"></i>';
+    }
+}
+
+function formatCardNumber(input) {
+    let v = input.value.replace(/\s/g, '').replace(/[^0-9]/g, '');
+    let parts = [];
+    for (let i = 0; i < v.length && i < 16; i += 4) parts.push(v.substring(i, i + 4));
+    input.value = parts.join(' ');
+}
+
+function formatExpiry(input) {
+    let v = input.value.replace(/\s/g, '').replace(/[^0-9]/g, '');
+    if (v.length >= 2) input.value = v.substring(0, 2) + (v.length > 2 ? '/' + v.substring(2, 4) : '');
+}
+
+function getCsrfToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, 'csrftoken'.length + 1) === ('csrftoken' + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring('csrftoken'.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function addCard() {
+    const cardHolder = document.getElementById('cardHolderInput').value.trim().toUpperCase();
+    const cardNumber = document.getElementById('cardNumberInput').value.replace(/\s/g, '');
+    const cardExpiry = document.getElementById('cardExpiryInput').value;
+    const cardCvv = document.getElementById('cardCvvInput').value;
+    const setAsDefault = document.getElementById('setDefaultCheckbox').checked;
+    
+    if (!cardHolder || !cardNumber || !cardExpiry || !cardCvv) {
+        alert('Пожалуйста, заполните все поля');
+        return;
+    }
+    if (cardNumber.length !== 16) {
+        alert('Номер карты должен содержать 16 цифр');
+        return;
+    }
+    if (!cardExpiry.match(/^\d{2}\/\d{2}$/)) {
+        alert('Введите срок действия в формате ММ/ГГ');
+        return;
+    }
+    
+    const [month, year] = cardExpiry.split('/');
+    const currentYear = new Date().getFullYear() % 100;
+    const currentMonth = new Date().getMonth() + 1;
+    if (parseInt(year) < currentYear || (parseInt(year) === currentYear && parseInt(month) < currentMonth)) {
+        alert('Срок действия карты истек');
+        return;
+    }
+    
+    let cardType = 'visa';
+    if (cardNumber.startsWith('4')) cardType = 'visa';
+    else if (cardNumber.startsWith('5') || cardNumber.startsWith('2')) cardType = 'mastercard';
+    else if (cardNumber.startsWith('6')) cardType = 'mir';
+    
+    // Блокируем кнопку на время запроса
+    const btn = document.querySelector('.btn-add-card');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Обработка...';
+    btn.disabled = true;
+
+    fetch('/payments/api/add-card/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            card_holder: cardHolder,
+            card_number: cardNumber,
+            card_type: cardType,
+            expiry_month: parseInt(month),
+            expiry_year: parseInt('20' + year),
+            set_as_default: setAsDefault
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Перезагрузка скроет форму и покажет новую карту
+        } else {
+            alert(data.error || 'Ошибка при добавлении карты');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ошибка соединения');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+function deleteCard(cardId) {
+    if (!confirm('Вы уверены, что хотите удалить эту карту?')) return;
+    fetch(`/payments/api/delete-card/${cardId}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrfToken() }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) location.reload();
+        else alert(data.error || 'Ошибка');
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function setDefaultCard(cardId) {
+    fetch(`/payments/api/set-default-card/${cardId}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrfToken() }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) location.reload();
+        else alert(data.error || 'Ошибка');
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function selectCard(element, cardId) {
+    document.querySelectorAll('.real-card').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedCardId = cardId;
+    localStorage.setItem('selectedPaymentCard', cardId);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,835 @@
+<!-- templates/children/child_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Личное дело - {{ child.full_name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    /* === ТОЧНЫЕ СТИЛИ ИЗ ПРИМЕРА === */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    a {
+        text-decoration: none;
+    }
+
+    /* Контейнер страницы — как iframe-container в примере */
+    .page-frame {
+        flex: 1;
+        position: relative;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        min-height: 0;
+        margin: 20px;
+    }
+
+    .page-content {
+        padding: 24px 28px;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: #f5f5f5;
+        min-height: 100%;
+    }
+
+    /* Заголовок страницы */
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 16px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(45, 47, 53, 0.08);
+    }
+
+    .page-title {
+        color: #151617;
+        font-size: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .page-title i {
+        color: #2d2d2d;
+        font-size: 20px;
+    }
+
+    .page-subtitle {
+        color: #878c9f;
+        font-size: 13px;
+        margin-top: 2px;
+    }
+
+    /* Карточка ребенка */
+    .child-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .child-photo-wrapper {
+        flex-shrink: 0;
+    }
+
+    .child-photo {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #f5f5f5;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .no-photo {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: #2d2d2d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 28px;
+        border: 2px solid #f5f5f5;
+    }
+
+    .child-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .child-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #151617;
+        margin-bottom: 6px;
+        line-height: 1.3;
+    }
+
+    .child-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        font-size: 13px;
+        color: #878c9f;
+    }
+
+    .child-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .child-meta-item i {
+        color: #2d2d2d;
+        width: 14px;
+        text-align: center;
+    }
+
+    /* Секции */
+    .section {
+        background: white;
+        border-radius: 12px;
+        padding: 18px 20px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #151617;
+        padding-bottom: 12px;
+        margin-bottom: 14px;
+        border-bottom: 1px solid rgba(45, 47, 53, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .section-title i {
+        color: #2d2d2d;
+        font-size: 16px;
+    }
+
+    /* Сетка документов */
+    .documents-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 10px;
+    }
+
+    .document-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 12px 14px;
+        background: #f8f8f8;
+        border-radius: 10px;
+        transition: background 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .document-item:hover {
+        background: white;
+        border-color: rgba(45, 47, 53, 0.12);
+    }
+
+    .document-icon {
+        width: 36px;
+        height: 36px;
+        margin-right: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border-radius: 8px;
+        flex-shrink: 0;
+        color: #2d2d2d;
+        font-size: 16px;
+        border: 1px solid rgba(45, 47, 53, 0.08);
+    }
+
+    .document-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .document-name {
+        font-weight: 500;
+        color: #151617;
+        font-size: 13px;
+        margin-bottom: 5px;
+        line-height: 1.3;
+    }
+
+    .document-footer {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .document-status {
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 3px 8px;
+        border-radius: 9999px;
+        font-weight: 500;
+    }
+
+    .status-success {
+        color: #0a7d4a;
+        background: rgba(10, 125, 74, 0.12);
+    }
+
+    .status-warning {
+        color: #9a6d00;
+        background: rgba(154, 109, 0, 0.12);
+    }
+
+    .status-danger {
+        color: #c42b2b;
+        background: rgba(196, 43, 43, 0.12);
+    }
+
+    .status-info {
+        color: #006d8a;
+        background: rgba(0, 109, 138, 0.12);
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 7px;
+        border-radius: 9999px;
+        font-size: 10px;
+        font-weight: 600;
+        color: white;
+    }
+
+    .badge-success { background: #0a7d4a; }
+    .badge-warning { background: #ffb033; color: #151617; }
+    .badge-danger { background: #c42b2b; }
+    .badge-info { background: #0077cc; }
+
+    .document-value {
+        font-size: 11px;
+        color: #878c9f;
+        font-family: ui-monospace, SFMono-Regular, monospace;
+        margin-top: 3px;
+        word-break: break-all;
+    }
+
+    /* Информация (grid) */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 6px 14px;
+    }
+
+    .info-row {
+        display: flex;
+        padding: 8px 0;
+        border-bottom: 1px dashed rgba(45, 47, 53, 0.08);
+        align-items: flex-start;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .info-label {
+        width: 140px;
+        font-weight: 500;
+        color: #878c9f;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+
+    .info-value {
+        flex: 1;
+        color: #151617;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+
+    .info-value small {
+        color: #878c9f;
+        font-weight: 400;
+    }
+
+    .info-value i {
+        color: #2d2d2d;
+        margin-right: 3px;
+        width: 13px;
+    }
+
+    /* Кнопки — точные стили из примера */
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        margin-right: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.2s;
+        font-family: inherit;
+        background: #2d2d2d;
+        color: white;
+    }
+
+    .btn:hover {
+        background: #151617;
+    }
+
+    .btn-primary {
+        background: #2d2d2d;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #151617;
+    }
+
+    .btn-warning {
+        background: #ffb033;
+        color: #151617;
+    }
+
+    .btn-warning:hover {
+        background: #e5a02e;
+    }
+
+    .btn-secondary {
+        background: #f0f0f0;
+        color: #151617;
+        border: 1px solid rgba(45, 47, 53, 0.12);
+    }
+
+    .btn-secondary:hover {
+        background: #e5e5e5;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding-top: 14px;
+        border-top: 1px solid rgba(45, 47, 53, 0.08);
+    }
+
+    /* Статус бейдж */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 10px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-badge.active {
+        background: rgba(10, 125, 74, 0.15);
+        color: #0a7d4a;
+    }
+
+    .status-badge.inactive {
+        background: rgba(196, 43, 43, 0.12);
+        color: #c42b2b;
+    }
+
+    /* Адаптив */
+    @media (max-width: 768px) {
+        .page-frame {
+            margin: 12px;
+        }
+        
+        .page-content {
+            padding: 16px 18px;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .child-card {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .child-meta {
+            justify-content: center;
+        }
+        
+        .documents-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .info-label {
+            width: 120px;
+        }
+        
+        .info-row {
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Печать */
+    @media print {
+        .btn, .action-buttons, .no-print {
+            display: none !important;
+        }
+        
+        .page-frame {
+            box-shadow: none;
+            margin: 0;
+        }
+        
+        .section, .child-card {
+            box-shadow: none;
+            border: 1px solid #ddd;
+            break-inside: avoid;
+        }
+        
+        .document-item {
+            break-inside: avoid;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-frame">
+    <div class="page-content">
+        
+        <!-- Заголовок страницы -->
+        <div class="page-header">
+            <div>
+                <div class="page-title">
+                    <i class="fas fa-user-circle"></i>
+                    Личное дело воспитанника
+                </div>
+                <div class="page-subtitle">Детский сад "Рябинушка"</div>
+            </div>
+        </div>
+        
+        <!-- Карточка ребенка -->
+        <div class="child-card">
+            <div class="child-photo-wrapper">
+                {% if child.photo and child.photo.url %}
+                    <img src="{{ child.photo.url }}" alt="{{ child.full_name }}" class="child-photo">
+                {% else %}
+                    <div class="no-photo">
+                        <i class="fas fa-child"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="child-info">
+                <div class="child-name">{{ child.full_name }}</div>
+                <div class="child-meta">
+                    <div class="child-meta-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        {{ child.birth_date|date:"d.m.Y" }} ({{ child.age_display }})
+                    </div>
+                    <div class="child-meta-item">
+                        <i class="fas fa-users"></i>
+                        Группа: {{ child.group.name|default:"Не назначена" }}
+                    </div>
+                    {% if child.enrollment_date %}
+                    <div class="child-meta-item">
+                        <i class="fas fa-calendar-check"></i>
+                        Зачислен: {{ child.enrollment_date|date:"d.m.Y" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Основные документы -->
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-folder"></i>
+                Основные документы
+            </div>
+            <div class="documents-grid">
+                
+                <!-- Заявление о приеме -->
+                <div class="document-item">
+                    <div class="document-icon"><i class="fas fa-file-signature"></i></div>
+                    <div class="document-info">
+                        <div class="document-name">Заявление о приеме</div>
+                        <div class="document-footer">
+                            <span class="document-status {% if document_statuses.application_exists %}status-success{% else %}status-danger{% endif %}">
+                                {% if document_statuses.application_exists %}
+                                    <i class="fas fa-check"></i> Подано
+                                {% else %}
+                                    <i class="fas fa-times"></i> Не подано
+                                {% endif %}
+                            </span>
+                            {% if document_statuses.application_exists and not document_statuses.application_signed %}
+                                <span class="badge badge-warning">Не подписано</span>
+                            {% elif document_statuses.application_exists and document_statuses.application_signed %}
+                                <span class="badge badge-success">Подписано</span>
+                            {% endif %}
+                        </div>
+                        {% if document_statuses.application_number %}
+                        <div class="document-value">№{{ document_statuses.application_number|truncatechars:15 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Свидетельство о рождении -->
+                <div class="document-item">
+                    <div class="document-icon"><i class="fas fa-cake-candles"></i></div>
+                    <div class="document-info">
+                        <div class="document-name">Свидетельство о рождении</div>
+                        <div class="document-footer">
+                            <span class="document-status {% if document_statuses.birth_certificate %}status-success{% else %}status-danger{% endif %}">
+                                {% if document_statuses.birth_certificate %}
+                                    <i class="fas fa-check"></i> Указано
+                                {% else %}
+                                    <i class="fas fa-times"></i> Не указано
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if document_statuses.birth_certificate_value %}
+                        <div class="document-value">{{ document_statuses.birth_certificate_value }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Регистрация -->
+                <div class="document-item">
+                    <div class="document-icon"><i class="fas fa-house-chimney"></i></div>
+                    <div class="document-info">
+                        <div class="document-name">Регистрация (ф. Н-3/Н-8)</div>
+                        <div class="document-footer">
+                            <span class="document-status {% if document_statuses.registration_address %}status-success{% else %}status-warning{% endif %}">
+                                {% if document_statuses.registration_address %}
+                                    <i class="fas fa-check"></i> Заполнено
+                                {% else %}
+                                    <i class="fas fa-exclamation"></i> Не заполнено
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- СНИЛС -->
+                <div class="document-item">
+                    <div class="document-icon"><i class="fas fa-id-card-clip"></i></div>
+                    <div class="document-info">
+                        <div class="document-name">СНИЛС</div>
+                        <div class="document-footer">
+                            <span class="document-status {% if document_statuses.snils %}status-success{% else %}status-warning{% endif %}">
+                                {% if document_statuses.snils %}
+                                    <i class="fas fa-check"></i> Указан
+                                {% else %}
+                                    <i class="fas fa-exclamation"></i> Не указан
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if document_statuses.snils_value %}
+                        <div class="document-value">{{ document_statuses.snils_value }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Согласие на ПД -->
+                <div class="document-item">
+                    <div class="document-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="document-info">
+                        <div class="document-name">Согласие на обработку ПД</div>
+                        <div class="document-footer">
+                            <span class="document-status {% if document_statuses.data_processing_consent %}status-success{% else %}status-danger{% endif %}">
+                                {% if document_statuses.data_processing_consent %}
+                                    <i class="fas fa-check"></i> Подписано
+                                {% else %}
+                                    <i class="fas fa-times"></i> Не подписано
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Полис ОМС -->
+                <div class="document-item">
+                    <div class="document-icon"><i class="fas fa-heart-pulse"></i></div>
+                    <div class="document-info">
+                        <div class="document-name">Полис ОМС</div>
+                        <div class="document-footer">
+                            <span class="document-status {% if document_statuses.policy_oms %}status-success{% else %}status-danger{% endif %}">
+                                {% if document_statuses.policy_oms %}
+                                    <i class="fas fa-check"></i> Указан
+                                {% else %}
+                                    <i class="fas fa-times"></i> Не указан
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if document_statuses.policy_oms_value %}
+                        <div class="document-value">{{ document_statuses.policy_oms_value }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Льготы -->
+                <div class="document-item">
+                    <div class="document-icon"><i class="fas fa-hand-holding-heart"></i></div>
+                    <div class="document-info">
+                        <div class="document-name">Документы на льготы</div>
+                        <div class="document-footer">
+                            <span class="document-status {% if document_statuses.benefits %}status-success{% else %}status-info{% endif %}">
+                                {% if document_statuses.benefits %}
+                                    <i class="fas fa-check"></i> Предоставлены
+                                {% else %}
+                                    <i class="fas fa-info"></i> Нет
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if document_statuses.benefits_value %}
+                        <div class="document-value">{{ document_statuses.benefits_value }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Медкарта -->
+                <div class="document-item">
+                    <div class="document-icon"><i class="fas fa-file-medical"></i></div>
+                    <div class="document-info">
+                        <div class="document-name">Медкарта (ф. 026/у)</div>
+                        <div class="document-footer">
+                            <span class="document-status {% if document_statuses.medical_card %}status-success{% else %}status-warning{% endif %}">
+                                {% if document_statuses.medical_card %}
+                                    <i class="fas fa-check"></i> Заполнена
+                                {% else %}
+                                    <i class="fas fa-exclamation"></i> Не заполнена
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if document_statuses.medical_card_value %}
+                        <div class="document-value">№{{ document_statuses.medical_card_value }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- Информация о ребенке -->
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-child-reaching"></i>
+                Информация о ребенке
+            </div>
+            <div class="info-grid">
+                <div class="info-row">
+                    <div class="info-label">ФИО:</div>
+                    <div class="info-value">{{ child.full_name }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Дата рождения:</div>
+                    <div class="info-value">{{ child.birth_date|date:"d.m.Y" }} ({{ child.age_display }})</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Пол:</div>
+                    <div class="info-value">{{ child.get_gender_display }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Группа крови:</div>
+                    <div class="info-value">{{ child.blood_type|default:"Не указана" }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Аллергии:</div>
+                    <div class="info-value">{{ child.allergies|default:"Нет" }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Хронические заболевания:</div>
+                    <div class="info-value">{{ child.chronic_diseases|default:"Нет" }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Особые потребности:</div>
+                    <div class="info-value">{{ child.special_needs|default:"Нет" }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Адреса -->
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-location-dot"></i>
+                Адреса
+            </div>
+            <div class="info-row">
+                <div class="info-label">Регистрация:</div>
+                <div class="info-value">{{ child.registration_address|default:"Не указан" }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Фактический адрес:</div>
+                <div class="info-value">{{ child.actual_address|default:"Не указан" }}</div>
+            </div>
+        </div>
+        
+        <!-- Родители -->
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-people-family"></i>
+                Сведения о родителях
+            </div>
+            {% for child_parent in child.childparent_set.all %}
+            <div class="info-row">
+                <div class="info-label">{{ child_parent.get_relation_display }}:</div>
+                <div class="info-value">
+                    <strong>{{ child_parent.parent.user.get_full_name|default:child_parent.parent.user.username }}</strong>
+                    {% if child_parent.parent.user.phone %}
+                    <br><small><i class="fas fa-phone"></i> {{ child_parent.parent.user.phone }}</small>
+                    {% endif %}
+                    {% if child_parent.parent.user.email %}
+                    <br><small><i class="fas fa-envelope"></i> {{ child_parent.parent.user.email }}</small>
+                    {% endif %}
+                    {% if child_parent.is_primary %}
+                    <span class="badge badge-success" style="margin-left: 6px;">Основной</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="info-row">
+                <div class="info-label">Родители:</div>
+                <div class="info-value" style="color: #878c9f;">Не указаны</div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Дополнительно -->
+        <div class="section" style="margin-bottom: 16px;">
+            <div class="section-title">
+                <i class="fas fa-circle-info"></i>
+                Дополнительно
+            </div>
+            <div class="info-grid">
+                <div class="info-row">
+                    <div class="info-label">Зачислен:</div>
+                    <div class="info-value">{{ child.enrollment_date|date:"d.m.Y"|default:"Не указана" }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Статус:</div>
+                    <div class="info-value">
+                        {% if child.is_active %}
+                        <span class="status-badge active"><i class="fas fa-check-circle"></i> Активен</span>
+                        {% else %}
+                        <span class="status-badge inactive"><i class="fas fa-times-circle"></i> Неактивен</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Создано:</div>
+                    <div class="info-value">{{ child.created_at|date:"d.m.Y H:i" }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Обновлено:</div>
+                    <div class="info-value">{{ child.updated_at|date:"d.m.Y H:i" }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Кнопки -->
+        <div class="section no-print">
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="window.print()">
+                    <i class="fas fa-print"></i> Распечатать
+                </button>
+                {% if request.user.role == 'director' %}
+                <a href="{% url 'children:child_edit' child.id %}" class="btn btn-warning">
+                    <i class="fas fa-pen"></i> Редактировать
+                </a>
+                {% endif %}
+                <a href="{% url 'children:children_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Назад
+                </a>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

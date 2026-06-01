@@ -1,0 +1,607 @@
+<!-- templates/attendance/sheet_view.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Табель - {{ sheet.group.name }} - {{ month_name }} {{ sheet.year }}{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+}
+
+body {
+    background: var(--gray-50);
+}
+
+/* ==================== ШАПКА ==================== */
+.sheet-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    color: white;
+    box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+}
+
+.sheet-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.sheet-title h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sheet-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 6px;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.sheet-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-pill.approved {
+    background: rgba(16, 185, 129, 0.25);
+    color: #a7f3d0;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.status-pill.draft {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fde68a;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-header {
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 13px;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+
+.btn-header:hover {
+    transform: translateY(-2px);
+}
+
+.btn-header.primary {
+    background: white;
+    color: var(--primary);
+}
+
+.btn-header.secondary {
+    background: rgba(255,255,255,0.15);
+    color: white;
+}
+
+.btn-header.success {
+    background: var(--success);
+    color: white;
+}
+
+.btn-header:disabled,
+.btn-header.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ==================== ТАБЛИЦА ==================== */
+.table-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+
+.table-scroll {
+    overflow-x: auto;
+    max-height: 75vh;
+}
+
+.table-scroll::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+.table-scroll::-webkit-scrollbar-track {
+    background: var(--gray-100);
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 4px;
+}
+
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.attendance-table th,
+.attendance-table td {
+    border: 1px solid var(--gray-200);
+    padding: 8px 6px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.attendance-table thead th {
+    background: var(--gray-50);
+    font-weight: 600;
+    color: var(--gray-700);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Фиксированные колонки */
+.col-num {
+    width: 40px;
+    min-width: 40px;
+    position: sticky;
+    left: 0;
+    z-index: 12;
+    background: white;
+    font-weight: 600;
+    color: var(--gray-500);
+}
+
+.col-name {
+    width: 200px;
+    min-width: 200px;
+    text-align: left !important;
+    padding-left: 12px !important;
+    position: sticky;
+    left: 40px;
+    z-index: 12;
+    background: white;
+}
+
+thead .col-num,
+thead .col-name {
+    background: var(--gray-50) !important;
+}
+
+/* Дни */
+.day-col {
+    min-width: 36px;
+    width: 36px;
+    font-size: 12px;
+}
+
+.day-col .day-num {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--gray-800);
+}
+
+.day-col .day-name {
+    font-size: 9px;
+    color: var(--gray-400);
+    text-transform: uppercase;
+}
+
+.day-col.weekend {
+    background: #fef2f2 !important;
+}
+
+.day-col.weekend .day-num,
+.day-col.weekend .day-name {
+    color: var(--danger);
+}
+
+.day-col.today {
+    background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+}
+
+/* Итоговые колонки */
+.col-sum {
+    min-width: 40px;
+    width: 40px;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.col-sum.s-present { background: #dcfce7; color: #166534; }
+.col-sum.s-absent { background: #fee2e2; color: #991b1b; }
+.col-sum.s-sick { background: #fef3c7; color: #92400e; }
+.col-sum.s-vacation { background: #dbeafe; color: #1e40af; }
+
+/* Ячейки статуса */
+.cell {
+    font-weight: 700;
+    font-size: 11px;
+}
+
+.cell.present { background: #dcfce7; color: #166534; }
+.cell.absent { background: #fee2e2; color: #991b1b; }
+.cell.sick { background: #fef3c7; color: #92400e; }
+.cell.vacation { background: #dbeafe; color: #1e40af; }
+.cell.weekend { background: #f9fafb; color: #9ca3af; }
+.cell.empty { color: #d1d5db; }
+
+/* Подсветка строки */
+.attendance-table tbody tr:hover td {
+    background: #f0f9ff !important;
+}
+
+.attendance-table tbody tr:hover .col-num,
+.attendance-table tbody tr:hover .col-name {
+    background: #e0f2fe !important;
+}
+
+.attendance-table tbody tr:hover .cell.present { background: #bbf7d0 !important; }
+.attendance-table tbody tr:hover .cell.absent { background: #fecaca !important; }
+.attendance-table tbody tr:hover .cell.sick { background: #fde68a !important; }
+.attendance-table tbody tr:hover .cell.vacation { background: #bfdbfe !important; }
+
+/* Имя ребенка */
+.child-info .name {
+    font-weight: 600;
+    color: var(--gray-800);
+    font-size: 13px;
+}
+
+.child-info .birth {
+    font-size: 10px;
+    color: var(--gray-400);
+}
+
+/* Итоговая строка */
+.attendance-table tfoot td {
+    background: var(--gray-50) !important;
+    font-weight: 700;
+    border-top: 2px solid var(--gray-300);
+}
+
+/* ==================== ЛЕГЕНДА ==================== */
+.legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-100);
+    font-size: 11px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--gray-600);
+}
+
+.legend-badge {
+    width: 24px;
+    height: 18px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 9px;
+}
+
+.legend-badge.present { background: #dcfce7; color: #166534; }
+.legend-badge.absent { background: #fee2e2; color: #991b1b; }
+.legend-badge.sick { background: #fef3c7; color: #92400e; }
+.legend-badge.vacation { background: #dbeafe; color: #1e40af; }
+.legend-badge.weekend { background: #f3f4f6; color: #9ca3af; }
+
+/* ==================== ПРЕДУПРЕЖДЕНИЕ ==================== */
+.draft-warning {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 1px solid #f59e0b;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #92400e;
+}
+
+.draft-warning .icon {
+    font-size: 24px;
+}
+
+/* ==================== ПЕЧАТЬ ==================== */
+@media print {
+    .no-print { display: none !important; }
+    
+    body { background: white; }
+    
+    .sheet-header {
+        background: var(--primary) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        border-radius: 0;
+        margin: 0 0 10px;
+        padding: 12px 16px;
+    }
+    
+    .table-card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        border-radius: 0;
+    }
+    
+    .table-scroll {
+        max-height: none;
+        overflow: visible;
+    }
+    
+    .attendance-table { font-size: 9px; }
+    .col-name { width: 130px; min-width: 130px; }
+    .day-col { min-width: 20px; width: 20px; }
+    .col-sum { min-width: 28px; width: 28px; }
+    
+    .cell.present, .cell.absent, .cell.sick, .cell.vacation, .cell.weekend,
+    .col-sum.s-present, .col-sum.s-absent, .col-sum.s-sick, .col-sum.s-vacation,
+    .day-col.weekend {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .legend { 
+        padding: 8px 12px;
+        font-size: 9px;
+    }
+}
+
+/* ==================== АДАПТИВ ==================== */
+@media (max-width: 768px) {
+    .sheet-header { padding: 14px; border-radius: 12px; }
+    .sheet-title h1 { font-size: 1.1rem; }
+    .sheet-meta { flex-wrap: wrap; gap: 8px; font-size: 0.75rem; }
+    .header-actions { width: 100%; justify-content: stretch; }
+    .header-actions .btn-header { flex: 1; justify-content: center; font-size: 12px; padding: 8px 12px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <!-- Шапка -->
+    <div class="sheet-header">
+        <div class="sheet-header-content">
+            <div>
+                <div class="sheet-title">
+                    <h1>
+                        📋 {{ sheet.group.name }}
+                        {% if sheet.is_approved %}
+                            <span class="status-pill approved">✓ Утверждён</span>
+                        {% else %}
+                            <span class="status-pill draft">✎ Черновик</span>
+                        {% endif %}
+                    </h1>
+                </div>
+                <div class="sheet-meta">
+                    <span><i class="fas fa-calendar"></i> {{ month_name }} {{ sheet.year }}</span>
+                    <span><i class="fas fa-users"></i> {{ children_data|length }} детей</span>
+                    <span><i class="fas fa-briefcase"></i> {{ workdays_count }} раб. дней</span>
+                </div>
+            </div>
+            <div class="header-actions no-print">
+                <a href="{% url 'attendance:attendance_sheet_list' %}" class="btn-header secondary">
+                    <i class="fas fa-arrow-left"></i> Назад
+                </a>
+                {% if can_edit %}
+                    <a href="{% url 'attendance:attendance_sheet_edit' sheet.id %}" class="btn-header primary">
+                        <i class="fas fa-edit"></i> Редактировать
+                    </a>
+                {% endif %}
+                {% if can_approve and not sheet.is_approved %}
+                    <a href="{% url 'attendance:attendance_sheet_approve' sheet.id %}" class="btn-header success">
+                        <i class="fas fa-check"></i> Утвердить
+                    </a>
+                {% endif %}
+                {% if sheet.is_approved %}
+                    <button type="button" class="btn-header primary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Печать
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Предупреждение для черновика -->
+    {% if not sheet.is_approved %}
+    <div class="draft-warning no-print">
+        <span class="icon">⚠️</span>
+        <div>
+            <strong>Табель не утверждён</strong><br>
+            <span style="font-size: 12px;">Печать будет доступна после утверждения табеля</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Таблица -->
+    <div class="table-card">
+        <div class="table-scroll">
+            <table class="attendance-table">
+                <thead>
+                    <tr>
+                        <th class="col-num">№</th>
+                        <th class="col-name">ФИО ребёнка</th>
+                        {% for day in calendar_data %}
+                            <th class="day-col {% if day.is_holiday %}weekend{% endif %}">
+                                <div class="day-num">{{ day.day }}</div>
+                                <div class="day-name">{{ day.weekday_short }}</div>
+                            </th>
+                        {% endfor %}
+                        <th class="col-sum s-present" title="Присутствовал">Я</th>
+                        <th class="col-sum s-absent" title="Без причины">НЯ</th>
+                        <th class="col-sum s-sick" title="Болезнь">НБ</th>
+                        <th class="col-sum s-vacation" title="Уваж. причина">НУ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for child_data in children_data %}
+                    <tr>
+                        <td class="col-num">{{ forloop.counter }}</td>
+                        <td class="col-name">
+                            <div class="child-info">
+                                <div class="name">{{ child_data.child.full_name }}</div>
+                                {% if child_data.child.birth_date %}
+                                    <div class="birth">{{ child_data.child.birth_date|date:"d.m.Y" }}</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        
+                        {% for day_status in child_data.statuses %}
+                            <td class="cell {% if day_status.is_holiday %}weekend{% elif day_status.status == 'present' %}present{% elif day_status.status == 'absent_unexcused' %}absent{% elif day_status.status == 'absent_sick' %}sick{% elif day_status.status == 'absent_vacation' %}vacation{% else %}empty{% endif %}">
+                                {% if day_status.is_holiday %}В
+                                {% elif day_status.status == "present" %}Я
+                                {% elif day_status.status == "absent_unexcused" %}НЯ
+                                {% elif day_status.status == "absent_sick" %}НБ
+                                {% elif day_status.status == "absent_vacation" %}НУ
+                                {% else %}—{% endif %}
+                            </td>
+                        {% endfor %}
+                        
+                        <td class="col-sum s-present">{{ child_data.totals.present }}</td>
+                        <td class="col-sum s-absent">{{ child_data.totals.absent }}</td>
+                        <td class="col-sum s-sick">{{ child_data.totals.sick }}</td>
+                        <td class="col-sum s-vacation">{{ child_data.totals.vacation }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{{ calendar_data|length|add:6 }}" style="padding: 50px; text-align: center;">
+                            <div style="font-size: 40px; margin-bottom: 12px;">📭</div>
+                            <p style="color: var(--gray-500); margin: 0;">Нет данных о детях</p>
+                            {% if can_edit %}
+                            <a href="{% url 'attendance:restore_records' sheet.id %}" style="display: inline-block; margin-top: 12px; color: var(--primary);">
+                                <i class="fas fa-sync-alt"></i> Восстановить записи
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if children_data %}
+                <tfoot>
+                    <tr>
+                        <td class="col-num"></td>
+                        <td class="col-name" style="text-align: right; padding-right: 12px;">
+                            <strong>ИТОГО:</strong>
+                        </td>
+                        {% for day in calendar_data %}
+                            <td>
+                                {% if day.is_holiday %}—{% else %}<strong>{{ day.total_present|default:0 }}</strong>{% endif %}
+                            </td>
+                        {% endfor %}
+                        <td class="col-sum s-present"><strong>{{ group_stats.total_present }}</strong></td>
+                        <td class="col-sum s-absent"><strong>{{ group_stats.total_absent }}</strong></td>
+                        <td class="col-sum s-sick"><strong>{{ group_stats.total_sick }}</strong></td>
+                        <td class="col-sum s-vacation"><strong>{{ group_stats.total_vacation }}</strong></td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+        
+        <!-- Легенда -->
+        <div class="legend">
+            <div class="legend-item"><span class="legend-badge present">Я</span> Присутствовал</div>
+            <div class="legend-item"><span class="legend-badge absent">НЯ</span> Без причины</div>
+            <div class="legend-item"><span class="legend-badge sick">НБ</span> Болезнь</div>
+            <div class="legend-item"><span class="legend-badge vacation">НУ</span> Уваж. причина</div>
+            <div class="legend-item"><span class="legend-badge weekend">В</span> Выходной</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Подсветка текущего дня
+    const today = new Date();
+    const sheetMonth = {{ sheet.month }};
+    const sheetYear = {{ sheet.year }};
+    
+    if (today.getMonth() + 1 === sheetMonth && today.getFullYear() === sheetYear) {
+        document.querySelectorAll('.day-col').forEach(col => {
+            const dayNum = parseInt(col.querySelector('.day-num')?.textContent);
+            if (dayNum === today.getDate()) {
+                col.classList.add('today');
+            }
+        });
+    }
+    
+    // Подсказки для ячеек
+    const tooltips = {
+        'Я': 'Присутствовал',
+        'НЯ': 'Неявка без причины', 
+        'НБ': 'Неявка по болезни',
+        'НУ': 'Неявка по уваж. причине',
+        'В': 'Выходной',
+        '—': 'Нет отметки'
+    };
+    
+    document.querySelectorAll('.cell').forEach(cell => {
+        const text = cell.textContent.trim();
+        if (tooltips[text]) {
+            cell.title = tooltips[text];
+        }
+    });
+});
+</script>
+{% endblock %}

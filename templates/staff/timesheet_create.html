@@ -1,0 +1,71 @@
+<!-- staff/templates/staff/timesheet_create.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Создание табеля{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <h1>
+            <i class="fas fa-calendar-plus"></i>
+            Создание табеля учета рабочего времени
+        </h1>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-clock"></i>
+                    Выберите период
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Месяц</label>
+                            <select name="month" class="form-select" required>
+                                <option value="">Выберите месяц</option>
+                                {% for month_num, month_name in months %}
+                                <option value="{{ month_num }}" {% if month_num == current_month %}selected{% endif %}>
+                                    {{ month_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Год</label>
+                            <select name="year" class="form-select" required>
+                                <option value="">Выберите год</option>
+                                {% for year in years %}
+                                <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>
+                                    {{ year }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Будет создан табель для всех активных сотрудников.
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn staff-btn-primary">
+                                <i class="fas fa-check"></i> Создать табель
+                            </button>
+                            <a href="{% url 'staff:timesheet_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Назад к списку
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

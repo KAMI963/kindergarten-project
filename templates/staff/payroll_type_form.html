@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid #4a6fa5;
+    }
+    .form-section h5 {
+        color: #4a6fa5;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    .code-example {
+        background-color: #2d3748;
+        color: #e2e8f0;
+        padding: 10px;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 12px;
+    }
+    .help-text {
+        font-size: 0.85rem;
+        color: #718096;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 text-gray-800">{{ title }}</h1>
+        <a href="{% url 'staff:payroll_type_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Назад к списку
+        </a>
+    </div>
+
+    <!-- Форма -->
+    <div class="row">
+        <div class="col-md-8">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <!-- Основная информация -->
+                <div class="form-section">
+                    <h5><i class="fas fa-info-circle me-2"></i>Основная информация</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.code.id_for_label }}" class="form-label">
+                                {{ form.code.label }} *
+                            </label>
+                            {{ form.code }}
+                            {% if form.code.errors %}
+                                <div class="invalid-feedback d-block">{{ form.code.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Уникальный код начисления (например: SALARY_HOURLY, BONUS_CATEGORY, REGIONAL_COEF)
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                {{ form.name.label }} *
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            {{ form.description.label }}
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Тип расчета -->
+                <div class="form-section">
+                    <h5><i class="fas fa-calculator me-2"></i>Параметры расчета</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.calculation_type.id_for_label }}" class="form-label">
+                                {{ form.calculation_type.label }} *
+                            </label>
+                            {{ form.calculation_type }}
+                            {% if form.calculation_type.errors %}
+                                <div class="invalid-feedback d-block">{{ form.calculation_type.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.base_value.id_for_label }}" class="form-label">
+                                {{ form.base_value.label }}
+                            </label>
+                            {{ form.base_value }}
+                            {% if form.base_value.errors %}
+                                <div class="invalid-feedback d-block">{{ form.base_value.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Для фиксированной суммы - рубли, для процента - число (например: 15)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Сложные настройки -->
+                <div class="form-section">
+                    <h5><i class="fas fa-cog me-2"></i>Дополнительные настройки</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.is_accrual }}
+                                <label class="form-check-label" for="{{ form.is_accrual.id_for_label }}">
+                                    {{ form.is_accrual.label }}
+                                </label>
+                            </div>
+                            <div class="help-text">
+                                Начисление (увеличивает зарплату) или удержание (уменьшает)
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.is_taxable }}
+                                <label class="form-check-label" for="{{ form.is_taxable.id_for_label }}">
+                                    {{ form.is_taxable.label }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.include_in_average }}
+                                <label class="form-check-label" for="{{ form.include_in_average.id_for_label }}">
+                                    {{ form.include_in_average.label }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    {{ form.is_active.label }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Шкала за стаж (JSON) -->
+                <div class="form-section">
+                    <h5><i class="fas fa-chart-line me-2"></i>Шкала за стаж (для надбавок)</h5>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.seniority_scale_json.id_for_label }}" class="form-label">
+                            {{ form.seniority_scale_json.label }}
+                        </label>
+                        {{ form.seniority_scale_json }}
+                        {% if form.seniority_scale_json.errors %}
+                            <div class="invalid-feedback d-block">{{ form.seniority_scale_json.errors.0 }}</div>
+                        {% endif %}
+                        
+                        <div class="code-example mt-2">
+                            Пример формата:<br>
+                            [<br>
+                            &nbsp;&nbsp;{"years_from": 0, "years_to": 3, "percent": 5},<br>
+                            &nbsp;&nbsp;{"years_from": 3, "years_to": 5, "percent": 10},<br>
+                            &nbsp;&nbsp;{"years_from": 5, "years_to": 10, "percent": 15},<br>
+                            &nbsp;&nbsp;{"years_from": 10, "years_to": 100, "percent": 20}<br>
+                            ]
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Кнопки -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-5">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        <i class="fas fa-save me-2"></i>{{ submit_text }}
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Боковая панель с подсказками -->
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-lightbulb me-2"></i>Рекомендации
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title">Предустановленные коды:</h6>
+                    <ul class="list-unstyled">
+                        <li><code>SALARY_HOURLY</code> - Оплата по окладу (по часам)</li>
+                        <li><code>SALARY_PED</code> - Педагогическая нагрузка</li>
+                        <li><code>BONUS_CATEGORY_HIGHEST</code> - За высшую категорию</li>
+                        <li><code>BONUS_CATEGORY_FIRST</code> - За первую категорию</li>
+                        <li><code>SENIORITY_BONUS</code> - За выслугу лет</li>
+                        <li><code>HAZARDOUS</code> - За вредные условия</li>
+                        <li><code>STIMULATING</code> - Стимулирующая надбавка</li>
+                        <li><code>REGIONAL_COEF</code> - Районный коэффициент</li>
+                        <li><code>NORTHERN_BONUS</code> - Северная надбавка</li>
+                    </ul>
+                    
+                    <hr>
+                    
+                    <h6 class="card-title">Типы расчета:</h6>
+                    <ul>
+                        <li><strong>Фиксированная сумма</strong> - конкретная сумма в рублях</li>
+                        <li><strong>Процент от оклада</strong> - например, 15%</li>
+                        <li><strong>По формуле</strong> - для сложных случаев (стаж, районный коэффициент)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            {% if payroll_type %}
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <i class="fas fa-history me-2"></i>Информация
+                </div>
+                <div class="card-body">
+                    <p><strong>Создан:</strong> {{ payroll_type.created_at|date:"d.m.Y H:i" }}</p>
+                    <p><strong>Код:</strong> <code>{{ payroll_type.code }}</code></p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Автоматическое форматирование JSON
+    document.addEventListener('DOMContentLoaded', function() {
+        const jsonField = document.getElementById('{{ form.seniority_scale_json.id_for_label }}');
+        if (jsonField && jsonField.value) {
+            try {
+                const parsed = JSON.parse(jsonField.value);
+                jsonField.value = JSON.stringify(parsed, null, 2);
+            } catch (e) {
+                // Невалидный JSON, оставляем как есть
+            }
+        }
+    });
+</script>
+{% endblock %}

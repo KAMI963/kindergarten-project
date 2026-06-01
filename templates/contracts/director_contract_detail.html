@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Договор №{{ contract.contract_number }} - Управление{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contract-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    /* Стили для интерфейса заведующей - строгие, деловые тона */
+    .director-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 16px 16px 0 0;
+        padding: 20px 25px;
+        color: white;
+    }
+    
+    .director-header .contract-number {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .director-body {
+        background: white;
+        border-radius: 0 0 16px 16px;
+        padding: 25px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .admin-card {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .admin-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .info-row {
+        display: flex;
+        margin-bottom: 10px;
+        font-size: 0.85rem;
+    }
+    
+    .info-label {
+        width: 140px;
+        font-weight: 600;
+        color: #64748b;
+    }
+    
+    .info-value {
+        flex: 1;
+        color: #1e293b;
+    }
+    
+    .signature-status {
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .signature-approved {
+        background: #d1fae5;
+        color: #059669;
+        border-left: 4px solid #059669;
+    }
+    
+    .signature-pending {
+        background: #fef3c7;
+        color: #d97706;
+        border-left: 4px solid #d97706;
+    }
+    
+    .btn-sign-director {
+        background: #3b82f6;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    
+    .btn-sign-director:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+    }
+    
+    .btn-edit-director {
+        background: #f59e0b;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+    }
+    
+    .btn-edit-director:hover {
+        background: #d97706;
+        color: white;
+    }
+    
+    .btn-download-director {
+        background: #64748b;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+    }
+    
+    .btn-download-director:hover {
+        background: #475569;
+        color: white;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .stat-badge {
+        background: #e2e8f0;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .amount-highlight {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #3b82f6;
+    }
+    
+    .edit-form {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .edit-form input {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 6px 10px;
+        width: 120px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4 contract-container">
+    <!-- Шапка для заведующей -->
+    <div class="director-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div class="contract-number">Договор об образовании №{{ contract.contract_number }}</div>
+                <div class="small opacity-75">от {{ contract.registration_date|date:"d.m.Y" }}</div>
+            </div>
+            <div>
+                <span class="stat-badge">{{ contract.get_status_display }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="director-body">
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Информация о ребенке -->
+                <div class="admin-card">
+                    <div class="admin-title">
+                        <i class="fas fa-child"></i> Данные ребенка
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">ФИО:</div>
+                        <div class="info-value">{{ contract.child_full_name }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Дата рождения:</div>
+                        <div class="info-value">{{ contract.child_birth_date|date:"d.m.Y" }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Группа:</div>
+                        <div class="info-value">{{ contract.group_name }}</div>
+                    </div>
+                </div>
+                
+                <!-- Информация о родителе -->
+                <div class="admin-card">
+                    <div class="admin-title">
+                        <i class="fas fa-user"></i> Данные родителя
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">ФИО:</div>
+                        <div class="info-value">{{ contract.parent.user.get_full_name }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Телефон:</div>
+                        <div class="info-value">{{ contract.parent.user.phone|default:"—" }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Email:</div>
+                        <div class="info-value">{{ contract.parent.user.email|default:"—" }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <!-- Финансовая информация -->
+                <div class="admin-card">
+                    <div class="admin-title">
+                        <i class="fas fa-ruble-sign"></i> Финансовые условия
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Абонентская плата:</div>
+                        <div class="info-value">{{ contract.subscription_fee|floatformat:2 }} ₽</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Питание:</div>
+                        <div class="info-value">{{ contract.food_fee|floatformat:2 }} ₽</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Итого:</div>
+                        <div class="info-value"><span class="amount-highlight">{{ contract.parent_fee|floatformat:2 }} ₽/месяц</span></div>
+                    </div>
+                    
+                    <!-- Быстрое редактирование суммы -->
+                    <div class="edit-form">
+                        <form method="post" action="{% url 'contracts:contract_edit' contract.pk %}" class="d-flex gap-2 align-items-center">
+                            {% csrf_token %}
+                            <input type="number" name="parent_fee" value="{{ contract.parent_fee|floatformat:2 }}" step="0.01" class="form-control form-control-sm" style="width: 100px;">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Изменить</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Статус подписания -->
+                <div class="admin-card">
+                    <div class="admin-title">
+                        <i class="fas fa-file-signature"></i> Статус подписания
+                    </div>
+                    
+                    <div class="signature-status {% if contract.director_signed_at %}signature-approved{% else %}signature-pending{% endif %}">
+                        <i class="fas {% if contract.director_signed_at %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
+                        <div>
+                            <strong>Заведующая:</strong>
+                            {% if contract.director_signed_at %}
+                                подписано {{ contract.director_signed_at|date:"d.m.Y H:i" }}
+                            {% else %}
+                                не подписано
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="signature-status {% if contract.parent_signed_at %}signature-approved{% else %}signature-pending{% endif %}">
+                        <i class="fas {% if contract.parent_signed_at %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
+                        <div>
+                            <strong>Родитель:</strong>
+                            {% if contract.parent_signed_at %}
+                                подписано {{ contract.parent_signed_at|date:"d.m.Y H:i" }}
+                            {% else %}
+                                не подписано
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопка подписания для заведующей -->
+                    {% if not contract.director_signed_at %}
+                    <div class="mt-3">
+                        <form method="post" action="{% url 'contracts:sign_contract_director' contract.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-sign-director w-100">
+                                <i class="fas fa-file-signature me-2"></i> Подписать договор
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Кнопки действий -->
+        <div class="action-buttons">
+            <a href="{% url 'contracts:contract_edit' contract.pk %}" class="btn-edit-director">
+                <i class="fas fa-edit"></i> Редактировать
+            </a>
+            {% if contract.generated_contract %}
+            <a href="{% url 'contracts:download_contract' contract.pk %}" class="btn-download-director">
+                <i class="fas fa-download"></i> Скачать договор
+            </a>
+            {% endif %}
+            <a href="{% url 'contracts:generate_contract' contract.pk %}" class="btn-download-director">
+                <i class="fas fa-file-word"></i> Сгенерировать Word
+            </a>
+        </div>
+        
+        <!-- Системная информация -->
+        <div class="admin-card mt-3">
+            <div class="admin-title">
+                <i class="fas fa-info-circle"></i> Системная информация
+            </div>
+            <div class="info-row">
+                <div class="info-label">Создан:</div>
+                <div class="info-value">{{ contract.created_at|date:"d.m.Y H:i" }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Последнее изменение:</div>
+                <div class="info-value">{{ contract.updated_at|date:"d.m.Y H:i" }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">ID договора:</div>
+                <div class="info-value">{{ contract.id }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

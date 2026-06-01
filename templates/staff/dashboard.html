@@ -1,0 +1,660 @@
+<!-- staff/templates/staff/dashboard.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Кадровый учёт - Панель управления{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Компактные стили для дашборда */
+    .staff-dashboard {
+        padding: 1rem;
+    }
+    
+    /* Уменьшенный хедер */
+    .staff-header {
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        color: white;
+    }
+    
+    .staff-header h2 {
+        font-size: 1.25rem;
+        margin: 0 0 0.25rem;
+        font-weight: 600;
+    }
+    
+    .staff-header p {
+        font-size: 0.75rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+    /* Компактные карточки статистики */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+        transition: all 0.2s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .stat-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(79, 70, 229, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #4f46e5;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+        line-height: 1.2;
+    }
+    
+    .stat-label {
+        font-size: 0.65rem;
+        color: #64748b;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Компактные карточки */
+    .info-card {
+        background: white;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        margin-bottom: 1.25rem;
+        overflow: hidden;
+    }
+    
+    .card-header-compact {
+        padding: 0.6rem 1rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .card-header-compact i {
+        width: 28px;
+        height: 28px;
+        background: #4f46e5;
+        color: white;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+    }
+    
+    .card-header-compact h3 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin: 0;
+        flex: 1;
+    }
+    
+    .card-header-compact .badge {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.5rem;
+    }
+    
+    .card-body-compact {
+        padding: 0.75rem 1rem;
+    }
+    
+    /* Распределение */
+    .distribution-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0;
+        font-size: 0.75rem;
+    }
+    
+    .distribution-name {
+        min-width: 90px;
+        font-weight: 500;
+        color: #334155;
+    }
+    
+    .distribution-bar {
+        flex: 1;
+        height: 5px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .distribution-progress {
+        height: 100%;
+        background: linear-gradient(90deg, #4f46e5, #818cf8);
+        border-radius: 4px;
+        transition: width 0.3s;
+    }
+    
+    .distribution-count {
+        min-width: 30px;
+        text-align: right;
+        font-weight: 600;
+        color: #4f46e5;
+    }
+    
+    /* Таймлайн */
+    .timeline {
+        position: relative;
+        padding-left: 0.75rem;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 2px;
+        top: 0.25rem;
+        bottom: 0.25rem;
+        width: 2px;
+        background: #e2e8f0;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding: 0.4rem 0 0.4rem 1rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -3px;
+        top: 0.7rem;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4f46e5;
+        border: 2px solid white;
+    }
+    
+    .timeline-date {
+        font-size: 0.6rem;
+        color: #94a3b8;
+    }
+    
+    .timeline-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin: 0.1rem 0;
+    }
+    
+    .timeline-title a {
+        color: #1e293b;
+        text-decoration: none;
+    }
+    
+    .timeline-title a:hover {
+        color: #4f46e5;
+    }
+    
+    .timeline-description {
+        font-size: 0.7rem;
+        color: #64748b;
+        margin: 0;
+    }
+    
+    /* Алерты */
+    .alert-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.6rem;
+        background: #f8fafc;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        border-left: 3px solid #f59e0b;
+    }
+    
+    .alert-item.danger { border-left-color: #ef4444; }
+    .alert-item.info { border-left-color: #3b82f6; }
+    
+    .alert-content {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .alert-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+    }
+    
+    .alert-item.danger .alert-icon {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+    }
+    
+    .alert-item.info .alert-icon {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+    }
+    
+    .alert-text {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #334155;
+    }
+    
+    .alert-count {
+        background: #f59e0b;
+        color: white;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        font-size: 0.6rem;
+        margin-left: 0.3rem;
+    }
+    
+    .btn-alert {
+        padding: 0.2rem 0.6rem;
+        font-size: 0.65rem;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    
+    .btn-alert-warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+        border: 1px solid #f59e0b;
+    }
+    
+    .btn-alert-warning:hover {
+        background: #f59e0b;
+        color: white;
+    }
+    
+    .btn-alert-danger {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+    }
+    
+    .btn-alert-danger:hover {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .btn-alert-info {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+        border: 1px solid #3b82f6;
+    }
+    
+    .btn-alert-info:hover {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    /* Вакансии */
+    .vacancy-item {
+        padding: 0.5rem;
+        background: #f8fafc;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .vacancy-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin: 0 0 0.2rem;
+        color: #1e293b;
+    }
+    
+    .vacancy-meta {
+        font-size: 0.65rem;
+        color: #94a3b8;
+    }
+    
+    /* Сетка действий */
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+    }
+    
+    .action-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0.6rem 0.3rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 1px solid #e9ecef;
+    }
+    
+    .action-card:hover {
+        background: #4f46e5;
+        transform: translateY(-2px);
+    }
+    
+    .action-card:hover .action-icon,
+    .action-card:hover .action-label {
+        color: white;
+    }
+    
+    .action-icon {
+        font-size: 1rem;
+        color: #4f46e5;
+        margin-bottom: 0.3rem;
+    }
+    
+    .action-label {
+        font-size: 0.65rem;
+        color: #475569;
+        text-align: center;
+    }
+    
+    /* Пустые состояния */
+    .empty-state {
+        text-align: center;
+        padding: 1rem;
+        color: #94a3b8;
+    }
+    
+    .empty-state i {
+        font-size: 1.5rem;
+        opacity: 0.4;
+        margin-bottom: 0.3rem;
+    }
+    
+    .empty-state p {
+        font-size: 0.7rem;
+        margin: 0;
+    }
+    
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .actions-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .distribution-item {
+            flex-wrap: wrap;
+        }
+        
+        .distribution-bar {
+            order: 3;
+            width: 100%;
+            margin-top: 0.3rem;
+        }
+    }
+    
+    /* Кнопки */
+    .btn-sm-custom {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        border-radius: 6px;
+        background: white;
+        color: #4f46e5;
+        text-decoration: none;
+        border: 1px solid #e9ecef;
+        transition: all 0.2s;
+    }
+    
+    .btn-sm-custom:hover {
+        background: #4f46e5;
+        color: white;
+        border-color: #4f46e5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="staff-dashboard">
+    <!-- Компактный хедер -->
+    <div class="staff-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h2>
+                <i class="fas fa-users-cog me-2"></i>
+                Кадровый учёт
+            </h2>
+            <p>Управление персоналом детского сада</p>
+        </div>
+        <a href="{% url 'staff:employee_create' %}" class="btn-sm-custom">
+            <i class="fas fa-user-plus"></i> Новый сотрудник
+        </a>
+    </div>
+
+    <!-- Статистика -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-value">{{ total_employees|default:"0" }}</div>
+            <div class="stat-label">Всего сотрудников</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-briefcase"></i></div>
+            <div class="stat-value">{{ vacancies_count|default:"0" }}</div>
+            <div class="stat-label">Вакансии</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-clock"></i></div>
+            <div class="stat-value">{{ expiring_medical|add:expiring_criminal|default:"0" }}</div>
+            <div class="stat-label">Истекают документы</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-value">{{ expired_medical|default:"0" }}</div>
+            <div class="stat-label">Просрочено</div>
+        </div>
+    </div>
+
+    <!-- Основная сетка -->
+    <div class="row g-3">
+        <!-- Распределение по категориям -->
+        <div class="col-md-6 col-lg-4">
+            <div class="info-card">
+                <div class="card-header-compact">
+                    <i class="fas fa-chart-pie"></i>
+                    <h3>По категориям</h3>
+                </div>
+                <div class="card-body-compact">
+                    {% for type in employee_types %}
+                    <div class="distribution-item">
+                        <span class="distribution-name">{{ type.name }}</span>
+                        <div class="distribution-bar">
+                            <div class="distribution-progress" style="width: {% widthratio type.count total_employees 100 %}%"></div>
+                        </div>
+                        <span class="distribution-count">{{ type.count }}</span>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state"><i class="fas fa-chart-pie"></i><p>Нет данных</p></div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Последние события -->
+        <div class="col-md-6 col-lg-4">
+            <div class="info-card">
+                <div class="card-header-compact">
+                    <i class="fas fa-history"></i>
+                    <h3>Последние события</h3>
+                </div>
+                <div class="card-body-compact">
+                    <div class="timeline">
+                        {% for employee in recent_employees|slice:":5" %}
+                        <div class="timeline-item">
+                            <div class="timeline-date">{{ employee.created_at|date:"d.m.Y" }}</div>
+                            <div class="timeline-title">
+                                <a href="{% url 'staff:employee_detail' employee.id %}">{{ employee.full_name }}</a>
+                            </div>
+                            <div class="timeline-description">{{ employee.position }}</div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state"><i class="fas fa-history"></i><p>Нет событий</p></div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Требуют внимания -->
+        <div class="col-md-6 col-lg-4">
+            <div class="info-card">
+                <div class="card-header-compact">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h3>Требуют внимания</h3>
+                </div>
+                <div class="card-body-compact">
+                    {% if expiring_medical %}
+                    <div class="alert-item">
+                        <div class="alert-content">
+                            <div class="alert-icon"><i class="fas fa-file-medical"></i></div>
+                            <span class="alert-text">Медосмотры <span class="alert-count">{{ expiring_medical }}</span></span>
+                        </div>
+                        <a href="{% url 'staff:document_reminders' %}" class="btn-alert btn-alert-warning">Просмотр</a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if expiring_criminal %}
+                    <div class="alert-item danger">
+                        <div class="alert-content">
+                            <div class="alert-icon"><i class="fas fa-file-invoice"></i></div>
+                            <span class="alert-text">Справки о несудимости <span class="alert-count">{{ expiring_criminal }}</span></span>
+                        </div>
+                        <a href="{% url 'staff:document_reminders' %}" class="btn-alert btn-alert-danger">Срочно</a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if pending_leave_requests %}
+                    <div class="alert-item info">
+                        <div class="alert-content">
+                            <div class="alert-icon"><i class="fas fa-umbrella-beach"></i></div>
+                            <span class="alert-text">Заявления на отпуск <span class="alert-count">{{ pending_leave_requests }}</span></span>
+                        </div>
+                        <a href="{% url 'staff:leave_requests' %}" class="btn-alert btn-alert-info">Обработать</a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if not expiring_medical and not expiring_criminal and not pending_leave_requests %}
+                    <div class="empty-state"><i class="fas fa-check-circle"></i><p>Все в порядке ✓</p></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Активные вакансии -->
+        <div class="col-md-6">
+            <div class="info-card">
+                <div class="card-header-compact">
+                    <i class="fas fa-briefcase"></i>
+                    <h3>Активные вакансии</h3>
+                    {% if active_vacancies %}<span class="badge bg-success">{{ active_vacancies|length }}</span>{% endif %}
+                </div>
+                <div class="card-body-compact">
+                    {% for vacancy in active_vacancies|slice:":3" %}
+                    <div class="vacancy-item">
+                        <div class="vacancy-title">{{ vacancy.staff_unit.position.title|truncatechars:35 }}</div>
+                        <div class="vacancy-meta"><i class="fas fa-calendar"></i> {{ vacancy.publish_date|date:"d.m.Y" }}</div>
+                        <a href="{% url 'staff:vacancy_detail' vacancy.id %}" class="btn-sm-custom mt-1 d-inline-flex">Подробнее</a>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state"><i class="fas fa-briefcase"></i><p>Нет активных вакансий</p></div>
+                    {% endfor %}
+                    
+                    {% if active_vacancies|length > 3 %}
+                    <div class="text-center mt-2 pt-2 border-top">
+                        <a href="{% url 'staff:vacancy_list' %}" class="btn-sm-custom">Все вакансии →</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="col-md-6">
+            <div class="info-card">
+                <div class="card-header-compact">
+                    <i class="fas fa-bolt"></i>
+                    <h3>Быстрые действия</h3>
+                </div>
+                <div class="card-body-compact">
+                    <div class="actions-grid">
+                        <a href="{% url 'staff:current_timesheet' %}" class="action-card">
+                            <div class="action-icon"><i class="fas fa-calendar-check"></i></div>
+                            <span class="action-label">Табель</span>
+                        </a>
+                        <a href="{% url 'staff:salary_calculate' %}" class="action-card">
+                            <div class="action-icon"><i class="fas fa-calculator"></i></div>
+                            <span class="action-label">Зарплата</span>
+                        </a>
+                        <a href="{% url 'staff:leave_schedule_create' %}" class="action-card">
+                            <div class="action-icon"><i class="fas fa-umbrella-beach"></i></div>
+                            <span class="action-label">Отпуска</span>
+                        </a>
+                        <a href="{% url 'staff:contract_list' %}" class="action-card">
+                            <div class="action-icon"><i class="fas fa-file-contract"></i></div>
+                            <span class="action-label">Договоры</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Анимация прогресс-баров
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        document.querySelectorAll('.distribution-progress').forEach(bar => {
+            const width = bar.style.width;
+            if (width) {
+                bar.style.width = '0';
+                setTimeout(() => { bar.style.width = width; }, 50);
+            }
+        });
+    }, 100);
+});
+</script>
+{% endblock %}

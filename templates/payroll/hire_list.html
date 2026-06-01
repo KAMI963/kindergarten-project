@@ -1,0 +1,152 @@
+{% extends 'payroll/base_payroll.html' %}
+{% load static %}
+
+{% block page_title %}Прием на работу{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item active">Прием на работу</li>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'payroll:hire_document_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Новый прием
+</a>
+{% endblock %}
+
+{% block page_content %}
+<!-- Статистика -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(52, 152, 219, 0.1);">
+                <i class="fas fa-users" style="color: #3498db;"></i>
+            </div>
+            <div class="stat-value">{{ hires.count }}</div>
+            <div class="stat-label">Всего сотрудников</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(46, 204, 113, 0.1);">
+                <i class="fas fa-user-check" style="color: #27ae60;"></i>
+            </div>
+            <div class="stat-value">{{ active_count }}</div>
+            <div class="stat-label">Активных</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(241, 196, 15, 0.1);">
+                <i class="fas fa-user-clock" style="color: #f39c12;"></i>
+            </div>
+            <div class="stat-value">{{ this_month_count }}</div>
+            <div class="stat-label">Принято в этом месяце</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(155, 89, 182, 0.1);">
+                <i class="fas fa-calendar-check" style="color: #8e44ad;"></i>
+            </div>
+            <div class="stat-value">{{ avg_per_month }}</div>
+            <div class="stat-label">В среднем в месяц</div>
+        </div>
+    </div>
+</div>
+
+<!-- Таблица приемов -->
+<div class="payroll-card">
+    <div class="payroll-card-header">
+        <span><i class="fas fa-list me-2"></i>Список принятых сотрудников</span>
+        <div>
+            <input type="text" class="form-control form-control-sm" placeholder="Поиск..." id="searchInput" style="width: 200px;">
+        </div>
+    </div>
+    <div class="payroll-card-body">
+        <table class="payroll-table" id="hiresTable">
+            <thead>
+                <tr>
+                    <th>№ документа</th>
+                    <th>Дата</th>
+                    <th>Сотрудник</th>
+                    <th>Должность</th>
+                    <th>Дата приема</th>
+                    <th>График</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hire in hires %}
+                <tr>
+                    <td><strong>{{ hire.document_number }}</strong></td>
+                    <td>{{ hire.document_date|date:"d.m.Y" }}</td>
+                    <td>
+                        {{ hire.employee.get_full_name }}
+                        <br>
+                        <small class="text-muted">{{ hire.employee.username }}</small>
+                    </td>
+                    <td>{{ hire.position }}</td>
+                    <td>{{ hire.hire_date|date:"d.m.Y" }}</td>
+                    <td>
+                        {% if hire.schedule %}
+                        <span class="badge bg-info">{{ hire.schedule.name }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Не указан</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if hire.is_active %}
+                        <span class="status-badge status-active">
+                            <i class="fas fa-check-circle me-1"></i>Действует
+                        </span>
+                        {% else %}
+                        <span class="status-badge status-inactive">
+                            <i class="fas fa-times-circle me-1"></i>Завершен
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'payroll:hire_document_detail' hire.pk %}" class="action-btn btn-view" title="Просмотр">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="#" class="action-btn btn-edit" title="Редактировать">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <i class="fas fa-user-plus fa-4x mb-3" style="color: #bdc3c7;"></i>
+                        <h5 style="color: #7f8c8d;">Нет принятых сотрудников</h5>
+                        <p class="text-muted">Оформите первый прием на работу</p>
+                        <a href="{% url 'payroll:hire_document_create' %}" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus me-2"></i>Новый прием
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Поиск по таблице
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let searchText = this.value.toLowerCase();
+        let rows = document.querySelectorAll('#hiresTable tbody tr');
+        
+        rows.forEach(row => {
+            let text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchText) ? '' : 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

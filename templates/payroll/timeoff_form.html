@@ -1,0 +1,95 @@
+{% extends 'payroll/base_payroll.html' %}
+{% load static %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'payroll:time_off_list' %}">Отсутствия</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block page_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="payroll-card">
+            <div class="payroll-card-header">
+                <span><i class="fas fa-calendar-times me-2"></i>{{ title }}</span>
+            </div>
+            <div class="payroll-card-body">
+                <form method="post" enctype="multipart/form-data" class="payroll-form">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                    <div class="form-group">
+                        <label class="form-label">{{ field.label }}</label>
+                        {% if field.name == 'time_off_type' %}
+                            <select name="{{ field.name }}" class="form-select" id="timeOffType">
+                                {% for value, label in field.field.choices %}
+                                <option value="{{ value }}" {% if field.value == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.name == 'document_file' %}
+                            <input type="file" name="{{ field.name }}" class="form-control">
+                        {% else %}
+                            {{ field }}
+                        {% endif %}
+                        
+                        {% if field.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in field.errors %}
+                                <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if field.help_text %}
+                        <small class="text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <!-- Дополнительные поля для больничного -->
+                    <div id="sickLeaveFields" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Для расчета больничного будет автоматически рассчитан стаж сотрудника
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Сохранить
+                        </button>
+                        <a href="{% url 'payroll:time_off_list' %}" class="btn btn-secondary ms-2">
+                            <i class="fas fa-times me-2"></i>Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('timeOffType');
+    const sickFields = document.getElementById('sickLeaveFields');
+    
+    function toggleSickFields() {
+        if (typeSelect.value === 'sick_leave') {
+            sickFields.style.display = 'block';
+        } else {
+            sickFields.style.display = 'none';
+        }
+    }
+    
+    typeSelect.addEventListener('change', toggleSickFields);
+    toggleSickFields();
+});
+</script>
+{% endblock %}

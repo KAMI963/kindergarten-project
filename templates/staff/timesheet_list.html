@@ -1,0 +1,84 @@
+<!-- staff/templates/staff/timesheet_list.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Архив табелей{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-calendar-alt"></i>
+                    Архив табелей
+                </h1>
+                <p class="mb-0 opacity-75">Список всех табелей учета рабочего времени</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'staff:timesheet_create' %}" class="btn btn-light staff-btn">
+                    <i class="fas fa-plus"></i> Новый табель
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="staff-card">
+        <div class="card-header">
+            <i class="fas fa-list"></i>
+            Табели по месяцам
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="staff-table table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Период</th>
+                            <th>Кто составил</th>
+                            <th>Дата создания</th>
+                            <th>Статус</th>
+                            <th>Дата закрытия</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for timesheet in timesheets %}
+                        <tr>
+                            <td>
+                                <strong>{{ timesheet.month_name }} {{ timesheet.year }}</strong>
+                            </td>
+                            <td>{{ timesheet.created_by.get_full_name|default:"—" }}</td>
+                            <td>{{ timesheet.created_at|date:"d.m.Y H:i" }}</td>
+                            <td>
+                                {% if timesheet.is_closed %}
+                                <span class="badge bg-secondary">Закрыт</span>
+                                {% else %}
+                                <span class="badge bg-success">Открыт</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ timesheet.closed_at|date:"d.m.Y H:i"|default:"—" }}</td>
+                            <td>
+                                <a href="{% url 'staff:timesheet_detail' timesheet.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> Просмотр
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Нет созданных табелей</p>
+                                <a href="{% url 'staff:timesheet_create' %}" class="btn staff-btn-primary btn-sm">
+                                    Создать первый табель
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

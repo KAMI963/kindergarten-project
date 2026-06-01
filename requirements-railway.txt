@@ -1,0 +1,132 @@
+# Основной фреймворк
+Django==5.2.11
+
+# База данных PostgreSQL
+psycopg2-binary==2.9.7
+
+# Сервер для продакшена
+gunicorn==20.1.0
+
+# Статические файлы
+whitenoise==6.5.0
+
+# Работа с переменными окружения
+python-decouple==3.8
+
+# Django компоненты
+asgiref==3.10.0
+sqlparse==0.5.3
+
+# Изображения
+Pillow==10.0.1
+
+# Формы
+crispy-bootstrap5==0.7
+django-crispy-forms==2.0
+
+# Аутентификация
+django-allauth==65.14.1
+
+# Очистка файлов
+django-cleanup==8.0.0
+
+# Celery для фоновых задач
+celery==5.3.4
+django-celery-results==2.5.1
+
+# Redis как брокер
+redis==5.0.1
+
+# Работа с документами
+python-docx==1.2.0
+docxtpl==0.20.1
+openpyxl==3.1.5
+
+# Data science (если используется)
+pandas==3.0.2
+numpy==2.4.4
+
+# PDF генерация
+xhtml2pdf==0.2.17
+reportlab==4.4.10
+weasyprint==61.0
+
+# Графика и текст
+qrcode==8.2
+arabic-reshaper==3.0.0
+python-bidi==0.6.7
+
+# Интернационализация
+babel==2.17.0
+
+# HTTP запросы
+requests==2.32.5
+aiohttp==3.13.3
+
+# Безопасность
+certifi==2025.10.5
+urllib3==2.5.0
+cryptography==46.0.3
+
+# OAuth
+oauthlib==3.3.1
+requests-oauthlib==2.0.0
+PyJWT==2.10.1
+python3-openid==3.2.0
+
+# SMS уведомления
+twilio==9.10.1
+
+# Шаблонизаторы
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+
+# Утилиты
+click==8.3.0
+packaging==25.0
+typing_extensions==4.15.0
+python-dateutil==2.9.0.post0
+tzdata==2025.2
+six==1.17.0
+
+# Работа с PDF
+pypdf==6.7.0
+
+# Web-стандарты
+html5lib==1.1
+webencodings==0.5.1
+tinycss2==1.4.0
+cssselect2==0.8.0
+
+# Работа с XML/HTML
+lxml==6.0.2
+
+# Celery компоненты
+kombu==5.5.4
+billiard==4.2.2
+amqp==5.3.1
+vine==5.1.0
+
+# Для click команд
+click-didyoumean==0.3.1
+click-plugins==1.1.1.2
+click-repl==0.3.0
+
+# aiohttp компоненты
+aiohappyeyeballs==2.6.1
+aiohttp-retry==2.9.1
+aiosignal==1.4.0
+attrs==25.4.0
+frozenlist==1.8.0
+multidict==6.7.1
+propcache==0.4.1
+yarl==1.22.0
+
+# Прочее
+idna==3.11
+charset-normalizer==3.4.4
+colorama==0.4.6
+prompt_toolkit==3.0.52
+wcwidth==0.2.14
+tzlocal==5.3.1
+uritools==6.0.1

@@ -1,0 +1,36 @@
+<!-- templates/personalfiles/partials/child_header.html -->
+{% load static %}
+<div class="child-header">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <div class="child-avatar">
+                {% if child.gender == 'M' %}
+                    <i class="fas fa-boy"></i>
+                {% else %}
+                    <i class="fas fa-girl"></i>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col">
+            <h2 class="fw-bold mb-2">{{ child.full_name }}</h2>
+            <div class="row mt-3">
+                <div class="col-md-3">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    {{ child.birth_date|date:"d.m.Y" }} ({{ child.age_display }})
+                </div>
+                <div class="col-md-3">
+                    <i class="fas fa-users me-2"></i>
+                    Группа: {{ child.group.name|default:"Не назначена" }}
+                </div>
+                <div class="col-md-3">
+                    <i class="fas fa-venus-mars me-2"></i>
+                    Пол: {{ child.get_gender_display }}
+                </div>
+                <div class="col-md-3">
+                    <i class="fas fa-home me-2"></i>
+                    {{ child.actual_address|truncatechars:30 }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

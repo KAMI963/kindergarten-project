@@ -1,0 +1,24 @@
+<!-- templates/includes/status_badge.html -->
+{% if status == 'draft' %}
+    <span class="badge bg-secondary">Черновик</span>
+{% elif status == 'pending' %}
+    <span class="badge bg-warning text-dark">На проверке</span>
+{% elif status == 'queue' %}
+    <span class="badge bg-primary">В очереди</span>
+{% elif status == 'invited' %}
+    <span class="badge bg-success">Приглашен на оформление</span>
+{% elif status == 'processing' %}
+    <span class="badge bg-info text-dark">На оформлении</span>
+{% elif status == 'enrolled' %}
+    <span class="badge bg-success">Зачислен</span>
+{% elif status == 'rejected' %}
+    <span class="badge bg-danger">Отказ</span>
+{% elif status == 'deferred' %}
+    <span class="badge bg-warning text-dark">Отложен</span>
+{% elif status == 'no_show' %}
+    <span class="badge bg-danger">Не явился</span>
+{% elif status == 'withdrawn' %}
+    <span class="badge bg-secondary">Отозвана</span>
+{% else %}
+    <span class="badge bg-secondary">{{ status }}</span>
+{% endif %}

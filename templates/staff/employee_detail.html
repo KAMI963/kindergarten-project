@@ -1,0 +1,680 @@
+{% extends 'staff/base_staff.html' %}
+{% load static %}
+
+{% block title %}{{ employee.full_name }} | Профиль{% endblock %}
+
+{% block staff_content %}
+<style>
+    :root {
+        --primary-color: #3b82f6;
+        --primary-hover: #2563eb;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --danger-color: #ef4444;
+        --text-main: #1f2937;
+        --text-muted: #6b7280;
+        --bg-light: #f3f4f6;
+        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --radius: 10px;
+    }
+
+    body { background-color: #f9fafb; font-family: 'Inter', system-ui, sans-serif; color: var(--text-main); }
+
+    /* Profile Header - Уменьшен */
+    .profile-header-card {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--card-shadow);
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .avatar-container {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        flex-shrink: 0;
+    }
+
+    .avatar-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        background: #e5e7eb;
+    }
+
+    .status-indicator {
+        position: absolute;
+        bottom: 3px;
+        right: 3px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+
+    .info-block h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.2rem; color: var(--text-main); }
+    .info-block .position { font-size: 0.9rem; color: var(--primary-color); font-weight: 500; margin-bottom: 0.35rem; }
+    .meta-info { font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .meta-info span { display: flex; align-items: center; gap: 0.3rem; }
+
+    /* Buttons - Уменьшены */
+    .btn-group-custom { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
+    .btn-custom {
+        padding: 0.45rem 0.9rem;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    .btn-primary-custom { background: var(--primary-color); color: white; border: none; }
+    .btn-primary-custom:hover { background: var(--primary-hover); color: white; transform: translateY(-1px); }
+    .btn-success-custom { background: var(--success-color); color: white; border: none; }
+    .btn-success-custom:hover { background: #059669; color: white; transform: translateY(-1px); }
+    .btn-outline-custom { background: white; border: 1px solid #d1d5db; color: var(--text-main); }
+    .btn-outline-custom:hover { background: #f9fafb; border-color: var(--text-muted); }
+
+    /* Sidebar Cards - Уменьшены */
+    .sidebar-card {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1.25rem;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+    }
+    .card-header-clean {
+        padding: 0.7rem 1rem;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        font-weight: 600;
+        color: var(--text-main);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+    }
+    .card-body-clean { padding: 1rem; }
+    
+    .data-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+    .data-row { display: flex; flex-direction: column; gap: 0.2rem; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; }
+    .data-value { font-size: 0.85rem; color: var(--text-main); font-weight: 500; word-break: break-word; }
+    .data-value a { color: var(--primary-color); text-decoration: none; }
+    .data-value a:hover { text-decoration: underline; }
+
+    /* Horizontal Tabs - Уменьшены */
+    .tabs-wrapper {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+
+    .tabs-scroll {
+        display: flex;
+        gap: 0.2rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 0.2rem;
+        scroll-behavior: smooth;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .tabs-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-tabs-horizontal {
+        display: flex;
+        flex-wrap: nowrap;
+        border-bottom: 1px solid #e5e7eb;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        min-width: max-content;
+    }
+
+    .nav-tabs-horizontal .nav-item {
+        margin: 0;
+    }
+
+    .nav-tabs-horizontal .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+        border-radius: 6px 6px 0 0;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .nav-tabs-horizontal .nav-link:hover {
+        color: var(--primary-color);
+        background: rgba(59, 130, 246, 0.08);
+        border-bottom-color: transparent;
+    }
+
+    .nav-tabs-horizontal .nav-link.active {
+        color: var(--primary-color);
+        background: rgba(59, 130, 246, 0.1);
+        border-bottom-color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .nav-tabs-horizontal .nav-link i {
+        font-size: 0.8rem;
+        width: 14px;
+        text-align: center;
+    }
+
+    /* Content Items - Уменьшены */
+    .item-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s;
+    }
+    .item-card:hover { border-color: var(--primary-color); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1); }
+    .item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.35rem; }
+    .item-title { font-weight: 600; color: var(--text-main); margin: 0; font-size: 0.85rem; }
+    .item-meta { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.35rem; }
+    .badge-soft { padding: 0.2rem 0.5rem; border-radius: 5px; font-size: 0.65rem; font-weight: 600; }
+    .badge-soft-success { background: rgba(16, 185, 129, 0.1); color: var(--success-color); }
+    .badge-soft-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning-color); }
+    .badge-soft-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger-color); }
+
+    /* Alerts - Уменьшены */
+    .alert-custom {
+        border-radius: var(--radius);
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        padding: 0.75rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    @media (max-width: 991px) {
+        .profile-header-card { text-align: center; }
+        .avatar-container { margin: 0 auto 0.75rem; }
+        .info-block { margin-bottom: 1rem; }
+        .btn-group-custom { justify-content: center; }
+        .meta-info { justify-content: center; }
+    }
+</style>
+
+<!-- Profile Header -->
+<div class="container mt-3">
+    <div class="profile-header-card">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center flex-wrap">
+                    <div class="avatar-container me-3 mb-3 mb-lg-0">
+                        {% if employee.photo %}
+                            <img src="{{ employee.photo.url }}" class="avatar-img" alt="{{ employee.full_name }}">
+                        {% else %}
+                            <div class="avatar-img d-flex align-items-center justify-content-center bg-primary text-white display-4 fw-bold">
+                                {{ employee.full_name|first|upper }}
+                            </div>
+                        {% endif %}
+                        <div class="status-indicator {% if employee.is_active %}bg-success{% else %}bg-secondary{% endif %}" 
+                             title="{% if employee.is_active %}Активен{% else %}Архив{% endif %}"></div>
+                    </div>
+                    
+                    <div class="info-block">
+                        <div class="d-flex align-items-center gap-2 mb-1 justify-content-center justify-content-lg-start">
+                            <h1>{{ employee.full_name }}</h1>
+                            <span class="badge {% if employee.is_active %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2 py-1 border" style="font-size: 0.7rem;">
+                                {% if employee.is_active %}Работает{% else %}Уволен{% endif %}
+                            </span>
+                        </div>
+                        <p class="position mb-1">
+                            <i class="fas fa-briefcase me-1"></i>{{ employee.position }}
+                        </p>
+                        <div class="meta-info justify-content-center justify-content-lg-start">
+                            <span><i class="fas fa-tag"></i> {{ employee.get_employee_type_display }}</span>
+                            <span><i class="fas fa-calendar-alt"></i> Принят: {{ employee.hire_date|date:"d.m.Y" }}</span>
+                            {% if employee.experience %}
+                                <span><i class="fas fa-clock"></i> Стаж: {{ employee.experience }} лет</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="btn-group-custom">
+                    <a href="{% url 'staff:employee_edit' employee.id %}" class="btn-custom btn-primary-custom">
+                        <i class="fas fa-edit"></i> Редактировать
+                    </a>
+                    <a href="{% url 'staff:hire_order_create' employee.id %}" class="btn-custom btn-success-custom">
+                        <i class="fas fa-file-signature"></i> Приказ
+                    </a>
+                    {% if not employee.user %}
+                    <a href="{% url 'staff:invite_employee' employee.id %}" class="btn-custom btn-outline-custom">
+                        <i class="fas fa-envelope"></i> Пригласить
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'staff:employee_list' %}" class="btn-custom btn-outline-custom">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                </div>
+
+                <!-- Account Status - Уменьшен -->
+                <div class="mt-2 p-2 rounded-3 {% if employee.user %}bg-success bg-opacity-10 border border-success border-opacity-25{% else %}bg-warning bg-opacity-10 border border-warning border-opacity-25{% endif %}">
+                    {% if employee.user %}
+                        <div class="d-flex align-items-center gap-2 text-success" style="font-size: 0.75rem;">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <strong>Аккаунт создан</strong>
+                                <div class="small opacity-75">Логин: {{ employee.user.username }}</div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="d-flex align-items-center gap-2 text-warning" style="font-size: 0.75rem;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <div>
+                                <strong>Нет доступа</strong>
+                                <div class="small opacity-75">Email: {{ employee.email|default:"Не указан" }}</div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expiring Documents Alert - Уменьшен -->
+    {% if expiring_documents %}
+    <div class="alert alert-warning alert-custom d-flex align-items-start mb-3" role="alert">
+        <div class="me-2"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="flex-grow-1">
+            <strong>Внимание! Истекают документы</strong>
+            <ul class="mb-0 small mt-1">
+                {% for doc in expiring_documents|slice:":3" %}
+                <li>{{ doc.type }} — осталось <strong>{{ doc.days_left }} дн.</strong> (до {{ doc.date|date:"d.m.Y" }})</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Left Sidebar -->
+        <div class="col-lg-4">
+            <!-- Personal Info -->
+            <div class="sidebar-card">
+                <div class="card-header-clean">
+                    <span><i class="fas fa-user-circle me-1 text-primary"></i>Личные данные</span>
+                </div>
+                <div class="card-body-clean">
+                    <div class="data-grid">
+                        <div class="data-row">
+                            <span class="data-label">Дата рождения</span>
+                            <span class="data-value">{{ employee.birth_date|date:"d.m.Y"|default:"—" }} ({{ employee.age|default:"?" }} лет)</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Телефон</span>
+                            <span class="data-value"><a href="tel:{{ employee.phone }}">{{ employee.phone|default:"Не указан" }}</a></span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Email</span>
+                            <span class="data-value"><a href="mailto:{{ employee.email }}">{{ employee.email|default:"Не указан" }}</a></span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Адрес</span>
+                            <span class="data-value">{{ employee.address|default:"Не указан"|truncatechars:60 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Passport -->
+            <div class="sidebar-card">
+                <div class="card-header-clean">
+                    <span><i class="fas fa-passport me-1 text-primary"></i>Паспорт</span>
+                    <a href="{% url 'staff:passport_data' employee.id %}" class="btn btn-sm btn-link p-0 text-decoration-none" style="font-size: 0.7rem;">
+                        {% if passport %}Изменить{% else %}Добавить{% endif %}
+                    </a>
+                </div>
+                <div class="card-body-clean">
+                    {% if passport %}
+                    <div class="data-grid">
+                        <div class="data-row">
+                            <span class="data-label">Серия и номер</span>
+                            <span class="data-value fw-bold">{{ passport.series }} {{ passport.number }}</span>
+                        </div>
+                        <div class="row g-1">
+                            <div class="col-6">
+                                <span class="data-label">Дата выдачи</span>
+                                <div class="data-value small">{{ passport.issue_date|date:"d.m.Y" }}</div>
+                            </div>
+                            <div class="col-6">
+                                <span class="data-label">Код подр.</span>
+                                <div class="data-value small">{{ passport.department_code }}</div>
+                            </div>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Кем выдан</span>
+                            <div class="data-value small text-muted">{{ passport.issued_by|truncatechars:60 }}</div>
+                        </div>
+                        {% if passport.scan %}
+                        <a href="{{ passport.scan.url }}" target="_blank" class="btn btn-sm btn-outline-primary w-100 mt-2" style="font-size: 0.7rem;">
+                            <i class="fas fa-file-pdf me-1"></i>Смотреть скан
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-2 small">Данные не заполнены</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- IDs -->
+            <div class="sidebar-card">
+                <div class="card-header-clean">
+                    <span><i class="fas fa-id-card me-1 text-primary"></i>ИНН / СНИЛС</span>
+                    <div>
+                        <a href="{% url 'staff:inn_data' employee.id %}" class="btn btn-sm btn-link p-0 me-2 text-decoration-none" style="font-size: 0.7rem;">ИНН</a>
+                        <a href="{% url 'staff:snils_data' employee.id %}" class="btn btn-sm btn-link p-0 text-decoration-none" style="font-size: 0.7rem;">СНИЛС</a>
+                    </div>
+                </div>
+                <div class="card-body-clean">
+                    <div class="row g-2">
+                        <div class="col-6 border-end">
+                            <span class="data-label">ИНН</span>
+                            {% if inn %}
+                                <div class="data-value small">{{ inn.inn_number }}</div>
+                                {% if inn.scan %}<a href="{{ inn.scan.url }}" target="_blank" class="small text-danger"><i class="fas fa-file"></i></a>{% endif %}
+                            {% else %}<div class="text-muted small">—</div>{% endif %}
+                        </div>
+                        <div class="col-6 ps-2">
+                            <span class="data-label">СНИЛС</span>
+                            {% if snils %}
+                                <div class="data-value small">{{ snils.snils_number }}</div>
+                                {% if snils.scan %}<a href="{{ snils.scan.url }}" target="_blank" class="small text-danger"><i class="fas fa-file"></i></a>{% endif %}
+                            {% else %}<div class="text-muted small">—</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Content: Tabs -->
+        <div class="col-lg-8">
+            <div class="sidebar-card h-100">
+                <div class="card-body-clean">
+                    
+                    <!-- Horizontal Tabs Navigation -->
+                    <div class="tabs-wrapper">
+                        <div class="tabs-scroll" id="tabsScroll">
+                            <ul class="nav nav-tabs-horizontal" id="employeeTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#education" type="button" role="tab">
+                                        <i class="fas fa-graduation-cap"></i>Образование
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#courses" type="button" role="tab">
+                                        <i class="fas fa-chalkboard-teacher"></i>Курсы
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#attestations" type="button" role="tab">
+                                        <i class="fas fa-certificate"></i>Аттестация
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#medical" type="button" role="tab">
+                                        <i class="fas fa-heartbeat"></i>Медосмотры
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#contracts" type="button" role="tab">
+                                        <i class="fas fa-file-contract"></i>Договоры
+                                    </button>
+                                </li>
+                               
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Tabs Content -->
+                    <div class="tab-content" id="employeeTabsContent">
+                        
+                        <!-- Education -->
+                        <div class="tab-pane fade show active" id="education" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0" style="font-size: 0.85rem;">Документы об образовании</h6>
+                                <a href="{% url 'staff:education_add' employee.id %}" class="btn btn-sm btn-primary-custom" style="padding: 0.25rem 0.6rem; font-size: 0.7rem;"><i class="fas fa-plus"></i></a>
+                            </div>
+                            {% for doc in education_docs %}
+                            <div class="item-card">
+                                <div class="item-header">
+                                    <h6 class="item-title">{{ doc.get_education_level_display }}</h6>
+                                    <div class="d-flex gap-1">
+                                        {% if doc.scan %}<a href="{{ doc.scan.url }}" target="_blank" class="btn btn-sm btn-light border" style="padding: 0.2rem 0.4rem; font-size: 0.65rem;"><i class="fas fa-file-pdf text-danger"></i></a>{% endif %}
+                                        <a href="{% url 'staff:education_edit' doc.id %}" class="btn btn-sm btn-light border" style="padding: 0.2rem 0.4rem; font-size: 0.65rem;"><i class="fas fa-pen text-primary"></i></a>
+                                    </div>
+                                </div>
+                                <div class="item-meta">{{ doc.institution|truncatechars:50 }} • {{ doc.specialization|truncatechars:40 }}</div>
+                                <span class="badge-soft badge-soft-success">{{ doc.document_type }}: {{ doc.series }} {{ doc.number }}</span>
+                                <span class="text-muted small ms-2">{{ doc.issue_date|date:"d.m.Y" }}</span>
+                            </div>
+                            {% empty %}
+                            <div class="text-center text-muted py-4 bg-light rounded-3" style="font-size: 0.75rem;"><i class="fas fa-graduation-cap fa-2x mb-2 opacity-25"></i><p>Записей нет</p></div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Courses -->
+                        <div class="tab-pane fade" id="courses" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0" style="font-size: 0.85rem;">Повышение квалификации</h6>
+                                <a href="{% url 'staff:course_add' employee.id %}" class="btn btn-sm btn-primary-custom" style="padding: 0.25rem 0.6rem; font-size: 0.7rem;"><i class="fas fa-plus"></i></a>
+                            </div>
+                            {% for course in courses %}
+                            <div class="item-card">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <h6 class="item-title">{{ course.course_name|truncatechars:50 }}</h6>
+                                    <a href="{% url 'staff:course_edit' course.id %}" class="btn btn-sm btn-light border" style="padding: 0.2rem 0.4rem; font-size: 0.65rem;"><i class="fas fa-pen"></i></a>
+                                </div>
+                                <div class="row small text-muted g-1 mb-1">
+                                    <div class="col-md-6"><i class="fas fa-building me-1"></i> {{ course.provider|truncatechars:30 }}</div>
+                                    <div class="col-md-6"><i class="fas fa-clock me-1"></i> {{ course.start_date|date:"d.m.Y" }} — {{ course.end_date|date:"d.m.Y" }}</div>
+                                </div>
+                                <span class="badge-soft badge-soft-warning">{{ course.document_number }}</span>
+                                {% if course.scan %}<a href="{{ course.scan.url }}" target="_blank" class="ms-2 small text-danger"><i class="fas fa-file-pdf"></i> Скан</a>{% endif %}
+                            </div>
+                            {% empty %}
+                            <div class="text-center text-muted py-4 bg-light rounded-3" style="font-size: 0.75rem;"><p>Курсы не добавлены</p></div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Attestations -->
+                        <div class="tab-pane fade" id="attestations" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0" style="font-size: 0.85rem;">Аттестации</h6>
+                                <a href="{% url 'staff:attestation_add' employee.id %}" class="btn btn-sm btn-primary-custom" style="padding: 0.25rem 0.6rem; font-size: 0.7rem;"><i class="fas fa-plus"></i></a>
+                            </div>
+                            {% for att in attestations %}
+                            <div class="item-card {% if not att.is_valid %}border-danger bg-danger bg-opacity-10{% endif %}">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="item-title">Аттестация от {{ att.attestation_date|date:"d.m.Y" }}</h6>
+                                    <a href="{% url 'staff:attestation_edit' att.id %}" class="btn btn-sm btn-light border" style="padding: 0.2rem 0.4rem; font-size: 0.65rem;"><i class="fas fa-pen"></i></a>
+                                </div>
+                                <div class="row small mt-1">
+                                    <div class="col-md-4">Результат: <strong>{{ att.get_result_display }}</strong></div>
+                                    <div class="col-md-4">Категория: {{ att.get_category_display }}</div>
+                                    <div class="col-md-4 text-end">
+                                        До: <span class="{% if att.is_valid %}text-success fw-bold{% else %}text-danger fw-bold{% endif %}">{{ att.valid_until|date:"d.m.Y" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center text-muted py-4 bg-light rounded-3" style="font-size: 0.75rem;"><p>Аттестации не добавлены</p></div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Medical -->
+                        <div class="tab-pane fade" id="medical" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0" style="font-size: 0.85rem;">Медицинские осмотры</h6>
+                                <a href="{% url 'staff:medical_examination_add' employee.id %}" class="btn btn-sm btn-primary-custom" style="padding: 0.25rem 0.6rem; font-size: 0.7rem;"><i class="fas fa-plus"></i></a>
+                            </div>
+                            
+                            {% for exam in medical_exams %}
+                            <div class="item-card {% if exam.valid_until < today %}border-danger bg-danger bg-opacity-10{% endif %}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="item-title">{{ exam.get_examination_type_display }}</h6>
+                                        <p class="small text-muted mb-1" style="font-size: 0.65rem;">Осмотр: {{ exam.examination_date|date:"d.m.Y" }}</p>
+                                        <p class="small mb-0" style="font-size: 0.7rem;">
+                                            Действителен до: 
+                                            <span class="{% if exam.valid_until >= today %}text-success fw-bold{% else %}text-danger fw-bold{% endif %}">
+                                                {{ exam.valid_until|date:"d.m.Y" }}
+                                            </span>
+                                            {% if exam.valid_until >= today %}
+                                                <span class="badge-soft badge-soft-warning ms-2">Осталось: {{ exam.valid_until|timeuntil:today }}</span>
+                                            {% else %}
+                                                <span class="badge-soft badge-soft-danger ms-2">ПРОСРОЧЕН</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="text-end">
+                                        <a href="{% url 'staff:medical_examination_edit' exam.id %}" class="btn btn-sm btn-light border" style="padding: 0.2rem 0.4rem; font-size: 0.65rem;"><i class="fas fa-pen"></i></a>
+                                        {% if exam.medical_book_scan %}
+                                        <a href="{{ exam.medical_book_scan.url }}" target="_blank" class="btn btn-sm btn-light border mt-1" style="padding: 0.2rem 0.4rem; font-size: 0.65rem;"><i class="fas fa-file-medical text-danger"></i></a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center text-muted py-4 bg-light rounded-3" style="font-size: 0.75rem;"><p>Медосмотры не добавлены</p></div>
+                            {% endfor %}
+
+                            <!-- Criminal Check -->
+                            <div class="card border-0 bg-light mt-3 rounded-3">
+                                <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-0" style="font-size: 0.8rem;"><i class="fas fa-shield-alt me-1 text-secondary"></i>Справка о несудимости</h6>
+                                        {% if criminal_check %}
+                                        <small class="text-muted" style="font-size: 0.65rem;">Действительна до: <span class="{% if criminal_check.valid_until >= today %}text-success{% else %}text-danger{% endif %}">{{ criminal_check.valid_until|date:"d.m.Y" }}</span></small>
+                                        {% else %}
+                                        <small class="text-muted" style="font-size: 0.65rem;">Не добавлена</small>
+                                        {% endif %}
+                                    </div>
+                                    <a href="{% url 'staff:criminal_check_edit' employee.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-2" style="font-size: 0.65rem;">
+                                        {% if criminal_check %}Изменить{% else %}Добавить{% endif %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contracts -->
+                        <div class="tab-pane fade" id="contracts" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0" style="font-size: 0.85rem;">Трудовые договоры</h6>
+                                <a href="{% url 'staff:contract_create' employee.id %}" class="btn btn-sm btn-primary-custom" style="padding: 0.25rem 0.6rem; font-size: 0.7rem;"><i class="fas fa-plus"></i></a>
+                            </div>
+                            {% for contract in contracts %}
+                            <div class="item-card d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="item-title">Договор №{{ contract.contract_number }}</h6>
+                                    <p class="small text-muted mb-0" style="font-size: 0.65rem;">от {{ contract.start_date|date:"d.m.Y" }}</p>
+                                    <span class="badge-soft {% if contract.contract_type == 'indefinite' %}badge-soft-success{% else %}badge-soft-warning{% endif %}" style="font-size: 0.6rem;">
+                                        {{ contract.get_contract_type_display }}
+                                    </span>
+                                </div>
+                                <a href="{% url 'staff:contract_detail' contract.id %}" class="btn btn-sm btn-outline-primary" style="padding: 0.25rem 0.6rem; font-size: 0.65rem;">
+                                    <i class="fas fa-eye me-1"></i>Детали
+                                </a>
+                            </div>
+                            {% empty %}
+                            <div class="text-center text-muted py-4 bg-light rounded-3" style="font-size: 0.75rem;"><p>Договоры не добавлены</p></div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Payroll -->
+                        <div class="tab-pane fade" id="payroll" role="tabpanel">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-2">
+                                    <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;"><i class="fas fa-calculator text-primary me-1"></i>Начисления и удержания</h6>
+                                    <a href="{% url 'staff:employee_payroll_assignments' employee.id %}" class="btn btn-sm btn-primary-custom" style="padding: 0.25rem 0.6rem; font-size: 0.7rem;">
+                                        <i class="fas fa-cog me-1"></i>Управление
+                                    </a>
+                                </div>
+                                <div class="card-body p-3">
+                                    <p class="text-muted mb-0" style="font-size: 0.75rem;">Здесь отображается сводка по текущим начислениям сотрудника.</p>
+                                    <div class="alert alert-light border mt-2 mb-0 small" style="font-size: 0.7rem; padding: 0.5rem;">
+                                        <i class="fas fa-info-circle me-1"></i>Для детальной настройки перейдите в раздел управления.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabsScroll = document.getElementById('tabsScroll');
+    
+    if (tabsScroll) {
+        function updateScrollIndicators() {
+            if (tabsScroll.scrollLeft > 10) {
+                tabsScroll.classList.add('scrolled-left');
+            } else {
+                tabsScroll.classList.remove('scrolled-left');
+            }
+            
+            if (tabsScroll.scrollLeft < tabsScroll.scrollWidth - tabsScroll.clientWidth - 10) {
+                tabsScroll.classList.add('scrolled-right');
+            } else {
+                tabsScroll.classList.remove('scrolled-right');
+            }
+        }
+        
+        updateScrollIndicators();
+        tabsScroll.addEventListener('scroll', updateScrollIndicators);
+        window.addEventListener('resize', updateScrollIndicators);
+        
+        const activeTab = tabsScroll.querySelector('.nav-link.active');
+        if (activeTab) {
+            setTimeout(() => {
+                activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }, 100);
+        }
+    }
+    
+    const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabButtons.forEach(btn => {
+        btn.addEventListener('shown.bs.tab', function(e) {
+            if (tabsScroll && e.target) {
+                e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

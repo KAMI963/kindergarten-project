@@ -1,0 +1,636 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Производственный календарь{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Компактные стили */
+.calendar-card {
+    max-width: 420px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.calendar-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 12px 16px;
+    color: white;
+    text-align: center;
+}
+
+.month-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: scale(1.05);
+}
+
+.current-month {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.current-year {
+    font-size: 0.75rem;
+    opacity: 0.85;
+    cursor: pointer;
+}
+
+.weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: #f8f9fa;
+    padding: 8px 6px;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.weekend {
+    color: #dc3545;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 6px;
+    gap: 3px;
+    min-height: 280px;
+}
+
+.day-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.day-cell:hover {
+    transform: scale(1.02);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.holiday {
+    background: #ffe5e5;
+    color: #dc3545;
+}
+
+.weekend-day {
+    background: #fff3e0;
+    color: #fd7e14;
+}
+
+.workday {
+    background: #f8f9fa;
+    color: #495057;
+}
+
+.day-number {
+    font-weight: 600;
+}
+
+.holiday-name {
+    font-size: 0.5rem;
+    color: #dc3545;
+    margin-top: 1px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+    padding: 0 2px;
+}
+
+.calendar-footer {
+    padding: 10px 12px;
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 0.65rem;
+}
+
+.legend {
+    display: flex;
+    gap: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.legend-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+}
+
+.btn-generate {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.65rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-generate:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102,126,234,0.3);
+}
+
+/* Кастомное модальное окно (поверх всего) */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+.custom-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.custom-modal {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 380px;
+    position: relative;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.custom-modal-overlay.active .custom-modal {
+    transform: scale(1);
+}
+
+.custom-modal-header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.custom-modal-header h5 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.custom-modal-close {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.custom-modal-body {
+    padding: 20px;
+}
+
+.custom-modal-footer {
+    padding: 12px 16px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn-custom-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.btn-custom-secondary {
+    background: #6c757d;
+    border: none;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+/* Toast уведомления */
+.toast-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    z-index: 200000;
+    animation: slideInUp 0.3s ease;
+}
+
+.toast-notification.error {
+    background: #dc3545;
+}
+
+@keyframes slideInUp {
+    from { transform: translateY(100px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+}
+
+.loading::after {
+    content: '';
+    width: 30px;
+    height: 30px;
+    border: 2px solid #e9ecef;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+    .calendar-card {
+        max-width: 100%;
+        margin: 0;
+    }
+    .holiday-name {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    <div class="calendar-card">
+        <div class="calendar-header">
+            <div class="month-nav">
+                <button class="nav-btn" id="prevMonth">‹</button>
+                <div>
+                    <div class="current-month" id="currentMonth">{{ month_name }}</div>
+                    <div class="current-year" id="currentYearBtn">{{ current_year }}</div>
+                </div>
+                <button class="nav-btn" id="nextMonth">›</button>
+            </div>
+        </div>
+        
+        <div class="weekdays">
+            <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div>
+            <div class="weekend">Сб</div><div class="weekend">Вс</div>
+        </div>
+        
+        <div class="calendar-days" id="calendarDays">
+            <div class="loading"></div>
+        </div>
+        
+        <div class="calendar-footer">
+            <div class="legend">
+                <div class="legend-item"><div class="legend-color" style="background:#ffe5e5;"></div><span>Праздник</span></div>
+                <div class="legend-item"><div class="legend-color" style="background:#fff3e0;"></div><span>Выходной</span></div>
+                <div class="legend-item"><div class="legend-color" style="background:#f8f9fa;"></div><span>Рабочий</span></div>
+            </div>
+            <button class="btn-generate" id="generateYearBtn">↻ Перегенерировать</button>
+        </div>
+    </div>
+</div>
+
+<!-- Кастомное модальное окно для редактирования дня -->
+<div id="editModal" class="custom-modal-overlay">
+    <div class="custom-modal">
+        <div class="custom-modal-header">
+            <h5><i class="bi bi-calendar-edit me-1"></i>Редактирование дня</h5>
+            <button class="custom-modal-close" onclick="closeEditModal()">×</button>
+        </div>
+        <form id="editDayForm">
+            <div class="custom-modal-body">
+                {% csrf_token %}
+                <input type="hidden" id="edit-date" name="date">
+                <p class="small text-muted mb-3" id="edit-date-display"></p>
+                
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_holiday" id="edit-is-holiday">
+                        <label class="form-check-label" for="edit-is-holiday">
+                            📅 Выходной/праздник
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Название праздника</label>
+                    <input type="text" class="form-control form-control-sm" name="holiday_name" id="edit-holiday-name" placeholder="Название">
+                </div>
+                
+                <div class="mb-0">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_working_saturday" id="edit-is-working-saturday">
+                        <label class="form-check-label" for="edit-is-working-saturday">
+                            💼 Рабочая суббота
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="custom-modal-footer">
+                <button type="button" class="btn-custom-secondary" onclick="closeEditModal()">Отмена</button>
+                <button type="submit" class="btn-custom-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Кастомное модальное окно для выбора года -->
+<div id="yearModal" class="custom-modal-overlay">
+    <div class="custom-modal" style="max-width: 300px;">
+        <div class="custom-modal-header">
+            <h5><i class="bi bi-calendar-year me-1"></i>Выберите год</h5>
+            <button class="custom-modal-close" onclick="closeYearModal()">×</button>
+        </div>
+        <div class="custom-modal-body">
+            <div class="year-grid" id="yearGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentYear = {{ current_year }};
+let currentMonth = {{ current_month }};
+let isLoading = false;
+
+const monthNames = {1: 'Январь',2: 'Февраль',3: 'Март',4: 'Апрель',5: 'Май',6: 'Июнь',7: 'Июль',8: 'Август',9: 'Сентябрь',10: 'Октябрь',11: 'Ноябрь',12: 'Декабрь'};
+
+function getCookie(name) {
+    let value = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                value = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return value;
+}
+
+function showToast(message, isError = false) {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${isError ? 'error' : ''}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Открытие/закрытие модальных окон
+function openEditModal() {
+    document.getElementById('editModal').classList.add('active');
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+}
+
+function openYearModal() {
+    document.getElementById('yearModal').classList.add('active');
+}
+
+function closeYearModal() {
+    document.getElementById('yearModal').classList.remove('active');
+}
+
+// Закрытие по клику на фон
+document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+});
+document.getElementById('yearModal').addEventListener('click', function(e) {
+    if (e.target === this) closeYearModal();
+});
+
+async function loadCalendar() {
+    if (isLoading) return;
+    isLoading = true;
+    
+    const container = document.getElementById('calendarDays');
+    container.innerHTML = '<div class="loading"></div>';
+    
+    try {
+        const response = await fetch(`/attendance/api/calendar-data/?year=${currentYear}&month=${currentMonth}`);
+        const data = await response.json();
+        
+        if (data && data.days) {
+            document.getElementById('currentMonth').textContent = monthNames[currentMonth];
+            document.getElementById('currentYearBtn').textContent = currentYear;
+            
+            container.innerHTML = '';
+            
+            // Пустые ячейки
+            const firstDay = data.days[0]?.weekday || 0;
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                empty.style.aspectRatio = '1';
+                container.appendChild(empty);
+            }
+            
+            // Дни
+            data.days.forEach(day => {
+                const cell = document.createElement('div');
+                cell.className = `day-cell ${day.is_holiday ? 'holiday' : (day.is_weekend ? 'weekend-day' : 'workday')}`;
+                cell.innerHTML = `<div class="day-number">${day.day}</div>${day.holiday_name ? `<div class="holiday-name">${day.holiday_name.substring(0, 8)}</div>` : ''}`;
+                cell.onclick = () => openEditModalWithData(day);
+                container.appendChild(cell);
+            });
+        } else {
+            container.innerHTML = '<div class="text-center py-5">Нет данных</div>';
+        }
+    } catch (error) {
+        container.innerHTML = '<div class="text-center py-5">Ошибка загрузки</div>';
+    } finally {
+        isLoading = false;
+    }
+}
+
+function openEditModalWithData(day) {
+    document.getElementById('edit-date').value = day.date;
+    document.getElementById('edit-date-display').innerHTML = `📅 ${day.day} ${monthNames[currentMonth]} ${currentYear}`;
+    document.getElementById('edit-is-holiday').checked = day.is_holiday;
+    document.getElementById('edit-is-working-saturday').checked = day.is_working_saturday;
+    document.getElementById('edit-holiday-name').value = day.holiday_name || '';
+    openEditModal();
+}
+
+async function saveDay(date, isHoliday, isWorkingSaturday, holidayName) {
+    const formData = new FormData();
+    formData.append('date', date);
+    formData.append('is_holiday', isHoliday ? 'on' : '');
+    formData.append('is_working_saturday', isWorkingSaturday ? 'on' : '');
+    formData.append('holiday_name', holidayName);
+    
+    try {
+        const response = await fetch('/attendance/calendar/update/', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+        
+        if (response.ok) {
+            showToast('День обновлен!');
+            await loadCalendar();
+            return true;
+        } else {
+            showToast('Ошибка сохранения', true);
+            return false;
+        }
+    } catch (error) {
+        showToast('Ошибка сети', true);
+        return false;
+    }
+}
+
+// Обработчики
+document.getElementById('prevMonth').onclick = () => {
+    if (currentMonth === 1) { currentMonth = 12; currentYear--; }
+    else { currentMonth--; }
+    loadCalendar();
+};
+
+document.getElementById('nextMonth').onclick = () => {
+    if (currentMonth === 12) { currentMonth = 1; currentYear++; }
+    else { currentMonth++; }
+    loadCalendar();
+};
+
+document.getElementById('currentYearBtn').onclick = () => {
+    const grid = document.getElementById('yearGrid');
+    grid.innerHTML = '';
+    for (let year = 2020; year <= 2030; year++) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm btn-outline-primary';
+        btn.style.margin = '2px';
+        btn.style.padding = '6px';
+        btn.textContent = year;
+        btn.onclick = () => {
+            currentYear = year;
+            loadCalendar();
+            closeYearModal();
+        };
+        grid.appendChild(btn);
+    }
+    openYearModal();
+};
+
+document.getElementById('generateYearBtn').onclick = async () => {
+    if (confirm(`Перегенерировать календарь на ${currentYear} год?`)) {
+        try {
+            const response = await fetch('/attendance/api/generate-year/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify({ year: currentYear })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast(`Календарь на ${currentYear} год сгенерирован!`);
+                loadCalendar();
+            } else {
+                showToast('Ошибка генерации', true);
+            }
+        } catch (error) {
+            showToast('Ошибка сети', true);
+        }
+    }
+};
+
+document.getElementById('editDayForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = e.submitter;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Сохранение...';
+    
+    const date = document.getElementById('edit-date').value;
+    const isHoliday = document.getElementById('edit-is-holiday').checked;
+    const isWorkingSaturday = document.getElementById('edit-is-working-saturday').checked;
+    const holidayName = document.getElementById('edit-holiday-name').value;
+    
+    const success = await saveDay(date, isHoliday, isWorkingSaturday, holidayName);
+    
+    if (success) {
+        closeEditModal();
+    }
+    
+    btn.disabled = false;
+    btn.textContent = originalText;
+};
+
+// Инициализация
+loadCalendar();
+</script>
+{% endblock %}

@@ -1,0 +1,538 @@
+<!-- templates/contracts/create_from_application.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== MODERN VARIABLES ===== */
+    :root {
+        --primary: #5b21b6;
+        --primary-light: #7c3aed;
+        --primary-dark: #4c1d95;
+        --secondary: #0ea5e9;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --dark: #1e293b;
+        --gray: #64748b;
+        --light: #f1f5f9;
+        --white: #ffffff;
+        --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+        --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .page-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== HEADER ===== */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1.5rem 2rem;
+        background: var(--white);
+        border-radius: 24px;
+        box-shadow: var(--shadow-medium);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--bg-gradient);
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        background: var(--bg-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
+    .back-btn {
+        padding: 0.75rem 1.5rem;
+        background: var(--white);
+        border-radius: 16px;
+        color: var(--gray);
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+        border: 2px solid var(--light);
+    }
+
+    .back-btn:hover {
+        color: var(--primary);
+        border-color: var(--primary-light);
+        transform: translateX(-5px);
+    }
+
+    /* ===== APPLICATION INFO CARD ===== */
+    .info-card {
+        background: var(--white);
+        border-radius: 28px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-medium);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .info-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--bg-gradient);
+    }
+
+    .info-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--bg-gradient);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .info-header h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gray);
+    }
+
+    .info-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    /* ===== FORM CARD ===== */
+    .form-card {
+        background: var(--white);
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: var(--shadow-large);
+    }
+
+    .form-header {
+        background: var(--bg-gradient);
+        padding: 1.5rem 2rem;
+    }
+
+    .form-header h2 {
+        color: white;
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .form-body {
+        padding: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-label i {
+        color: var(--primary);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1.25rem;
+        border: 2px solid var(--light);
+        border-radius: 16px;
+        font-size: 0.95rem;
+        transition: var(--transition);
+        background: linear-gradient(145deg, #f8fafc 0%, #ffffff 100%);
+    }
+
+    .form-control:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--light);
+    }
+
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: 16px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: var(--transition);
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        border: none;
+    }
+
+    .btn-primary {
+        background: var(--bg-gradient);
+        color: white;
+        box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(124, 58, 237, 0.4);
+    }
+
+    .btn-secondary {
+        background: var(--light);
+        color: var(--gray);
+    }
+
+    .btn-secondary:hover {
+        background: var(--gray);
+        color: white;
+        transform: translateY(-3px);
+    }
+
+    /* ===== ALERTS ===== */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+        border-left: 4px solid var(--secondary);
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+        color: #92400e;
+        border-left: 4px solid var(--warning);
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+        border-left: 4px solid var(--success);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        .form-actions {
+            flex-direction: column;
+        }
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1>{{ title }}</h1>
+        <a href="{% url 'applications:application_detail' application.id %}" class="back-btn">
+            <i class="bi bi-arrow-left"></i>
+            Назад к заявлению
+        </a>
+    </div>
+
+    <!-- Application Info Card -->
+    <div class="info-card">
+        <div class="info-header">
+            <div class="info-icon">
+                <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <h3>Информация о заявлении №{{ application.application_number|truncatechars:8 }}</h3>
+        </div>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Ребенок</span>
+                <span class="info-value">{{ application.child_full_name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Дата рождения</span>
+                <span class="info-value">{{ application.child_birth_date|date:"d.m.Y" }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Родитель</span>
+                <span class="info-value">{{ application.parent.user.get_full_name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Приоритет</span>
+                <span class="info-value">
+                    <span class="priority-badge priority-{{ application.priority }}">
+                        {{ application.get_priority_display }}
+                    </span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+        <div class="form-header">
+            <h2>
+                <i class="bi bi-file-text"></i>
+                Заполните данные договора
+            </h2>
+        </div>
+        <div class="form-body">
+            {% if form.non_field_errors %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Основная информация -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-calendar-check"></i>
+                        {{ form.enrollment_date.label }}
+                    </label>
+                    {{ form.enrollment_date }}
+                    {% if form.enrollment_date.errors %}
+                    <div class="alert alert-warning" style="margin-top: 0.5rem; padding: 0.5rem;">
+                        {{ form.enrollment_date.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-people-fill"></i>
+                        {{ form.group_name.label }}
+                    </label>
+                    {{ form.group_name }}
+                    {% if form.group_name.errors %}
+                    <div class="alert alert-warning" style="margin-top: 0.5rem; padding: 0.5rem;">
+                        {{ form.group_name.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="bi bi-calendar"></i>
+                            {{ form.contract_start_date.label }}
+                        </label>
+                        {{ form.contract_start_date }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="bi bi-hourglass-split"></i>
+                            {{ form.study_period.label }}
+                        </label>
+                        {{ form.study_period }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-clock"></i>
+                        {{ form.stay_regimen.label }}
+                    </label>
+                    {{ form.stay_regimen }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-book"></i>
+                        {{ form.educational_program.label }}
+                    </label>
+                    {{ form.educational_program }}
+                </div>
+
+                <!-- Финансовая информация -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="bi bi-currency-ruble"></i>
+                            {{ form.parent_fee.label }}
+                        </label>
+                        {{ form.parent_fee }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="bi bi-credit-card"></i>
+                            {{ form.subscription_fee.label }}
+                        </label>
+                        {{ form.subscription_fee }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-cup-hot"></i>
+                        {{ form.food_fee.label }}
+                    </label>
+                    {{ form.food_fee }}
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill"></i>
+                    Родительская плата должна равняться сумме абонентской платы и платы за питание
+                </div>
+
+                <!-- Дополнительная информация -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-file-earmark-text"></i>
+                        {{ form.basis_documents.label }}
+                    </label>
+                    {{ form.basis_documents }}
+                </div>
+
+                <!-- Кнопки -->
+                <div class="form-actions">
+                    <a href="{% url 'applications:application_detail' application.id %}" class="btn btn-secondary">
+                        <i class="bi bi-x-lg"></i>
+                        Отмена
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i>
+                        Создать договор
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Автоматический расчет родительской платы
+    document.addEventListener('DOMContentLoaded', function() {
+        const subscriptionFee = document.getElementById('{{ form.subscription_fee.id_for_label }}');
+        const foodFee = document.getElementById('{{ form.food_fee.id_for_label }}');
+        const parentFee = document.getElementById('{{ form.parent_fee.id_for_label }}');
+        
+        if (subscriptionFee && foodFee && parentFee) {
+            function calculateTotal() {
+                const sub = parseFloat(subscriptionFee.value) || 0;
+                const food = parseFloat(foodFee.value) || 0;
+                parentFee.value = (sub + food).toFixed(2);
+            }
+            
+            subscriptionFee.addEventListener('input', calculateTotal);
+            foodFee.addEventListener('input', calculateTotal);
+        }
+    });
+</script>
+{% endblock %}

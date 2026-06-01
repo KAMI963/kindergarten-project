@@ -1,0 +1,271 @@
+{% extends 'payroll/base_payroll.html' %}
+{% load static %}
+
+{% block page_title %}Виды начислений{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item active">Виды начислений</li>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'payroll:accrual_type_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Новое начисление
+</a>
+{% endblock %}
+
+{% block page_content %}
+<!-- Статистика -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(52, 152, 219, 0.1);">
+                <i class="fas fa-calculator" style="color: #3498db;"></i>
+            </div>
+            <div class="stat-value">{{ accrual_types.count }}</div>
+            <div class="stat-label">Всего начислений</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(46, 204, 113, 0.1);">
+                <i class="fas fa-percent" style="color: #27ae60;"></i>
+            </div>
+            <div class="stat-value">{{ percent_count }}</div>
+            <div class="stat-label">Процентные</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(155, 89, 182, 0.1);">
+                <i class="fas fa-clock" style="color: #8e44ad;"></i>
+            </div>
+            <div class="stat-value">{{ seniority_count }}</div>
+            <div class="stat-label">Зависят от стажа</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(241, 196, 15, 0.1);">
+                <i class="fas fa-star" style="color: #f39c12;"></i>
+            </div>
+            <div class="stat-value">{{ qualification_count }}</div>
+            <div class="stat-label">Зависят от категории</div>
+        </div>
+    </div>
+</div>
+
+<!-- Таблица видов начислений -->
+<div class="payroll-card">
+    <div class="payroll-card-header">
+        <span><i class="fas fa-list me-2"></i>Список видов начислений</span>
+        <div>
+            <input type="text" class="form-control form-control-sm" placeholder="Поиск..." id="searchInput" style="width: 200px;">
+        </div>
+    </div>
+    <div class="payroll-card-body">
+        <table class="payroll-table" id="accrualsTable">
+            <thead>
+                <tr>
+                    <th>Код</th>
+                    <th>Название</th>
+                    <th>Категория</th>
+                    <th>Метод расчета</th>
+                    <th>Приоритет</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for accrual in accrual_types %}
+                <tr>
+                    <td><code>{{ accrual.code }}</code></td>
+                    <td>
+                        <strong>{{ accrual.name }}</strong>
+                        {% if accrual.is_seniority_based %}
+                        <span class="badge bg-info ms-2" title="Зависит от стажа">
+                            <i class="fas fa-chart-line"></i>
+                        </span>
+                        {% endif %}
+                        {% if accrual.is_qualification_based %}
+                        <span class="badge bg-warning ms-2" title="Зависит от категории">
+                            <i class="fas fa-star"></i>
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge" style="background: {% if accrual.category == 'base' %}#3498db{% elif accrual.category == 'allowance' %}#27ae60{% elif accrual.category == 'coefficient' %}#e74c3c{% else %}#95a5a6{% endif %}; color: white;">
+                            {{ accrual.get_category_display }}
+                        </span>
+                    </td>
+                    <td>{{ accrual.get_calculation_method_display }}</td>
+                    <td>
+                        <span class="badge bg-secondary">{{ accrual.priority }}</span>
+                    </td>
+                    <td>
+                        {% if accrual.is_active %}
+                        <span class="status-badge status-active">
+                            <i class="fas fa-check-circle me-1"></i>Активно
+                        </span>
+                        {% else %}
+                        <span class="status-badge status-inactive">
+                            <i class="fas fa-times-circle me-1"></i>Неактивно
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'payroll:accrual_type_edit' accrual.pk %}" class="action-btn btn-edit" title="Редактировать">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="#" class="action-btn btn-delete delete-confirm" title="Удалить" data-id="{{ accrual.pk }}">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <i class="fas fa-cogs fa-3x mb-3" style="color: #bdc3c7;"></i>
+                        <h5 style="color: #7f8c8d;">Нет видов начислений</h5>
+                        <p class="text-muted">Создайте первый вид начисления, нажав кнопку "Новое начисление"</p>
+                        <a href="{% url 'payroll:accrual_type_create' %}" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus me-2"></i>Создать начисление
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Детальная информация по категориям -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="payroll-card">
+            <div class="payroll-card-header">
+                <span><i class="fas fa-chart-pie me-2"></i>Распределение по категориям</span>
+            </div>
+            <div class="payroll-card-body">
+                                <canvas id="categoryChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="payroll-card">
+            <div class="payroll-card-header">
+                <span><i class="fas fa-chart-bar me-2"></i>Популярные методы расчета</span>
+            </div>
+            <div class="payroll-card-body">
+                <canvas id="methodChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Поиск по таблице
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let searchText = this.value.toLowerCase();
+        let rows = document.querySelectorAll('#accrualsTable tbody tr');
+        
+        rows.forEach(row => {
+            let text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchText) ? '' : 'none';
+        });
+    });
+
+    // Данные для графиков
+    const categoryData = {
+        labels: [
+            {% for category in category_stats %}
+                '{{ category.name }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for category in category_stats %}
+                    {{ category.count }},
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#3498db',
+                '#27ae60',
+                '#e74c3c',
+                '#f39c12',
+                '#9b59b6',
+                '#1abc9c'
+            ]
+        }]
+    };
+
+    const methodData = {
+        labels: [
+            {% for method in method_stats %}
+                '{{ method.name }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for method in method_stats %}
+                    {{ method.count }},
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#3498db',
+                '#27ae60',
+                '#e74c3c',
+                '#f39c12',
+                '#9b59b6'
+            ]
+        }]
+    };
+
+    // График категорий
+    if (document.getElementById('categoryChart')) {
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'doughnut',
+            data: categoryData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // График методов
+    if (document.getElementById('methodChart')) {
+        new Chart(document.getElementById('methodChart'), {
+            type: 'bar',
+            data: methodData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

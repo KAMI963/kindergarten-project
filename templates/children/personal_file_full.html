@@ -1,0 +1,1163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Личное дело: {{ child.full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Основные стили */
+    .pf-container {
+        padding: 12px 16px;
+        max-width: 100%;
+        background: #f8fafc;
+        min-height: calc(100vh - 100px);
+    }
+    
+    /* Шапка профиля */
+    .pf-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 20px 24px;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    
+    .pf-avatar {
+        width: 80px;
+        height: 80px;
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+    
+    .pf-avatar-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(255,255,255,0.9);
+    }
+    
+    .pf-avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: 600;
+        border: 3px solid rgba(255,255,255,0.9);
+    }
+    
+    .pf-info {
+        flex: 1;
+    }
+    
+    .pf-name {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .pf-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .pf-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 20px;
+        font-size: 12px;
+    }
+    
+    .pf-progress {
+        background: rgba(255,255,255,0.15);
+        border-radius: 10px;
+        padding: 8px 16px;
+        min-width: 150px;
+    }
+    
+    .pf-progress-label {
+        font-size: 11px;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+    }
+    
+    .pf-progress-bar {
+        height: 6px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .pf-progress-fill {
+        height: 100%;
+        background: white;
+        border-radius: 10px;
+        transition: width 0.3s;
+    }
+    
+    /* Вкладки */
+    .pf-tabs {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    
+    .pf-tabs-nav {
+        display: flex;
+        gap: 4px;
+        padding: 12px 16px 0;
+        border-bottom: 1px solid #e2e8f0;
+        overflow-x: auto;
+        background: white;
+    }
+    
+    .pf-tab-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: transparent;
+        border: none;
+        border-radius: 8px 8px 0 0;
+        font-size: 13px;
+        font-weight: 500;
+        color: #64748b;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s;
+    }
+    
+    .pf-tab-btn:hover {
+        color: #667eea;
+        background: #f8fafc;
+    }
+    
+    .pf-tab-btn.active {
+        color: #667eea;
+        background: #f0f4ff;
+        position: relative;
+    }
+    
+    .pf-tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #667eea;
+    }
+    
+    .pf-tab-content {
+        display: none;
+        padding: 20px;
+        animation: fadeIn 0.25s;
+    }
+    
+    .pf-tab-content.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Карточки */
+    .pf-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .pf-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1e293b;
+        padding-bottom: 10px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .pf-card-header i {
+        color: #667eea;
+    }
+    
+    /* Таблицы */
+    .pf-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .pf-table tr {
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .pf-table tr:last-child {
+        border-bottom: none;
+    }
+    
+    .pf-table td {
+        padding: 8px 0;
+    }
+    
+    .pf-label {
+        width: 35%;
+        font-weight: 500;
+        color: #64748b;
+        font-size: 12px;
+    }
+    
+    .pf-value {
+        color: #1e293b;
+        font-size: 13px;
+    }
+    
+    .pf-value.empty {
+        color: #94a3b8;
+        font-style: italic;
+    }
+    
+    /* Бейджи */
+    .pf-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    
+    .pf-status.active {
+        background: rgba(16,185,129,0.1);
+        color: #10b981;
+    }
+    
+    .pf-status.warning {
+        background: rgba(245,158,11,0.1);
+        color: #f59e0b;
+    }
+    
+    .pf-status.expired {
+        background: rgba(239,68,68,0.1);
+        color: #ef4444;
+    }
+    
+    /* Родители */
+    .pf-parent-card {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        border-left: 3px solid #667eea;
+    }
+    
+    .pf-parent-name {
+        font-weight: 600;
+        font-size: 14px;
+    }
+    
+    .pf-parent-contacts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 6px;
+        font-size: 12px;
+        color: #64748b;
+    }
+    
+    .pf-contact {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    /* Файлы */
+    .pf-file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: #f8fafc;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    
+    .pf-file-item:hover {
+        background: #f1f5f9;
+        transform: translateX(3px);
+    }
+    
+    .pf-file-info {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .pf-file-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+    
+    .pf-file-icon.pdf { background: #fee2e2; color: #dc2626; }
+    .pf-file-icon.image { background: #fef3c7; color: #d97706; }
+    .pf-file-icon.word { background: #dbeafe; color: #2563eb; }
+    .pf-file-icon.excel { background: #dcfce7; color: #16a34a; }
+    .pf-file-icon.default { background: #e2e8f0; color: #64748b; }
+    
+    .pf-file-details {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .pf-file-name {
+        font-weight: 600;
+        font-size: 14px;
+        color: #1e293b;
+        margin-bottom: 4px;
+    }
+    
+    .pf-file-meta {
+        font-size: 11px;
+        color: #94a3b8;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    .pf-file-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    
+    .pf-file-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    .pf-file-btn.view { color: #3b82f6; }
+    .pf-file-btn.download { color: #10b981; }
+    .pf-file-btn.delete { color: #ef4444; }
+    
+    .pf-file-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+    
+    /* Согласия */
+    .pf-consent-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .pf-consent-item:last-child {
+        border-bottom: none;
+    }
+    
+    /* Кнопки */
+    .pf-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        padding: 16px 20px;
+        background: white;
+        border-radius: 12px;
+        margin-top: 20px;
+    }
+    
+    .pf-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 13px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .pf-btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .pf-btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+    }
+    
+    .pf-btn-outline {
+        background: transparent;
+        color: #1e293b;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .pf-btn-outline:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+    
+    /* Модальное окно */
+    .pf-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.85);
+        z-index: 100000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        backdrop-filter: blur(8px);
+    }
+    
+    .pf-modal-content {
+        position: relative;
+        width: 100%;
+        max-width: 1000px;
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    }
+    
+    .pf-modal-header {
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .pf-modal-title {
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+    
+    .pf-modal-close {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: all 0.3s;
+    }
+    
+    .pf-modal-close:hover {
+        background: rgba(255,255,255,0.3);
+        transform: rotate(90deg);
+    }
+    
+    .pf-modal-body {
+        padding: 20px;
+        overflow-y: auto;
+        text-align: center;
+        background: #f8fafc;
+        min-height: 300px;
+        flex: 1;
+    }
+    
+    .pf-modal-footer {
+        padding: 12px 20px;
+        background: white;
+        border-top: 1px solid #edf2f7;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+    }
+    
+    .pf-alert {
+        background: #e0f2fe;
+        border-left: 4px solid #0284c7;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        font-size: 13px;
+    }
+    
+    .pf-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    
+    .pf-col-6 {
+        flex: 1;
+        min-width: 250px;
+    }
+    
+    @media (max-width: 768px) {
+        .pf-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        .pf-avatar {
+            margin: 0 auto;
+        }
+        .pf-col-6 {
+            min-width: 100%;
+        }
+        .pf-tabs-nav {
+            padding: 8px 12px 0;
+        }
+        .pf-tab-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pf-container">
+    <!-- Шапка профиля -->
+    <div class="pf-header">
+        <div class="pf-avatar" onclick="document.getElementById('photoInput')?.click()">
+            {% if child.photo and child.photo.url %}
+                <img src="{{ child.photo.url }}" alt="{{ child.full_name }}" class="pf-avatar-img">
+            {% else %}
+                <div class="pf-avatar-placeholder">{{ child.full_name|first|upper }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="pf-info">
+            <div class="pf-name">{{ child.full_name }}</div>
+            <div class="pf-badges">
+                <span class="pf-badge"><i class="fas fa-cake-candles"></i> {{ child.birth_date|date:"d.m.Y" }} ({{ child.get_age }} лет)</span>
+                {% if child.group %}
+                    <span class="pf-badge"><i class="fas fa-users"></i> {{ child.group.name }}</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if can_view_sensitive %}
+        <div class="pf-progress">
+            <div class="pf-progress-label">
+                <span>Заполнение</span>
+                <strong>{{ completion_percentage }}%</strong>
+            </div>
+            <div class="pf-progress-bar">
+                <div class="pf-progress-fill" style="width: {{ completion_percentage }}%;"></div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% if not can_view_sensitive %}
+    <div class="pf-alert">
+        <i class="fas fa-info-circle"></i> В режиме родительского доступа доступна только основная информация.
+    </div>
+    {% endif %}
+    
+    <!-- Форма загрузки фото -->
+    {% if can_view_sensitive %}
+    <form id="photoUploadForm" method="POST" enctype="multipart/form-data" action="{% url 'children:upload_child_photo' child.id %}" style="display:none">
+        {% csrf_token %}
+        <input type="file" id="photoInput" name="photo" accept="image/*">
+    </form>
+    {% endif %}
+    
+    <!-- Вкладки -->
+    <div class="pf-tabs">
+        <div class="pf-tabs-nav">
+            <button class="pf-tab-btn active" data-tab="basic"><i class="fas fa-user"></i> Основное</button>
+            <button class="pf-tab-btn" data-tab="parents"><i class="fas fa-users"></i> Родители</button>
+            {% if can_view_sensitive %}
+            <button class="pf-tab-btn" data-tab="documents"><i class="fas fa-file-alt"></i> Документы</button>
+            <button class="pf-tab-btn" data-tab="medical"><i class="fas fa-heartbeat"></i> Медицина</button>
+            <button class="pf-tab-btn" data-tab="consents"><i class="fas fa-file-signature"></i> Согласия</button>
+            <button class="pf-tab-btn" data-tab="applications"><i class="fas fa-clipboard-list"></i> Заявления</button>
+            <button class="pf-tab-btn" data-tab="orders"><i class="fas fa-gavel"></i> Приказы</button>
+            <button class="pf-tab-btn" data-tab="contracts"><i class="fas fa-file-contract"></i> Договоры</button>
+            {% endif %}
+        </div>
+        
+        <!-- Основное -->
+        <div class="pf-tab-content active" id="tab-basic">
+            <div class="pf-row">
+                <div class="pf-col-6">
+                    <div class="pf-card">
+                        <div class="pf-card-header">
+                            <span><i class="fas fa-info-circle"></i> Основные данные</span>
+                        </div>
+                        <table class="pf-table">
+                            <tr><td class="pf-label">ФИО</td><td class="pf-value">{{ child.full_name }}</td></tr>
+                            <tr><td class="pf-label">Дата рождения</td><td class="pf-value">{{ child.birth_date|date:"d.m.Y" }} ({{ child.get_age }} лет)</td></tr>
+                            <tr><td class="pf-label">Пол</td><td class="pf-value">{{ child.get_gender_display }}</td></tr>
+                            <tr><td class="pf-label">Группа</td><td class="pf-value">{{ child.group.name|default:"—" }}</td></tr>
+                            <tr><td class="pf-label">Зачисление</td><td class="pf-value">{{ child.enrollment_date|date:"d.m.Y"|default:"—" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="pf-col-6">
+                    <div class="pf-card">
+                        <div class="pf-card-header">
+                            <span><i class="fas fa-map-marker-alt"></i> Адреса</span>
+                        </div>
+                        <table class="pf-table">
+                            <tr><td class="pf-label">Регистрация</td><td class="pf-value">{{ child.registration_address|default:"—" }}</td></tr>
+                            <tr><td class="pf-label">Фактический</td><td class="pf-value">{{ child.actual_address|default:"—" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Родители -->
+        <div class="pf-tab-content" id="tab-parents">
+            {% for parent in parents %}
+            <div class="pf-parent-card">
+                <div style="display: flex; justify-content: space-between;">
+                    <span class="pf-parent-name">{{ parent.full_name }}</span>
+                    <span class="pf-status" style="background:#e0e7ff; color:#4338ca;">{{ parent.relation }}</span>
+                </div>
+                <div class="pf-parent-contacts">
+                    <span class="pf-contact"><i class="fas fa-phone"></i> {{ parent.phone|default:"—" }}</span>
+                    <span class="pf-contact"><i class="fas fa-envelope"></i> {{ parent.email|default:"—" }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                <i class="fas fa-users fa-3x mb-3"></i>
+                <p>Родители не указаны</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if can_view_sensitive %}
+        <!-- Документы -->
+        <div class="pf-tab-content" id="tab-documents">
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <span><i class="fas fa-file-contract"></i> Все документы</span>
+                    <button class="pf-btn pf-btn-primary" style="padding: 5px 12px; font-size: 12px;" onclick="showUploadDialog()">
+                        <i class="fas fa-upload"></i> Загрузить
+                    </button>
+                </div>
+                
+                {% for doc in documents %}
+                <div class="pf-file-item" onclick="openFileViewer('{{ doc.file }}', '{{ doc.name }}')">
+                    <div class="pf-file-info">
+                        <div class="pf-file-icon {{ doc.type|default:'default' }}">
+                            <i class="fas {% if doc.file and 'pdf' in doc.file|lower %}fa-file-pdf{% elif doc.file and 'doc' in doc.file|lower %}fa-file-word{% elif doc.file and 'jpg' in doc.file|lower or 'png' in doc.file|lower %}fa-file-image{% else %}fa-file-alt{% endif %}"></i>
+                        </div>
+                        <div class="pf-file-details">
+                            <div class="pf-file-name">{{ doc.name }}</div>
+                            <div class="pf-file-meta">
+                                {% if doc.number %}№ {{ doc.number }}{% endif %}
+                                {% if doc.expiry_date %}
+                                    <span>Действует до: {{ doc.expiry_date|date:"d.m.Y" }}</span>
+                                    {% if doc.days_left %}
+                                        <span class="pf-status {% if doc.days_left < 0 %}expired{% else %}warning{% endif %}">
+                                            {% if doc.days_left < 0 %}Просрочен{% else %}Истекает через {{ doc.days_left }} дн.{% endif %}
+                                        </span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pf-file-actions" onclick="event.stopPropagation()">
+                        <button class="pf-file-btn view" onclick="openFileViewer('{{ doc.file }}', '{{ doc.name }}')" title="Просмотреть"><i class="fas fa-eye"></i></button>
+                        <a href="{{ doc.file }}" download class="pf-file-btn download" title="Скачать" onclick="event.stopPropagation()"><i class="fas fa-download"></i></a>
+                        <button class="pf-file-btn delete" onclick="deleteDocument('{{ doc.type }}')" title="Удалить"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                    <i class="fas fa-folder-open fa-3x mb-3"></i>
+                    <p>Документы не загружены</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Медицина -->
+        <div class="pf-tab-content" id="tab-medical">
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <span><i class="fas fa-heartbeat"></i> Медицинская информация</span>
+                </div>
+                <table class="pf-table">
+                    <tr><td class="pf-label">Группа крови</td><td class="pf-value">{{ medical_info.blood_type|default:"—" }}</td></tr>
+                    <tr><td class="pf-label">Аллергии</td><td class="pf-value">{{ medical_info.allergies|default:"Нет" }}</td></tr>
+                    <tr><td class="pf-label">Хронические</td><td class="pf-value">{{ medical_info.chronic_diseases|default:"Нет" }}</td></tr>
+                    <tr><td class="pf-label">Группа здоровья</td><td class="pf-value">{{ medical_info.health_group|default:"—" }}</td></tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Согласия -->
+        <div class="pf-tab-content" id="tab-consents">
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <span><i class="fas fa-shield-check"></i> Согласия</span>
+                </div>
+                <div class="pf-consent-item">
+                    <span><i class="fas fa-database"></i> Обработка персональных данных</span>
+                    <span class="pf-status {% if consents.data_processing %}active{% else %}expired{% endif %}">
+                        {{ consents.data_processing|yesno:"Подписано,Не подписано" }}
+                    </span>
+                </div>
+                <div class="pf-consent-item">
+                    <span><i class="fas fa-camera"></i> Фото/видеосъемка</span>
+                    <span class="pf-status {% if consents.photo_video %}active{% else %}expired{% endif %}">
+                        {{ consents.photo_video|yesno:"Подписано,Не подписано" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Заявления -->
+        <div class="pf-tab-content" id="tab-applications">
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <span><i class="fas fa-clipboard-list"></i> Заявления</span>
+                </div>
+                {% for app in applications %}
+                <div class="pf-parent-card" style="cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between;" onclick="openFileViewer('{{ app.application_file.url }}', 'Заявление №{{ app.application_number }}')">
+                        <span class="pf-parent-name">Заявление №{{ app.application_number|default:"б/н" }}</span>
+                        <span class="pf-status {% if app.status == 'approved' %}active{% else %}warning{% endif %}">
+                            {{ app.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="pf-file-meta">Дата: {{ app.created_at|date:"d.m.Y" }}</div>
+                    {% if app.application_file %}
+                        <div class="pf-file-actions" style="margin-top: 8px; justify-content: flex-start;">
+                            <button class="pf-file-btn view" onclick="event.stopPropagation(); openFileViewer('{{ app.application_file.url }}', 'Заявление №{{ app.application_number }}')" title="Просмотреть"><i class="fas fa-eye"></i> Просмотреть</button>
+                        </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div style="text-align: center; padding: 30px; color: #94a3b8;">
+                    <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+                    <p>Заявлений нет</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Приказы -->
+        <div class="pf-tab-content" id="tab-orders">
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <span><i class="fas fa-gavel"></i> Приказы</span>
+                </div>
+                {% for order in orders %}
+                <div class="pf-file-item" onclick="openFileViewer('{{ order.document.url }}', 'Приказ №{{ order.order_number }}')">
+                    <div class="pf-file-info">
+                        <div class="pf-file-icon pdf"><i class="fas fa-file-pdf"></i></div>
+                        <div class="pf-file-details">
+                            <div class="pf-file-name">Приказ №{{ order.order_number }}</div>
+                            <div class="pf-file-meta">{{ order.order_date|date:"d.m.Y" }} - {{ order.get_order_type_display }}</div>
+                        </div>
+                    </div>
+                    <div class="pf-file-actions" onclick="event.stopPropagation()">
+                        <button class="pf-file-btn view" onclick="openFileViewer('{{ order.document.url }}', 'Приказ №{{ order.order_number }}')" title="Просмотреть"><i class="fas fa-eye"></i></button>
+                        <a href="{{ order.document.url }}" download class="pf-file-btn download" title="Скачать"><i class="fas fa-download"></i></a>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align: center; padding: 30px; color: #94a3b8;">
+                    <i class="fas fa-gavel fa-2x mb-2"></i>
+                    <p>Приказов нет</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Договоры -->
+        <div class="pf-tab-content" id="tab-contracts">
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <span><i class="fas fa-file-contract"></i> Договоры</span>
+                </div>
+                {% for contract in contracts %}
+                <div class="pf-file-item" onclick="openFileViewer('{{ contract.contract_file.url }}', 'Договор №{{ contract.contract_number }}')">
+                    <div class="pf-file-info">
+                        <div class="pf-file-icon pdf"><i class="fas fa-file-pdf"></i></div>
+                        <div class="pf-file-details">
+                            <div class="pf-file-name">Договор №{{ contract.contract_number }}</div>
+                            <div class="pf-file-meta">{{ contract.registration_date|date:"d.m.Y" }}</div>
+                        </div>
+                    </div>
+                    <div class="pf-file-actions" onclick="event.stopPropagation()">
+                        <button class="pf-file-btn view" onclick="openFileViewer('{{ contract.contract_file.url }}', 'Договор №{{ contract.contract_number }}')" title="Просмотреть"><i class="fas fa-eye"></i></button>
+                        <a href="{{ contract.contract_file.url }}" download class="pf-file-btn download" title="Скачать"><i class="fas fa-download"></i></a>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align: center; padding: 30px; color: #94a3b8;">
+                    <i class="fas fa-file-contract fa-2x mb-2"></i>
+                    <p>Договоров нет</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Панель действий -->
+    <div class="pf-actions">
+        <button class="pf-btn pf-btn-outline" onclick="window.print()"><i class="fas fa-print"></i> Печать</button>
+        <a href="{% if is_parent %}{% url 'dashboard' %}{% else %}{% url 'children:personal_files_list' %}{% endif %}" class="pf-btn pf-btn-outline">
+            <i class="fas fa-arrow-left"></i> Назад
+        </a>
+        {% if is_director %}
+        <a href="{% url 'children:personal_file_edit' child.id %}" class="pf-btn pf-btn-primary">
+            <i class="fas fa-edit"></i> Редактировать
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Модальное окно для просмотра файлов -->
+<div id="fileModal" class="pf-modal">
+    <div class="pf-modal-content">
+        <div class="pf-modal-header">
+            <span class="pf-modal-title" id="modalTitle">
+                <i class="fas fa-file-alt me-2"></i>Просмотр документа
+            </span>
+            <button class="pf-modal-close" onclick="closeFileModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="pf-modal-body" id="modalBody">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+                <p class="mt-3 text-muted">Загрузка документа...</p>
+            </div>
+        </div>
+        <div class="pf-modal-footer">
+            <a id="downloadFileLink" href="#" class="pf-btn pf-btn-primary" style="text-decoration: none;">
+                <i class="fas fa-download"></i> Скачать
+            </a>
+            <button onclick="closeFileModal()" class="pf-btn pf-btn-outline">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toastMsg" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; border-radius: 8px; padding: 12px 24px; z-index: 100001; display: none; align-items: center; gap: 10px;">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastText"></span>
+</div>
+
+<script>
+    // Функция для получения расширения файла
+    function getFileExt(url) {
+        if (!url) return '';
+        const clean = url.split('?')[0];
+        const parts = clean.split('.');
+        return parts.length > 1 ? parts.pop().toLowerCase() : '';
+    }
+    
+    // Проверка типа файла
+    function isImage(ext) {
+        return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
+    }
+    
+    function isPdf(ext) {
+        return ext === 'pdf';
+    }
+    
+    function isWord(ext) {
+        return ['doc', 'docx'].includes(ext);
+    }
+    
+    function isExcel(ext) {
+        return ['xls', 'xlsx', 'csv'].includes(ext);
+    }
+    
+    // Глобальные переменные
+    const modal = document.getElementById('fileModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const downloadLink = document.getElementById('downloadFileLink');
+    
+    // Основная функция открытия файла
+    window.openFileViewer = function(fileUrl, fileName) {
+        if (!fileUrl || fileUrl === 'None' || fileUrl === 'null' || fileUrl === '') {
+            showToast('Файл не найден', 'error');
+            return;
+        }
+        
+        // Формируем полный URL
+        let fullUrl = fileUrl;
+        if (fileUrl.startsWith('/')) {
+            fullUrl = window.location.origin + fileUrl;
+        }
+        
+        // Устанавливаем заголовок и ссылку скачивания
+        modalTitle.innerHTML = '<i class="fas fa-file-alt me-2"></i>' + (fileName || 'Просмотр документа');
+        downloadLink.href = fullUrl;
+        
+        // Показываем модальное окно
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        
+        // Определяем тип файла
+        const ext = getFileExt(fullUrl);
+        
+        // Показываем загрузку
+        modalBody.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Загрузка документа...</p></div>';
+        
+        if (isImage(ext)) {
+            // Изображения
+            const img = new Image();
+            img.onload = function() {
+                modalBody.innerHTML = '';
+                img.style.cssText = 'max-width:100%;max-height:55vh;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.1);';
+                modalBody.appendChild(img);
+            };
+            img.onerror = function() {
+                modalBody.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-image" style="font-size:3rem;color:#cbd5e0;"></i>
+                        <p class="mt-3" style="color:#6b7280;">Ошибка загрузки изображения</p>
+                        <a href="${fullUrl}" target="_blank" class="pf-btn pf-btn-primary mt-2">Открыть в новой вкладке</a>
+                    </div>
+                `;
+            };
+            img.src = fullUrl;
+        } 
+        else if (isPdf(ext)) {
+            // PDF файлы
+            modalBody.innerHTML = `<iframe src="${fullUrl}#toolbar=1&navpanes=1" style="width:100%;height:55vh;border:none;border-radius:12px;"></iframe>`;
+        }
+        else if (isWord(ext) || isExcel(ext)) {
+            // Word и Excel через Google Docs Viewer
+            const googleViewer = `https://docs.google.com/viewer?url=${encodeURIComponent(fullUrl)}&embedded=true`;
+            modalBody.innerHTML = `
+                <div class="alert alert-info mb-3" style="background:#dbeafe; border:1px solid #3b82f6; border-radius:8px; padding:10px; font-size:13px;">
+                    <i class="fas fa-info-circle"></i> Документ открыт в режиме предпросмотра
+                </div>
+                <iframe src="${googleViewer}" style="width:100%;height:50vh;border:none;border-radius:12px;"></iframe>
+            `;
+            
+            // Проверка загрузки через 2 секунды
+            setTimeout(() => {
+                const iframe = modalBody.querySelector('iframe');
+                if (iframe && iframe.contentWindow.document.body && iframe.contentWindow.document.body.innerHTML === '') {
+                    modalBody.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-word" style="font-size:3rem;color:#2b5797;"></i>
+                            <p class="mt-3" style="color:#6b7280;">Предпросмотр временно недоступен</p>
+                            <a href="${fullUrl}" download class="pf-btn pf-btn-primary mt-2">Скачать файл</a>
+                            <a href="${fullUrl}" target="_blank" class="pf-btn pf-btn-outline mt-2 ms-2">Открыть в новой вкладке</a>
+                        </div>
+                    `;
+                }
+            }, 2000);
+        }
+        else {
+            // Другие типы файлов
+            modalBody.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-file-alt" style="font-size:3rem;color:#cbd5e0;"></i>
+                    <p class="mt-3" style="color:#6b7280;">Предпросмотр недоступен</p>
+                    <p class="text-muted small">Тип файла: .${ext.toUpperCase() || 'Неизвестный'}</p>
+                    <div class="mt-4">
+                        <a href="${fullUrl}" download class="pf-btn pf-btn-primary me-2">Скачать файл</a>
+                        <a href="${fullUrl}" target="_blank" class="pf-btn pf-btn-outline">Открыть в новой вкладке</a>
+                    </div>
+                </div>
+            `;
+        }
+    };
+    
+    // Закрытие модального окна
+    window.closeFileModal = function() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        modalBody.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Загрузка документа...</p></div>';
+    };
+    
+    // Toast уведомление
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toastMsg');
+        const toastText = document.getElementById('toastText');
+        const icon = toast.querySelector('i');
+        
+        toastText.textContent = msg;
+        if (type === 'error') {
+            toast.style.background = '#dc2626';
+            icon.className = 'fas fa-exclamation-circle';
+        } else {
+            toast.style.background = '#1e293b';
+            icon.className = 'fas fa-check-circle';
+        }
+        toast.style.display = 'flex';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+    
+    // Переключение вкладок
+    document.querySelectorAll('.pf-tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.pf-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.pf-tab-content').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            const tabId = this.getAttribute('data-tab');
+            const tabContent = document.getElementById('tab-' + tabId);
+            if (tabContent) tabContent.classList.add('active');
+        });
+    });
+    
+    // Закрытие по Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+            closeFileModal();
+        }
+    });
+    
+    // Закрытие по клику на оверлей
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeFileModal();
+    });
+    
+    // Загрузка фото
+    {% if can_view_sensitive %}
+    document.getElementById('photoInput')?.addEventListener('change', function(e) {
+        if (!e.target.files.length) return;
+        const formData = new FormData();
+        formData.append('photo', e.target.files[0]);
+        
+        fetch(`/children/{{ child.id }}/upload-photo/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) location.reload();
+            else showToast(data.error || 'Ошибка загрузки', 'error');
+        })
+        .catch(() => showToast('Ошибка соединения', 'error'));
+    });
+    
+    function deleteDocument(docType) {
+        if (!confirm('Удалить этот документ?')) return;
+        
+        fetch(`/children/{{ child.id }}/delete-document/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ document_type: docType })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) location.reload();
+            else showToast(data.error || 'Ошибка удаления', 'error');
+        });
+    }
+    
+    function showUploadDialog() {
+        const docType = prompt('Тип документа:\n- birth_certificate\n- medical_card\n- vaccination_card\n- registration_certificate');
+        if (!docType) return;
+        
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
+        input.onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('document_type', docType);
+            formData.append('document_file', file);
+            
+            const expiryDate = prompt('Срок действия (ГГГГ-ММ-ДД) или оставьте пустым:');
+            if (expiryDate) formData.append('expiry_date', expiryDate);
+            
+            fetch(`/children/{{ child.id }}/upload-document/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) location.reload();
+                else showToast(data.error || 'Ошибка загрузки', 'error');
+            });
+        };
+        input.click();
+    }
+    {% endif %}
+    
+    function getCookie(name) {
+        let value = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    value = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return value;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,1532 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Заявление №{{ application.application_number|slice:"-8" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================
+       ПРЕФИКС app-detail для изоляции стилей
+       ============================================ */
+    
+    .app-detail {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    /* ШАПКА */
+    .app-detail .detail-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 14px;
+        padding: 16px 22px;
+        color: white;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .app-detail .detail-header::before {
+        content: '';
+        position: absolute;
+        top: -30px;
+        right: -30px;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.06);
+        border-radius: 50%;
+    }
+
+    .app-detail .detail-header::after {
+        content: '';
+        position: absolute;
+        bottom: -40px;
+        left: 30%;
+        width: 160px;
+        height: 160px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 50%;
+    }
+
+    .app-detail .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 10px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .app-detail .header-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin: 4px 0 0;
+        letter-spacing: -0.3px;
+    }
+
+    .app-detail .header-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .app-detail .header-date {
+        opacity: 0.85;
+        font-size: 0.72rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* БЕЙДЖИ СТАТУСОВ */
+    .app-detail .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        letter-spacing: 0.3px;
+    }
+    
+    .app-detail .status-pending { 
+        background: rgba(254,243,199,0.9); 
+        color: #92400e; 
+    }
+    
+    .app-detail .status-approved { 
+        background: rgba(209,250,229,0.9); 
+        color: #065f46; 
+    }
+    
+    .app-detail .status-rejected { 
+        background: rgba(254,226,226,0.9); 
+        color: #991b1b; 
+    }
+    
+    .app-detail .status-enrolled { 
+        background: rgba(219,234,254,0.9); 
+        color: #1e40af; 
+    }
+    
+    .app-detail .status-draft { 
+        background: rgba(255,255,255,0.2); 
+        color: white; 
+        border: 1px solid rgba(255,255,255,0.3); 
+    }
+    
+    .app-detail .status-queue { 
+        background: rgba(209,250,229,0.9); 
+        color: #065f46; 
+    }
+    
+    .app-detail .status-invited { 
+        background: rgba(219,234,254,0.9); 
+        color: #1e40af; 
+    }
+    
+    .app-detail .status-processing { 
+        background: rgba(254,243,199,0.9); 
+        color: #92400e; 
+    }
+    
+    .app-detail .status-needs_correction { 
+        background: rgba(254,226,226,0.9); 
+        color: #991b1b; 
+    }
+    
+    .app-detail .status-returned { 
+        background: rgba(254,226,226,0.9); 
+        color: #991b1b; 
+    }
+
+    .app-detail .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    
+    .app-detail .status-pending .status-dot { background: #f59e0b; }
+    .app-detail .status-approved .status-dot { background: #10b981; }
+    .app-detail .status-rejected .status-dot { background: #ef4444; }
+    .app-detail .status-enrolled .status-dot { background: #3b82f6; }
+    .app-detail .status-draft .status-dot { background: rgba(255,255,255,0.7); }
+    .app-detail .status-queue .status-dot { background: #10b981; }
+    .app-detail .status-invited .status-dot { background: #3b82f6; }
+    .app-detail .status-needs_correction .status-dot { background: #ef4444; }
+    .app-detail .status-returned .status-dot { background: #ef4444; }
+
+    /* КНОПКИ В ШАПКЕ */
+    .app-detail .header-actions {
+        display: flex;
+        gap: 6px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .app-detail .btn-header {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .app-detail .btn-header-send {
+        background: rgba(255,255,255,0.95);
+        color: #059669;
+    }
+    
+    .app-detail .btn-header-send:hover {
+        background: white;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    }
+
+    .app-detail .btn-header-edit {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .app-detail .btn-header-edit:hover {
+        background: rgba(255,255,255,0.3);
+    }
+
+    /* КНОПКА НАЗАД */
+    .app-detail .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: rgba(255,255,255,0.7);
+        text-decoration: none;
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+        transition: color 0.2s;
+    }
+    
+    .app-detail .back-btn:hover {
+        color: white;
+    }
+
+    /* СЕТКА */
+    .app-detail .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    /* КАРТОЧКИ */
+    .app-detail .d-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+        border: 1px solid #f0f2f6;
+        overflow: hidden;
+        transition: all 0.2s;
+    }
+
+    .app-detail .d-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+    }
+
+    .app-detail .d-card-head {
+        padding: 10px 16px;
+        border-bottom: 1px solid #f3f4f8;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .app-detail .d-card-head:hover {
+        background: #fafbfc;
+    }
+    
+    .app-detail .d-card-head .toggle-icon {
+        margin-left: auto;
+        font-size: 0.7rem;
+        color: #9ca3af;
+        transition: transform 0.2s;
+    }
+    
+    .app-detail .d-card-head.collapsed .toggle-icon {
+        transform: rotate(-90deg);
+    }
+    
+    .app-detail .d-card-body {
+        padding: 14px 16px;
+        transition: all 0.2s;
+    }
+    
+    .app-detail .d-card-body.collapsed {
+        display: none;
+    }
+
+    .app-detail .d-card-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .app-detail .d-card-icon.blue { background: #eff6ff; color: #3b82f6; }
+    .app-detail .d-card-icon.purple { background: #f3e8ff; color: #8b5cf6; }
+    .app-detail .d-card-icon.green { background: #ecfdf5; color: #10b981; }
+    .app-detail .d-card-icon.orange { background: #fff7ed; color: #f97316; }
+    .app-detail .d-card-icon.teal { background: #f0fdfa; color: #14b8a6; }
+    .app-detail .d-card-icon.red { background: #fef2f2; color: #ef4444; }
+    .app-detail .d-card-icon.indigo { background: #eef2ff; color: #6366f1; }
+
+    .app-detail .d-card-title {
+        font-weight: 700;
+        font-size: 0.82rem;
+        color: #1f2937;
+    }
+
+    /* ФОТО РЕБЕНКА */
+    .app-detail .child-photo-container {
+        text-align: center;
+        margin-bottom: 12px;
+    }
+    
+    .app-detail .child-photo {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #667eea;
+        margin-bottom: 8px;
+    }
+    
+    .app-detail .child-photo-placeholder {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+    }
+    
+    .app-detail .child-photo-placeholder i {
+        font-size: 2.5rem;
+        color: white;
+    }
+    
+    .app-detail .child-name {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #1f2937;
+        margin-bottom: 2px;
+    }
+
+    .app-detail .child-age {
+        font-size: 0.72rem;
+        color: #6b7280;
+    }
+
+    /* ОЧЕРЕДЬ */
+    .app-detail .queue-block {
+        text-align: center;
+        padding: 10px 0 4px;
+        border-top: 1px solid #f3f4f8;
+        margin-top: 10px;
+    }
+
+    .app-detail .queue-label {
+        font-size: 0.6rem;
+        color: #9ca3af;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+
+    .app-detail .queue-num {
+        font-size: 1.6rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        line-height: 1.2;
+    }
+
+    /* ИНФО-СТРОКИ */
+    .app-detail .info-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid #f7f8fa;
+    }
+
+    .app-detail .info-line:last-child { 
+        border-bottom: none; 
+    }
+
+    .app-detail .info-key {
+        color: #9ca3af;
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .app-detail .info-val {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.78rem;
+        text-align: right;
+        max-width: 60%;
+        word-break: break-word;
+    }
+
+    /* АДРЕСА */
+    .app-detail .addr-block {
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        border-left: 3px solid #e2e8f0;
+        transition: border-color 0.2s;
+    }
+
+    .app-detail .addr-block:hover {
+        border-left-color: #818cf8;
+    }
+
+    .app-detail .addr-label {
+        font-size: 0.6rem;
+        color: #9ca3af;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .app-detail .addr-val {
+        font-weight: 500;
+        color: #374151;
+        font-size: 0.78rem;
+        line-height: 1.4;
+    }
+
+    /* ЗАЯВИТЕЛИ */
+    .app-detail .parent-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        background: #f9fafb;
+        border-radius: 8px;
+        margin-bottom: 6px;
+        transition: background 0.15s;
+    }
+
+    .app-detail .parent-row:hover { 
+        background: #f3f4f6; 
+    }
+
+    .app-detail .parent-ava {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .app-detail .parent-ava.primary { 
+        background: linear-gradient(135deg, #10b981, #059669); 
+        color: white; 
+    }
+    
+    .app-detail .parent-ava.secondary { 
+        background: #dbeafe; 
+        color: #3b82f6; 
+    }
+
+    .app-detail .parent-name {
+        font-weight: 600;
+        font-size: 0.78rem;
+        color: #1f2937;
+    }
+
+    .app-detail .parent-phone {
+        font-size: 0.68rem;
+        color: #6b7280;
+    }
+    
+    .app-detail .parent-badge {
+        font-size: 0.6rem;
+        background: #e0f2fe;
+        color: #0284c7;
+        padding: 2px 8px;
+        border-radius: 20px;
+        margin-left: 8px;
+    }
+
+    /* ДОКУМЕНТЫ */
+    .app-detail .docs-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .app-detail .docs-grid-full {
+        grid-template-columns: 1fr;
+    }
+
+    .app-detail .doc-item {
+        background: #fafbfd;
+        border-radius: 8px;
+        padding: 10px;
+        border: 1.5px solid #eef0f4;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .app-detail .doc-item:hover {
+        border-color: #818cf8;
+        background: white;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(99,102,241,0.08);
+    }
+
+    .app-detail .doc-item.empty {
+        opacity: 0.5;
+        cursor: default;
+    }
+
+    .app-detail .doc-item.empty:hover {
+        border-color: #eef0f4;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .app-detail .doc-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        flex-shrink: 0;
+    }
+
+    .app-detail .doc-icon.ic-red { background: #fef2f2; color: #ef4444; }
+    .app-detail .doc-icon.ic-green { background: #ecfdf5; color: #10b981; }
+    .app-detail .doc-icon.ic-blue { background: #eff6ff; color: #3b82f6; }
+    .app-detail .doc-icon.ic-orange { background: #fff7ed; color: #f97316; }
+    .app-detail .doc-icon.ic-purple { background: #f3e8ff; color: #8b5cf6; }
+    .app-detail .doc-icon.ic-pink { background: #fce7f3; color: #ec4899; }
+    .app-detail .doc-icon.ic-cyan { background: #ecfeff; color: #06b6d4; }
+
+    .app-detail .doc-name {
+        font-weight: 600;
+        font-size: 0.72rem;
+        color: #1f2937;
+        line-height: 1.2;
+    }
+
+    .app-detail .doc-status {
+        font-size: 0.6rem;
+        margin-top: 1px;
+    }
+
+    .app-detail .doc-status.ok { color: #10b981; }
+    .app-detail .doc-status.no { color: #ef4444; }
+    .app-detail .doc-status.warning { color: #f59e0b; }
+
+    .app-detail .doc-eye {
+        margin-left: auto;
+        color: #c8cdd6;
+        font-size: 0.65rem;
+        flex-shrink: 0;
+    }
+    
+    /* Прогресс загрузки документов */
+    .app-detail .docs-progress {
+        background: #f0fdf4;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.7rem;
+    }
+    
+    .app-detail .progress-bar-custom {
+        flex: 1;
+        height: 6px;
+        background: #dcfce7;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .app-detail .progress-fill {
+        height: 100%;
+        background: #10b981;
+        border-radius: 3px;
+        transition: width 0.3s;
+    }
+
+    /* ЗАЯВЛЕНИЕ */
+    .app-detail .gen-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .app-detail .gen-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .app-detail .gen-title {
+        font-weight: 600;
+        font-size: 0.78rem;
+        color: #1f2937;
+    }
+
+    .app-detail .gen-sub {
+        font-size: 0.65rem;
+        color: #9ca3af;
+    }
+
+    .app-detail .gen-actions {
+        display: flex;
+        gap: 5px;
+    }
+
+    /* КНОПКИ ДЕЙСТВИЙ */
+    .app-detail .btn-act {
+        padding: 5px 12px;
+        border-radius: 18px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s;
+        text-decoration: none;
+        line-height: 1.4;
+    }
+
+    .app-detail .btn-primary-g {
+        background: linear-gradient(135deg, #6366f1, #7c3aed);
+        color: white;
+    }
+    
+    .app-detail .btn-primary-g:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(99,102,241,0.25);
+        color: white;
+    }
+
+    .app-detail .btn-success-g {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+    
+    .app-detail .btn-success-g:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(16,185,129,0.25);
+        color: white;
+    }
+
+    .app-detail .btn-danger-g {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+    
+    .app-detail .btn-danger-g:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(239,68,68,0.25);
+        color: white;
+    }
+
+    .app-detail .btn-muted {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+    
+    .app-detail .btn-muted:hover {
+        background: #e5e7eb;
+    }
+    
+    .app-detail .btn-warning-g {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+    }
+    
+    .app-detail .btn-warning-g:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(245,158,11,0.25);
+        color: white;
+    }
+
+    /* ПРОВЕРКА ДИРЕКТОРА */
+    .app-detail .review-card {
+        border: 1.5px solid #fbbf24;
+    }
+
+    .app-detail .review-head {
+        background: linear-gradient(135deg, #fef3c7, #fef9c3);
+        border-bottom: 1px solid #fde68a;
+    }
+
+    .app-detail .check-list {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .app-detail .check-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.7rem;
+        color: #374151;
+    }
+
+    .app-detail .check-ok { color: #10b981; }
+    .app-detail .check-no { color: #ef4444; }
+
+    .app-detail .review-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    
+    /* История статусов */
+    .app-detail .history-item {
+        display: flex;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid #f3f4f8;
+    }
+    
+    .app-detail .history-date {
+        font-size: 0.65rem;
+        color: #9ca3af;
+        min-width: 90px;
+    }
+    
+    .app-detail .history-status {
+        font-weight: 600;
+        font-size: 0.7rem;
+    }
+    
+    .app-detail .history-comment {
+        font-size: 0.68rem;
+        color: #6b7280;
+    }
+    
+    /* Информационная панель для родителя */
+    .app-detail .info-panel {
+        background: #eff6ff;
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 14px;
+        border-left: 4px solid #3b82f6;
+    }
+    
+    .app-detail .info-panel-title {
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: #1e40af;
+        margin-bottom: 6px;
+    }
+    
+    .app-detail .info-panel-text {
+        font-size: 0.7rem;
+        color: #1e3a8a;
+    }
+
+    /* АДАПТИВНОСТЬ */
+    @media (max-width: 992px) {
+        .app-detail .detail-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .app-detail .docs-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .app-detail .detail-header { 
+            padding: 12px 16px; 
+        }
+        
+        .app-detail .header-title { 
+            font-size: 1rem; 
+        }
+        
+        .app-detail .d-card-body { 
+            padding: 10px 12px; 
+        }
+        
+        .app-detail .review-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .app-detail .review-actions .btn-act {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-detail">
+
+    <!-- ШАПКА -->
+    <div class="detail-header">
+        <div>
+            <a href="{% url 'applications:applications_list' %}" class="back-btn">
+                <i class="fas fa-arrow-left"></i> К заявлениям
+            </a>
+        </div>
+        <div class="header-top">
+            <div>
+                <div class="header-meta">
+                    <span class="status-badge status-{{ application.status }}">
+                        <span class="status-dot"></span>
+                        {{ application.get_status_display_verbose }}
+                    </span>
+                    <span class="header-date">
+                        <i class="fas fa-calendar-alt"></i>
+                        {{ application.created_at|date:"d.m.Y" }}
+                    </span>
+                </div>
+                <div class="header-title">
+                    №{{ application.application_number|slice:"-8" }} · {{ application.child_full_name }}
+                </div>
+            </div>
+            {% if application.status == 'draft' and user.role == 'parent' %}
+            <div class="header-actions">
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" name="submit_for_review" class="btn-header btn-header-send">
+                        <i class="fas fa-paper-plane"></i> Отправить на проверку
+                    </button>
+                </form>
+                <a href="{% url 'applications:application_edit' application.id %}" class="btn-header btn-header-edit">
+                    <i class="fas fa-edit"></i> Редактировать
+                </a>
+            </div>
+            {% elif application.status == 'returned' and user.role == 'parent' %}
+            <div class="header-actions">
+                <a href="{% url 'applications:application_edit' application.id %}" class="btn-header btn-header-edit">
+                    <i class="fas fa-pen"></i> Исправить замечания
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Информационная панель для родителя -->
+    {% if user.role == 'parent' and application.status != 'draft' %}
+    <div class="info-panel">
+        <div class="info-panel-title">
+            <i class="fas fa-info-circle"></i> Статус заявления
+        </div>
+        <div class="info-panel-text">
+            {% if application.status == 'pending' %}
+                Ваше заявление находится на рассмотрении у заведующей. Обычно проверка занимает до 5 рабочих дней.
+            {% elif application.status == 'queue' %}
+                Ваш ребёнок находится в очереди. При появлении свободных мест вас пригласят в детский сад.
+            {% elif application.status == 'invited' %}
+                <i class="fas fa-envelope"></i> Получено приглашение в детский сад! Свяжитесь с заведующей для оформления.
+            {% elif application.status == 'rejected' %}
+                В заявлении отказано. Причина: {{ application.rejection_reason|default:"не указана" }}
+            {% elif application.status == 'returned' %}
+                Требуется исправить замечания: {{ application.returned_reason|default:"проверьте заполненные данные" }}
+            {% elif application.status == 'enrolled' %}
+                <i class="fas fa-graduation-cap"></i> Поздравляем! Ребёнок зачислен в детский сад.
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- СЕТКА -->
+    <div class="detail-grid">
+
+        <!-- ЛЕВАЯ КОЛОНКА -->
+        <div>
+            <!-- Ребёнок с ФОТО -->
+            <div class="d-card" style="margin-bottom:14px;">
+                <div class="d-card-head" onclick="toggleCard(this)">
+                    <div class="d-card-icon purple"><i class="fas fa-child"></i></div>
+                    <span class="d-card-title">Ребёнок</span>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="d-card-body">
+                    <!-- ФОТО РЕБЕНКА -->
+                    <div class="child-photo-container">
+                        {% if application.child_photo %}
+                            <img src="{{ application.child_photo.url }}" alt="Фото {{ application.child_full_name }}" class="child-photo">
+                        {% else %}
+                            <div class="child-photo-placeholder">
+                                <i class="fas fa-child"></i>
+                            </div>
+                        {% endif %}
+                        <div class="child-name">{{ application.child_full_name }}</div>
+                        <div class="child-age">
+                            {{ application.child_birth_date|date:"d.m.Y" }} · {{ application.get_age }} лет
+                        </div>
+                    </div>
+                    
+                    <div class="info-line">
+                        <span class="info-key">СНИЛС</span>
+                        <span class="info-val">{{ application.child_snils|default:"Не указан" }}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-key">Группа крови</span>
+                        <span class="info-val">{{ application.blood_type|default:"Не указана" }}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-key">Прививки</span>
+                        <span class="info-val">{% if application.has_vaccinations %}Есть{% else %}Нет{% endif %}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-key">Приоритет</span>
+                        <span class="info-val">{{ application.get_priority_text }}</span>
+                    </div>
+                    {% if application.status == 'queue' or application.status == 'invited' or application.status == 'processing' %}
+                    <div class="queue-block">
+                        <div class="queue-label">Позиция в очереди</div>
+                        <div class="queue-num">{{ application.display_queue_position|default:"—" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Заявители -->
+            <div class="d-card" style="margin-bottom:14px;">
+                <div class="d-card-head" onclick="toggleCard(this)">
+                    <div class="d-card-icon teal"><i class="fas fa-users"></i></div>
+                    <span class="d-card-title">Заявители</span>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="d-card-body">
+                    <!-- Заявитель 1 (основной) -->
+                    <div class="parent-row">
+                        <div class="parent-ava primary">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div style="flex:1;">
+                            <div class="parent-name">
+                                {{ application.applicant1_full_name|default:"Не указано" }}
+                                {% if application.applicant1_is_primary %}
+                                <span class="parent-badge">Основной</span>
+                                {% endif %}
+                            </div>
+                            {% if application.applicant1_phone %}
+                            <div class="parent-phone"><i class="fas fa-phone"></i> {{ application.applicant1_phone }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Заявитель 2 (при наличии) -->
+                    {% if application.applicant2_full_name %}
+                    <div class="parent-row">
+                        <div class="parent-ava secondary">
+                            <i class="fas fa-user-friends"></i>
+                        </div>
+                        <div style="flex:1;">
+                            <div class="parent-name">{{ application.applicant2_full_name }}</div>
+                            {% if application.applicant2_phone %}
+                            <div class="parent-phone"><i class="fas fa-phone"></i> {{ application.applicant2_phone }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="info-line" style="margin-top:8px;">
+                        <span class="info-key">Контактный телефон</span>
+                        <span class="info-val">{{ application.phone_number|default:"—" }}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-key">Электронная почта</span>
+                        <span class="info-val">{{ application.email|default:"—" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- История очереди -->
+            {% if application.queue_history_list %}
+            <div class="d-card">
+                <div class="d-card-head" onclick="toggleCard(this)">
+                    <div class="d-card-icon indigo"><i class="fas fa-chart-line"></i></div>
+                    <span class="d-card-title">История движения в очереди</span>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="d-card-body">
+                    {% for history in application.queue_history_list %}
+                    <div class="history-item">
+                        <div class="history-date">{{ history.changed_at|date:"d.m.Y H:i" }}</div>
+                        <div>
+                            <div class="history-status">
+                                {% if history.old_position %}
+                                    Позиция: {{ history.old_position }} → {{ history.new_position }}
+                                {% else %}
+                                    Позиция: {{ history.new_position }}
+                                {% endif %}
+                            </div>
+                            {% if history.reason %}
+                            <div class="history-comment">{{ history.reason }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ПРАВАЯ КОЛОНКА -->
+        <div>
+            <!-- Адреса -->
+            <div class="d-card" style="margin-bottom:14px;">
+                <div class="d-card-head" onclick="toggleCard(this)">
+                    <div class="d-card-icon blue"><i class="fas fa-map-marker-alt"></i></div>
+                    <span class="d-card-title">Адреса проживания</span>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="d-card-body">
+                    <div class="addr-block">
+                        <div class="addr-label">📍 Адрес регистрации</div>
+                        <div class="addr-val">{{ application.registration_address }}</div>
+                    </div>
+                    <div class="addr-block">
+                        <div class="addr-label">🏠 Фактический адрес</div>
+                        <div class="addr-val">{{ application.actual_address|default:application.registration_address }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Документы -->
+            <div class="d-card" style="margin-bottom:14px;">
+                <div class="d-card-head" onclick="toggleCard(this)">
+                    <div class="d-card-icon orange"><i class="fas fa-folder-open"></i></div>
+                    <span class="d-card-title">Документы</span>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="d-card-body">
+                    <div class="docs-progress">
+                        <i class="fas fa-cloud-upload-alt" style="color:#10b981;"></i>
+                        <span>Загружено документов:</span>
+                        <strong id="docsCount">0</strong><span>/8</span>
+                        <div class="progress-bar-custom">
+                            <div class="progress-fill" id="docsProgressFill" style="width:0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="docs-grid" id="docsGrid">
+                        <!-- Свидетельство о рождении -->
+                        <div class="doc-item {% if not application.birth_certificate_file %}empty{% endif %}" 
+                             data-has="{{ application.birth_certificate_file|yesno:'true,false' }}"
+                             {% if application.birth_certificate_file %}onclick="showDocument('{{ application.birth_certificate_file.url }}', 'Свидетельство о рождении')"{% endif %}>
+                            <div class="doc-icon ic-red"><i class="fas fa-file-pdf"></i></div>
+                            <div>
+                                <div class="doc-name">Свидетельство о рождении</div>
+                                <div class="doc-status {% if application.birth_certificate_file %}ok{% else %}no{% endif %}">
+                                    {% if application.birth_certificate_file %}
+                                        <i class="fas fa-check-circle"></i> Загружено
+                                    {% else %}
+                                        <i class="fas fa-times-circle"></i> Не загружено
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if application.birth_certificate_file %}
+                            <i class="fas fa-eye doc-eye"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- Паспорт заявителя -->
+                        <div class="doc-item {% if not application.applicant1_passport_file %}empty{% endif %}"
+                             data-has="{{ application.applicant1_passport_file|yesno:'true,false' }}"
+                             {% if application.applicant1_passport_file %}onclick="showDocument('{{ application.applicant1_passport_file.url }}', 'Паспорт заявителя')"{% endif %}>
+                            <div class="doc-icon ic-blue"><i class="fas fa-id-card"></i></div>
+                            <div>
+                                <div class="doc-name">Паспорт заявителя</div>
+                                <div class="doc-status {% if application.applicant1_passport_file %}ok{% else %}no{% endif %}">
+                                    {% if application.applicant1_passport_file %}
+                                        <i class="fas fa-check-circle"></i> Загружено
+                                    {% else %}
+                                        <i class="fas fa-times-circle"></i> Не загружено
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if application.applicant1_passport_file %}
+                            <i class="fas fa-eye doc-eye"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- Медицинская карта -->
+                        <div class="doc-item {% if not application.medical_card %}empty{% endif %}"
+                             data-has="{{ application.medical_card|yesno:'true,false' }}"
+                             {% if application.medical_card %}onclick="showDocument('{{ application.medical_card.url }}', 'Медицинская карта')"{% endif %}>
+                            <div class="doc-icon ic-green"><i class="fas fa-notes-medical"></i></div>
+                            <div>
+                                <div class="doc-name">Медицинская карта</div>
+                                <div class="doc-status {% if application.medical_card %}ok{% else %}no{% endif %}">
+                                    {% if application.medical_card %}
+                                        <i class="fas fa-check-circle"></i> Загружено
+                                    {% else %}
+                                        <i class="fas fa-times-circle"></i> Не загружено
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if application.medical_card %}
+                            <i class="fas fa-eye doc-eye"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- Подтверждение места жительства -->
+                        <div class="doc-item {% if not application.residence_certificate %}empty{% endif %}"
+                             data-has="{{ application.residence_certificate|yesno:'true,false' }}"
+                             {% if application.residence_certificate %}onclick="showDocument('{{ application.residence_certificate.url }}', 'Подтверждение места жительства')"{% endif %}>
+                            <div class="doc-icon ic-cyan"><i class="fas fa-home"></i></div>
+                            <div>
+                                <div class="doc-name">Подтверждение места жительства</div>
+                                <div class="doc-status {% if application.residence_certificate %}ok{% else %}no{% endif %}">
+                                    {% if application.residence_certificate %}
+                                        <i class="fas fa-check-circle"></i> Загружено
+                                    {% else %}
+                                        <i class="fas fa-times-circle"></i> Не загружено
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if application.residence_certificate %}
+                            <i class="fas fa-eye doc-eye"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- Сертификат о прививках -->
+                        <div class="doc-item {% if not application.vaccination_certificate_file %}empty{% endif %}"
+                             data-has="{{ application.vaccination_certificate_file|yesno:'true,false' }}"
+                             {% if application.vaccination_certificate_file %}onclick="showDocument('{{ application.vaccination_certificate_file.url }}', 'Сертификат о прививках')"{% endif %}>
+                            <div class="doc-icon ic-orange"><i class="fas fa-syringe"></i></div>
+                            <div>
+                                <div class="doc-name">Сертификат о прививках (№063/у)</div>
+                                <div class="doc-status {% if application.vaccination_certificate_file %}ok{% else %}no{% endif %}">
+                                    {% if application.vaccination_certificate_file %}
+                                        <i class="fas fa-check-circle"></i> Загружено
+                                    {% else %}
+                                        <i class="fas fa-times-circle"></i> Не загружено
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if application.vaccination_certificate_file %}
+                            <i class="fas fa-eye doc-eye"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- СНИЛС ребёнка -->
+                        <div class="doc-item {% if not application.child_snils_file %}empty{% endif %}"
+                             data-has="{{ application.child_snils_file|yesno:'true,false' }}"
+                             {% if application.child_snils_file %}onclick="showDocument('{{ application.child_snils_file.url }}', 'СНИЛС ребёнка')"{% endif %}>
+                            <div class="doc-icon ic-purple"><i class="fas fa-id-card"></i></div>
+                            <div>
+                                <div class="doc-name">СНИЛС ребёнка</div>
+                                <div class="doc-status {% if application.child_snils_file %}ok{% else %}no{% endif %}">
+                                    {% if application.child_snils_file %}
+                                        <i class="fas fa-check-circle"></i> Загружено
+                                    {% else %}
+                                        <i class="fas fa-times-circle"></i> Не загружено
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if application.child_snils_file %}
+                            <i class="fas fa-eye doc-eye"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- Полис -->
+                        <div class="doc-item {% if not application.insurance_policy_file %}empty{% endif %}"
+                             data-has="{{ application.insurance_policy_file|yesno:'true,false' }}"
+                             {% if application.insurance_policy_file %}onclick="showDocument('{{ application.insurance_policy_file.url }}', 'Полис медицинского страхования')"{% endif %}>
+                            <div class="doc-icon ic-cyan"><i class="fas fa-file-medical"></i></div>
+                            <div>
+                                <div class="doc-name">Полис медицинского страхования</div>
+                                <div class="doc-status {% if application.insurance_policy_file %}ok{% else %}no{% endif %}">
+                                    {% if application.insurance_policy_file %}
+                                        <i class="fas fa-check-circle"></i> Загружено
+                                    {% else %}
+                                        <i class="fas fa-times-circle"></i> Не загружено
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if application.insurance_policy_file %}
+                            <i class="fas fa-eye doc-eye"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- Медицинская карта А4 -->
+                        <div class="doc-item {% if not application.medical_card_a4_file %}empty{% endif %}"
+                             data-has="{{ application.medical_card_a4_file|yesno:'true,false' }}"
+                             {% if application.medical_card_a4_file %}onclick="showDocument('{{ application.medical_card_a4_file.url }}', 'Медицинская карта (форма 026/у) А4')"{% endif %}>
+                            <div class="doc-icon ic-pink"><i class="fas fa-file-alt"></i></div>
+                            <div>
+                                <div class="doc-name">Мед. карта (форма 026/у) А4</div>
+                                <div class="doc-status {% if application.medical_card_a4_file %}ok{% else %}no{% endif %}">
+                                    {% if application.medical_card_a4_file %}
+                                        <i class="fas fa-check-circle"></i> Загружено
+                                    {% else %}
+                                        <i class="fas fa-times-circle"></i> Не загружено
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if application.medical_card_a4_file %}
+                            <i class="fas fa-eye doc-eye"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if user.role == 'parent' and application.status == 'draft' %}
+                    <div style="margin-top:10px; text-align:center;">
+                        <a href="{% url 'applications:application_edit' application.id %}" class="btn-act btn-primary-g" style="padding:6px 16px;">
+                            <i class="fas fa-upload"></i> Загрузить документы
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+           <!-- Сформированное заявление -->
+<div class="d-card" style="margin-bottom:14px;">
+    <div class="d-card-head" onclick="toggleCard(this)">
+        <div class="d-card-icon green"><i class="fas fa-file-word"></i></div>
+        <span class="d-card-title">Заявление о приёме</span>
+        <i class="fas fa-chevron-down toggle-icon"></i>
+    </div>
+    <div class="d-card-body">
+        <div class="gen-row">
+            <div class="gen-info">
+                <!-- ИКОНКА/ФОТО ЗАЯВЛЕНИЯ -->
+                <div style="width:80px; height:110px; border-radius:12px; flex-shrink:0; overflow:hidden; border:1px solid #e2e8f0; background:#f8fafc; display:flex; align-items:center; justify-content:center;">
+                    {% load static %}
+                    <img src="{% static 'documents/Заявление.jpeg' %}" alt="Заявление" 
+                         style="width:100%; height:100%; object-fit:cover;">
+                </div>
+                <div>
+                    {% if application.generated_application %}
+                    <div class="gen-title" style="color:#059669;">
+                        <i class="fas fa-check-circle"></i> Документ сформирован
+                    </div>
+                    <div class="gen-sub">Дата: {{ application.updated_at|date:"d.m.Y H:i" }}</div>
+                    {% else %}
+                    <div class="gen-title">Заявление не сформировано</div>
+                    <div class="gen-sub">Нажмите кнопку для создания документа</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="gen-actions">
+                {% if application.generated_application %}
+                <a href="{% url 'applications:download_application' application.id %}" class="btn-act btn-success-g">
+                    <i class="fas fa-download"></i> Скачать
+                </a>
+                {% endif %}
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" name="generate_document" class="btn-act btn-primary-g">
+                        <i class="fas fa-sync-alt"></i> {% if application.generated_application %}Переформировать{% else %}Сформировать{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+            <!-- БЛОК ЗАВЕДУЮЩЕЙ -->
+            {% if user.role == 'director' %}
+                <div class="d-card review-card" style="margin-bottom:14px;">
+                    <div class="d-card-head review-head" onclick="toggleCard(this)">
+                        <div class="d-card-icon"><i class="fas fa-clipboard-list"></i></div>
+                        <span class="d-card-title">Проверка заявления</span>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="d-card-body">
+                        <div style="margin-bottom:12px;">
+                            <div class="check-list" style="margin-bottom:12px;">
+                                <span class="check-item">
+                                    <i class="fas {% if application.birth_certificate_file %}fa-check-circle check-ok{% else %}fa-times-circle check-no{% endif %}"></i>
+                                    Свид-во о рожд.
+                                </span>
+                                <span class="check-item">
+                                    <i class="fas {% if application.applicant1_passport_file %}fa-check-circle check-ok{% else %}fa-times-circle check-no{% endif %}"></i>
+                                    Паспорт
+                                </span>
+                                <span class="check-item">
+                                    <i class="fas {% if application.medical_card %}fa-check-circle check-ok{% else %}fa-times-circle check-no{% endif %}"></i>
+                                    Медкарта
+                                </span>
+                                <span class="check-item">
+                                    <i class="fas {% if application.residence_certificate %}fa-check-circle check-ok{% else %}fa-times-circle check-no{% endif %}"></i>
+                                    Справка
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-line" style="margin-bottom:8px;">
+                            <span class="info-key">Сформированное заявление</span>
+                            <span class="info-val">
+                                {% if application.generated_application %}
+                                    <i class="fas fa-check-circle" style="color:#10b981;"></i> Готово
+                                {% else %}
+                                    <i class="fas fa-times-circle" style="color:#ef4444;"></i> Не сформировано
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        {% if application.status == 'pending' %}
+                        <div class="review-actions" style="margin-top:12px;">
+                            <a href="{% url 'applications:application_approve' application.id %}" class="btn-act btn-success-g">
+                                <i class="fas fa-check"></i> Одобрить
+                            </a>
+                            <a href="{% url 'applications:return_revision' application.id %}" class="btn-act btn-warning-g">
+                                <i class="fas fa-edit"></i> На доработку
+                            </a>
+                            <a href="{% url 'applications:application_reject' application.id %}" class="btn-act btn-danger-g">
+                                <i class="fas fa-times"></i> Отказать
+                            </a>
+                        </div>
+                        {% elif application.status == 'returned' %}
+                        <div class="addr-block" style="background:#fffbeb;margin-top:8px;">
+                            <div class="addr-label">📝 Замечания родителю</div>
+                            <div class="addr-val">{{ application.returned_reason|default:"Не указаны" }}</div>
+                        </div>
+                        <div class="review-actions" style="margin-top:12px;">
+                            <a href="{% url 'applications:application_approve' application.id %}" class="btn-act btn-success-g">
+                                <i class="fas fa-check"></i> Одобрить после исправлений
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Управление очередью -->
+                {% if application.status == 'queue' %}
+                <div class="d-card">
+                    <div class="d-card-head" onclick="toggleCard(this)">
+                        <div class="d-card-icon indigo"><i class="fas fa-users"></i></div>
+                        <span class="d-card-title">Управление очередью</span>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="d-card-body">
+                        <div class="info-line">
+                            <span class="info-key">Позиция в очереди</span>
+                            <span class="info-val">{{ application.display_queue_position|default:"—" }}</span>
+                        </div>
+                        <div class="review-actions" style="margin-top:12px;">
+                            <a href="{% url 'applications:invite_enrollment' application.id %}" class="btn-act btn-primary-g">
+                                <i class="fas fa-envelope"></i> Пригласить на оформление
+                            </a>
+                            <a href="{% url 'applications:change_position' application.id %}" class="btn-act btn-warning-g">
+                                <i class="fas fa-arrows-alt"></i> Изменить позицию
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}
+            
+            <!-- Заметка для родителя при необходимости корректировки -->
+            {% if application.status == 'returned' and user.role == 'parent' %}
+            <div class="d-card review-card" style="margin-bottom:14px;">
+                <div class="d-card-head review-head" onclick="toggleCard(this)">
+                    <div class="d-card-icon"><i class="fas fa-edit"></i></div>
+                    <span class="d-card-title">Требуется корректировка</span>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="d-card-body">
+                    <div style="background:#fef3c7; border-radius:10px; padding:10px; margin-bottom:12px;">
+                        <i class="fas fa-info-circle" style="color:#d97706;"></i>
+                        Ваше заявление требует корректировки. Пожалуйста, внесите необходимые изменения.
+                    </div>
+                    {% if application.returned_reason %}
+                    <div class="addr-block" style="background:#fffbeb;margin-bottom:12px;">
+                        <div class="addr-label">📝 Замечания заведующей</div>
+                        <div class="addr-val">{{ application.returned_reason }}</div>
+                    </div>
+                    {% endif %}
+                    <a href="{% url 'applications:application_edit' application.id %}" class="btn-act btn-warning-g">
+                        <i class="fas fa-pen"></i> Внести изменения
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block modals %}
+<!-- Модальное окно документа -->
+<div id="documentModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);">
+    <div style="position:relative;width:100%;max-width:900px;background:white;border-radius:20px;overflow:hidden;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 25px 50px rgba(0,0,0,0.3);">
+        <div style="padding:16px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;display:flex;justify-content:space-between;align-items:center;">
+            <span id="modalTitle" style="font-weight:700;font-size:0.9rem;">
+                <i class="fas fa-file-alt me-2"></i>Просмотр документа
+            </span>
+            <button onclick="closeDocumentModal()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2rem;transition:all 0.3s;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="modalBody" style="padding:20px;overflow-y:auto;text-align:center;background:#f8fafc;min-height:300px;flex:1;">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+                <p class="mt-3 text-muted">Загрузка документа...</p>
+            </div>
+        </div>
+        <div style="padding:12px 20px;background:white;border-top:1px solid #edf2f7;display:flex;justify-content:center;gap:12px;">
+            <a id="downloadLink" href="#" class="btn-act btn-success-g" style="padding:8px 20px;text-decoration:none;">
+                <i class="fas fa-download"></i> Скачать
+            </a>
+            <button onclick="closeDocumentModal()" class="btn-act btn-muted" style="padding:8px 20px;">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCard(element) {
+    const head = element;
+    const body = head.nextElementSibling;
+    head.classList.toggle('collapsed');
+    if (body) {
+        body.classList.toggle('collapsed');
+    }
+}
+
+(function() {
+    function getFileExtension(url) {
+        return (url.split('?')[0].split('.').pop() || '').toLowerCase();
+    }
+    
+    function isImage(ext) {
+        return ['jpg','jpeg','png','gif','webp','bmp','svg'].indexOf(ext) !== -1;
+    }
+
+    var modal = document.getElementById('documentModal');
+    var mTitle = document.getElementById('modalTitle');
+    var mBody = document.getElementById('modalBody');
+    var mLink = document.getElementById('downloadLink');
+
+    window.showDocument = function(url, name) {
+        if (!url || url === 'None') {
+            alert('Документ не загружен');
+            return;
+        }
+        
+        var fullUrl = url.startsWith('/') ? window.location.origin + url : url;
+        mTitle.innerHTML = '<i class="fas fa-file-alt me-2"></i>' + (name || 'Документ');
+        mLink.href = fullUrl;
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        mBody.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Загрузка документа...</p></div>';
+
+        var ext = getFileExtension(fullUrl);
+        
+        if (isImage(ext)) {
+            var img = new Image();
+            img.onload = function() {
+                mBody.innerHTML = '';
+                img.style.cssText = 'max-width:100%;max-height:55vh;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.1);';
+                mBody.appendChild(img);
+            };
+            img.onerror = function() {
+                mBody.innerHTML = '<div class="text-center py-5"><i class="fas fa-image" style="font-size:3rem;color:#cbd5e0;"></i><p class="mt-3" style="color:#6b7280;">Ошибка загрузки изображения</p><a href="'+fullUrl+'" target="_blank" class="btn-act btn-primary-g mt-2">Открыть в новой вкладке</a></div>';
+            };
+            img.src = fullUrl;
+        } else if (ext === 'pdf') {
+            mBody.innerHTML = '<iframe src="'+fullUrl+'" style="width:100%;height:55vh;border:none;border-radius:12px;"></iframe>';
+        } else {
+            mBody.innerHTML = '<div class="text-center py-5"><i class="fas fa-file-alt" style="font-size:3rem;color:#cbd5e0;"></i><p class="mt-3" style="color:#6b7280;">Предпросмотр недоступен для этого типа файлов</p><a href="'+fullUrl+'" download class="btn-act btn-success-g mt-2">Скачать файл</a></div>';
+        }
+    };
+
+    window.closeDocumentModal = function() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        mBody.innerHTML = '';
+    };
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeDocumentModal();
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.style.display === 'flex') closeDocumentModal();
+    });
+})();
+
+document.addEventListener('DOMContentLoaded', function() {
+    const docItems = document.querySelectorAll('#docsGrid .doc-item');
+    let loadedCount = 0;
+    docItems.forEach(item => {
+        if (item.getAttribute('data-has') === 'true') {
+            loadedCount++;
+        }
+    });
+    const docsCountSpan = document.getElementById('docsCount');
+    const progressFill = document.getElementById('docsProgressFill');
+    if (docsCountSpan) {
+        docsCountSpan.textContent = loadedCount;
+    }
+    if (progressFill) {
+        const percent = (loadedCount / 8) * 100;
+        progressFill.style.width = percent + '%';
+    }
+});
+
+if (window.innerWidth < 768) {
+    document.addEventListener('DOMContentLoaded', function() {
+        const cardBodies = document.querySelectorAll('.app-detail .d-card-body');
+        const cardHeads = document.querySelectorAll('.app-detail .d-card-head');
+        cardBodies.forEach(body => {
+            body.classList.add('collapsed');
+        });
+        cardHeads.forEach(head => {
+            head.classList.add('collapsed');
+        });
+    });
+}
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,553 @@
+<!-- templates/personalfiles/child_detail.html (исправленная версия с AJAX) -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Личное дело - {{ child.full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --purple-primary: #6B21A5;
+        --purple-light: #9333EA;
+        --purple-dark: #4C1D95;
+        --purple-soft: #F3E8FF;
+        --purple-gradient: linear-gradient(135deg, #6B21A5 0%, #9333EA 100%);
+    }
+    
+    body {
+        background: linear-gradient(135deg, #F8F0FF 0%, #E9D5FF 100%);
+        min-height: 100vh;
+    }
+    
+    .back-button {
+        background: white;
+        border: none;
+        border-radius: 30px;
+        padding: 0.5rem 1.25rem;
+        color: var(--purple-primary);
+        font-weight: 500;
+        transition: all 0.3s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .back-button:hover {
+        background: var(--purple-primary);
+        color: white;
+        transform: translateX(-5px);
+    }
+    
+    .child-header {
+        background: var(--purple-gradient);
+        border-radius: 30px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(107, 33, 165, 0.3);
+    }
+    
+    .child-avatar {
+        width: 100px;
+        height: 100px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+    }
+    
+    .completion-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .completion-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .completion-inner {
+        width: 100px;
+        height: 100px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--purple-primary);
+    }
+    
+    .document-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s;
+        border-left: 4px solid var(--purple-primary);
+        cursor: pointer;
+    }
+    
+    .document-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .document-card.complete {
+        border-left-color: #10b981;
+        background: #f0fdf4;
+    }
+    
+    .document-card.missing {
+        border-left-color: #ef4444;
+        background: #fef2f2;
+    }
+    
+    .document-card.expired {
+        border-left-color: #dc2626;
+        background: #fee2e2;
+    }
+    
+    .document-card.pending {
+        border-left-color: #f59e0b;
+        background: #fffbeb;
+    }
+    
+    .document-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--purple-soft);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: var(--purple-primary);
+    }
+    
+    .document-actions {
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .document-card:hover .document-actions {
+        opacity: 1;
+    }
+    
+    .btn-icon {
+        padding: 0.25rem;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-icon:hover {
+        transform: scale(1.1);
+    }
+    
+    .stats-mini {
+        background: white;
+        border-radius: 15px;
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .stats-mini-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--purple-primary);
+    }
+    
+    .expiry-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 20px;
+        display: inline-block;
+    }
+    
+    .expiry-badge.expired {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .expiry-badge.near {
+        background: #fed7aa;
+        color: #f59e0b;
+    }
+    
+    .modal-content {
+        border-radius: 20px;
+    }
+    
+    .modal-header {
+        background: var(--purple-gradient);
+        color: white;
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .btn-close-white {
+        filter: brightness(0) invert(1);
+    }
+    
+    .btn-purple {
+        background: var(--purple-primary);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 0.5rem 1.25rem;
+        transition: all 0.3s;
+    }
+    
+    .btn-purple:hover {
+        background: var(--purple-dark);
+        color: white;
+    }
+    
+    .loading-small {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(107, 33, 165, 0.2);
+        border-top: 2px solid var(--purple-primary);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .toast-notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        z-index: 10000;
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+    }
+    
+    .toast-notification.show {
+        transform: translateX(0);
+    }
+    
+    .toast-notification.success {
+        border-left: 4px solid #10b981;
+    }
+    
+    .toast-notification.error {
+        border-left: 4px solid #ef4444;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Кнопка назад -->
+    <div class="mb-4">
+        <a href="{% url 'personalfiles:list' %}" class="back-button">
+            <i class="fas fa-arrow-left me-2"></i>Назад к списку
+        </a>
+    </div>
+    
+    <!-- Шапка ребенка (загружается через AJAX) -->
+    <div id="child-header-container">
+        {% include 'personalfiles/partials/child_header.html' %}
+    </div>
+    
+    <!-- Статистика заполнения -->
+    <div id="completion-container">
+        {% include 'personalfiles/partials/completion_stats.html' %}
+    </div>
+    
+    <!-- Список документов -->
+    <h4 class="mb-3">
+        <i class="fas fa-file-alt me-2" style="color: var(--purple-primary);"></i>
+        Документы личного дела
+    </h4>
+    
+    <div id="documents-container" class="row">
+        {% include 'personalfiles/partials/documents_list.html' %}
+    </div>
+</div>
+
+<!-- Модальное окно для просмотра документа -->
+<div class="modal fade" id="documentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle"></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="text-center py-4">
+                    <div class="loading-small"></div>
+                    <p class="mt-2">Загрузка...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для загрузки документа -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalTitle"></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div id="uploadFormContent"></div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-purple w-100">
+                            <i class="fas fa-upload me-2"></i>Загрузить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast уведомления -->
+<div id="toast-notification" class="toast-notification"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const childId = {{ child.id }};
+    
+    // Показать уведомление
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast-notification');
+        toast.textContent = message;
+        toast.className = `toast-notification ${type} show`;
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+    
+    // Обновить весь раздел документов
+    async function refreshDocuments() {
+        try {
+            const response = await fetch(`/personalfiles/api/documents/${childId}/`);
+            const html = await response.text();
+            document.getElementById('documents-container').innerHTML = html;
+            attachDocumentEvents();
+        } catch (error) {
+            console.error('Ошибка обновления документов:', error);
+        }
+    }
+    
+    // Обновить статистику
+    async function refreshStats() {
+        try {
+            const response = await fetch(`/personalfiles/api/completion/${childId}/`);
+            const html = await response.text();
+            document.getElementById('completion-container').innerHTML = html;
+        } catch (error) {
+            console.error('Ошибка обновления статистики:', error);
+        }
+    }
+    
+    // Обновить шапку
+    async function refreshHeader() {
+        try {
+            const response = await fetch(`/personalfiles/api/header/${childId}/`);
+            const html = await response.text();
+            document.getElementById('child-header-container').innerHTML = html;
+        } catch (error) {
+            console.error('Ошибка обновления шапки:', error);
+        }
+    }
+    
+    // Открыть модальное окно с документом
+    async function openDocumentModal(docType, docLabel) {
+        const modal = new bootstrap.Modal(document.getElementById('documentModal'));
+        document.getElementById('modalTitle').innerHTML = `<i class="fas fa-file-alt me-2"></i>${docLabel}`;
+        document.getElementById('modalBody').innerHTML = '<div class="text-center py-4"><div class="loading-small"></div><p class="mt-2">Загрузка...</p></div>';
+        modal.show();
+        
+        try {
+            const response = await fetch(`/personalfiles/api/document/${childId}/${docType}/`);
+            const data = await response.json();
+            
+            let html = `
+                <div class="mb-3">
+                    <strong>Статус:</strong>
+                    <span class="badge ${data.status === 'complete' ? 'bg-success' : 'bg-danger'} ms-2">${data.status_text}</span>
+                </div>
+                ${data.document_number ? `<div class="mb-3"><strong>Номер:</strong><br>${data.document_number}</div>` : ''}
+                ${data.issued_by ? `<div class="mb-3"><strong>Кем выдан:</strong><br>${data.issued_by}</div>` : ''}
+                ${data.issue_date ? `<div class="mb-3"><strong>Дата выдачи:</strong><br>${data.issue_date}</div>` : ''}
+                ${data.expiry_date ? `<div class="mb-3"><strong>Срок действия:</strong><br>${data.expiry_date}</div>` : ''}
+                ${data.notes ? `<div class="mb-3"><strong>Примечания:</strong><br>${data.notes}</div>` : ''}
+            `;
+            
+            if (data.file_url) {
+                html += `
+                    <div class="mt-3">
+                        <a href="${data.file_url}" class="btn btn-purple w-100" download>
+                            <i class="fas fa-download me-2"></i>Скачать документ
+                        </a>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('modalBody').innerHTML = html;
+        } catch (error) {
+            document.getElementById('modalBody').innerHTML = '<div class="alert alert-danger">Ошибка загрузки документа</div>';
+        }
+    }
+    
+    // Открыть модальное окно загрузки
+    async function uploadDocument(docType, docLabel) {
+        const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+        document.getElementById('uploadModalTitle').innerHTML = `Загрузка: ${docLabel}`;
+        
+        try {
+            const response = await fetch(`/personalfiles/api/upload-form/${childId}/${docType}/`);
+            const html = await response.text();
+            document.getElementById('uploadFormContent').innerHTML = html;
+            document.getElementById('uploadForm').action = `/personalfiles/child/${childId}/upload/${docType}/`;
+            modal.show();
+        } catch (error) {
+            showToast('Ошибка загрузки формы', 'error');
+        }
+    }
+    
+    // Удалить документ
+    async function deleteDocument(docType, docLabel) {
+        if (confirm(`Вы уверены, что хотите удалить документ "${docLabel}"?`)) {
+            try {
+                const response = await fetch(`/personalfiles/child/${childId}/delete/${docType}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrf-token]').content,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Документ успешно удален', 'success');
+                    await refreshDocuments();
+                    await refreshStats();
+                    await refreshHeader();
+                } else {
+                    showToast(data.error || 'Ошибка при удалении', 'error');
+                }
+            } catch (error) {
+                showToast('Ошибка при удалении документа', 'error');
+            }
+        }
+    }
+    
+    // Привязать события к документам
+    function attachDocumentEvents() {
+        document.querySelectorAll('.document-card').forEach(card => {
+            card.removeEventListener('click', card._clickHandler);
+            card._clickHandler = () => {
+                const docType = card.dataset.docType;
+                const docLabel = card.dataset.docLabel;
+                if (docType && docLabel) {
+                    openDocumentModal(docType, docLabel);
+                }
+            };
+            card.addEventListener('click', card._clickHandler);
+        });
+        
+        document.querySelectorAll('.upload-btn').forEach(btn => {
+            btn.removeEventListener('click', btn._uploadHandler);
+            btn._uploadHandler = (e) => {
+                e.stopPropagation();
+                const docType = btn.dataset.docType;
+                const docLabel = btn.dataset.docLabel;
+                uploadDocument(docType, docLabel);
+            };
+            btn.addEventListener('click', btn._uploadHandler);
+        });
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.removeEventListener('click', btn._deleteHandler);
+            btn._deleteHandler = (e) => {
+                e.stopPropagation();
+                const docType = btn.dataset.docType;
+                const docLabel = btn.dataset.docLabel;
+                deleteDocument(docType, docLabel);
+            };
+            btn.addEventListener('click', btn._deleteHandler);
+        });
+    }
+    
+    // Обработка отправки формы загрузки
+    document.getElementById('uploadForm')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<div class="loading-small"></div> Загрузка...';
+        submitBtn.disabled = true;
+        
+        try {
+            const response = await fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('Документ успешно загружен', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+                await refreshDocuments();
+                await refreshStats();
+                await refreshHeader();
+            } else {
+                showToast(data.error || 'Ошибка при загрузке', 'error');
+            }
+        } catch (error) {
+            showToast('Ошибка при загрузке документа', 'error');
+        } finally {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    });
+    
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', function() {
+        attachDocumentEvents();
+    });
+</script>
+{% endblock %}

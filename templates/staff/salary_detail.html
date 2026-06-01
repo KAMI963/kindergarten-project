@@ -1,0 +1,219 @@
+<!-- staff/templates/staff/salary_detail.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Расчет зарплаты{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-file-invoice"></i>
+                    Расчет заработной платы
+                </h1>
+                <p class="mb-0 opacity-75">{{ calculation.employee.full_name }} - {{ calculation.month_name }} {{ calculation.year }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                {% if calculation.status == 'calculated' %}
+                <a href="{% url 'staff:salary_approve' calculation.id %}" class="btn btn-success staff-btn me-2">
+                    <i class="fas fa-check"></i> Утвердить
+                </a>
+                {% endif %}
+                <a href="{% url 'staff:generate_payslip' calculation.id %}" class="btn btn-light staff-btn">
+                    <i class="fas fa-file-pdf"></i> Расчетный листок
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row">
+        <!-- Информация о сотруднике -->
+        <div class="col-md-4">
+            <div class="staff-card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-user"></i>
+                    Сотрудник
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        {% if calculation.employee.photo %}
+                        <img src="{{ calculation.employee.photo.url }}" class="rounded-circle" width="100" height="100" style="object-fit: cover;">
+                        {% else %}
+                        <div class="staff-avatar staff-avatar-lg mx-auto">
+                            {{ calculation.employee.full_name|first|upper }}
+                        </div>
+                        {% endif %}
+                        <h5 class="mt-3">{{ calculation.employee.full_name }}</h5>
+                        <p class="text-muted">{{ calculation.employee.position }}</p>
+                    </div>
+                    
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Табельный номер:</th>
+                            <td>{{ calculation.employee.id|stringformat:"04d" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Дата приема:</th>
+                            <td>{{ calculation.employee.hire_date|date:"d.m.Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Статус расчета:</th>
+                            <td>
+                                {% if calculation.status == 'calculated' %}
+                                <span class="badge bg-warning">Рассчитано</span>
+                                {% elif calculation.status == 'approved' %}
+                                <span class="badge bg-success">Утверждено</span>
+                                {% elif calculation.status == 'paid' %}
+                                <span class="badge bg-info">Выплачено</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Расчет -->
+        <div class="col-md-8">
+            <div class="staff-card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-calculator"></i>
+                    Детализация расчета
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-600 mb-3">Базовая информация</h6>
+                            <table class="table">
+                                <tr>
+                                    <th>Оклад/ставка:</th>
+                                    <td class="text-end">{{ calculation.base_salary|floatformat:2 }} ₽</td>
+                                </tr>
+                                <tr>
+                                    <th>Норма часов:</th>
+                                    <td class="text-end">{{ calculation.standard_hours|floatformat:1 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Отработано часов:</th>
+                                    <td class="text-end">{{ calculation.worked_hours|floatformat:1 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Часовая ставка:</th>
+                                    <td class="text-end">{{ hourly_rate|floatformat:2 }} ₽</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="fw-600 mb-3">Начисления</h6>
+                            <table class="table">
+                                <tr>
+                                    <th>Базовая часть:</th>
+                                    <td class="text-end">{{ calculation.base_salary|floatformat:2 }} ₽</td>
+                                </tr>
+                                <tr>
+                                    <th>Сверхурочные:</th>
+                                    <td class="text-end">{{ calculation.overtime_payment|floatformat:2 }} ₽</td>
+                                </tr>
+                                <tr>
+                                    <th>Ночные:</th>
+                                    <td class="text-end">{{ calculation.night_payment|floatformat:2 }} ₽</td>
+                                </tr>
+                                <tr>
+                                    <th>Праздничные:</th>
+                                    <td class="text-end">{{ calculation.holiday_payment|floatformat:2 }} ₽</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-600 mb-3">Удержания</h6>
+                            <table class="table">
+                                <tr>
+                                    <th>НДФЛ (13%):</th>
+                                    <td class="text-end text-danger">{{ calculation.income_tax|floatformat:2 }} ₽</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="fw-600">ИТОГО К ВЫПЛАТЕ</h6>
+                                    <p class="display-6 text-success">{{ calculation.total_payable|floatformat:2 }} ₽</p>
+                                    <p class="text-muted small">Начислено: {{ calculation.total_accrued|floatformat:2 }} ₽</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Информация о выплате -->
+            {% if calculation.status == 'paid' and calculation.payment_date %}
+            <div class="staff-card">
+                <div class="card-header bg-success text-white">
+                    <i class="fas fa-check-circle"></i>
+                    Информация о выплате
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Дата выплаты:</strong> {{ calculation.payment_date|date:"d.m.Y" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Способ выплаты:</strong> Банковский перевод</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Компоненты расчета -->
+    {% if components %}
+    <div class="staff-card mt-4">
+        <div class="card-header">
+            <i class="fas fa-list"></i>
+            Детализация по компонентам
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="staff-table table">
+                    <thead>
+                        <tr>
+                            <th>Тип</th>
+                            <th>Название</th>
+                            <th>Сумма</th>
+                            <th>Описание</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for component in components %}
+                        <tr>
+                            <td>
+                                <span class="badge {% if component.component_type == 'base' %}bg-primary{% elif component.component_type == 'bonus' %}bg-success{% elif component.component_type == 'deduction' %}bg-danger{% else %}bg-info{% endif %}">
+                                    {{ component.get_component_type_display }}
+                                </span>
+                            </td>
+                            <td>{{ component.name }}</td>
+                            <td class="fw-bold">{{ component.amount|floatformat:2 }} ₽</td>
+                            <td>{{ component.description|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

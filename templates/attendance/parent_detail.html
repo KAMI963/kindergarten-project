@@ -1,0 +1,884 @@
+<!-- attendance/parent_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Посещаемость {{ child.full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --primary-dark: #3a56d4;
+        --success: #4cc9f0;
+        --warning: #f72585;
+        --info: #4895ef;
+        --danger: #e74a3b;
+        --dark: #1e1b4b;
+        --light: #f8f9fa;
+        --gray: #6c757d;
+        --border: #e9ecef;
+        --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
+        --shadow-md: 0 8px 24px rgba(0,0,0,0.1);
+        --shadow-lg: 0 16px 32px rgba(0,0,0,0.15);
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        --gradient-success: linear-gradient(135deg, #4cc9f0 0%, #4895ef 100%);
+        --gradient-warning: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+        --gradient-info: linear-gradient(135deg, #4895ef 0%, #4cc9f0 100%);
+    }
+
+    body {
+        background: #f5f7fb;
+    }
+
+    /* Заголовок */
+    .detail-header {
+        background: white;
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .detail-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(67, 97, 238, 0.03) 0%, transparent 70%);
+        animation: rotate 30s linear infinite;
+    }
+
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Аватар */
+    .child-avatar-large {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: var(--gradient-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        overflow: hidden;
+        border: 4px solid white;
+    }
+
+    .child-avatar-large::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+        animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .child-avatar-large i {
+        color: white;
+        font-size: 3.5rem;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+    }
+
+    /* Карточки статистики */
+    .stat-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: 1px solid var(--border);
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--gradient-primary);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .stat-card:hover::after {
+        transform: scaleX(1);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        background: var(--gradient-primary);
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin-bottom: 0.25rem;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--gray);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Календарь */
+    .calendar-card {
+        background: white;
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+        margin-top: 1rem;
+    }
+
+    .calendar-weekday {
+        text-align: center;
+        font-weight: 700;
+        color: var(--dark);
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+
+    .calendar-weekday.weekend {
+        color: var(--warning);
+    }
+
+    .calendar-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        position: relative;
+        background: var(--light);
+        border: 2px solid transparent;
+    }
+
+    .calendar-day:hover {
+        transform: scale(1.05);
+        box-shadow: var(--shadow-md);
+        z-index: 10;
+    }
+
+    .calendar-day.today {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+
+    .calendar-day.weekend {
+        opacity: 0.6;
+    }
+
+    /* Статусы дней */
+    .day-present {
+        background: linear-gradient(135deg, #d1f3e0, #a3e4c5);
+        color: #0f5132;
+        border-color: #1cc88a;
+    }
+
+    .day-absent {
+        background: linear-gradient(135deg, #f8d7da, #f1aeb5);
+        color: #721c24;
+        border-color: #e74a3b;
+    }
+
+    .day-sick {
+        background: linear-gradient(135deg, #fff3cd, #ffe69c);
+        color: #856404;
+        border-color: #f6c23e;
+    }
+
+    .day-vacation {
+        background: linear-gradient(135deg, #d1ecf1, #b6e4f0);
+        color: #0c5460;
+        border-color: #36b9cc;
+    }
+
+    .day-not-marked {
+        background: #f8f9fc;
+        color: #858796;
+        border: 1px solid #eaecf4;
+    }
+
+    .day-empty {
+        background: transparent;
+        border: none;
+        cursor: default;
+    }
+
+    .day-empty:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Индикаторы питания */
+    .meal-indicators {
+        position: absolute;
+        bottom: 3px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 2px;
+    }
+
+    .meal-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--gray);
+    }
+
+    .meal-dot.breakfast { background: #1cc88a; }
+    .meal-dot.lunch { background: #36b9cc; }
+    .meal-dot.snack { background: #f6c23e; }
+    .meal-dot.dinner { background: #e74a3b; }
+
+    /* Легенда */
+    .legend-item {
+        display: inline-flex;
+        align-items: center;
+        margin-right: 1.5rem;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--light);
+        border-radius: 30px;
+        font-size: 0.85rem;
+    }
+
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 6px;
+        margin-right: 8px;
+    }
+
+    /* Таблица */
+    .table-card {
+        background: white;
+        border-radius: 24px;
+        padding: 2rem;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: var(--light);
+        color: var(--dark);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        padding: 1rem;
+        border-bottom: 2px solid var(--border);
+    }
+
+    .table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+        background: rgba(67, 97, 238, 0.02);
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .time-badge {
+        background: var(--light);
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Кнопки */
+    .btn-gradient {
+        background: var(--gradient-primary);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-gradient::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .btn-gradient:hover::before {
+        left: 100%;
+    }
+
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        color: white;
+    }
+
+    .btn-outline-gradient {
+        background: transparent;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        padding: 0.6rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-outline-gradient:hover {
+        background: var(--gradient-primary);
+        border-color: transparent;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    /* Селектор месяца */
+    .month-selector {
+        background: var(--light);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.6rem 2rem 0.6rem 1rem;
+        font-weight: 600;
+        color: var(--dark);
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234361ee' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.7rem center;
+    }
+
+    .month-selector:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    /* Анимации */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .stat-card, .calendar-card, .table-card {
+        animation: slideIn 0.5s ease-out forwards;
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+    .stat-card:nth-child(5) { animation-delay: 0.5s; }
+    .stat-card:nth-child(6) { animation-delay: 0.6s; }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .detail-header {
+            padding: 1.5rem;
+        }
+
+        .child-avatar-large {
+            width: 80px;
+            height: 80px;
+        }
+
+        .child-avatar-large i {
+            font-size: 2.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+        }
+
+        .calendar-grid {
+            gap: 4px;
+        }
+
+        .calendar-day {
+            font-size: 0.8rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок и навигация -->
+    <div class="detail-header">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="child-avatar-large">
+                    <i class="fas fa-child"></i>
+                </div>
+            </div>
+            <div class="col">
+                <h1 class="h2 mb-2 fw-bold" style="color: var(--dark);">
+                    {{ child.full_name }}
+                </h1>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="badge" style="background: var(--gradient-success); color: white; padding: 0.5rem 1rem;">
+                        <i class="fas fa-users me-1"></i>{{ child.group.name|default:"Не распределен" }}
+                    </span>
+                    <span class="badge" style="background: var(--light); color: var(--dark); padding: 0.5rem 1rem;">
+                        <i class="fas fa-birthday-cake me-1" style="color: var(--primary);"></i>{{ child.get_age }} лет
+                    </span>
+                    {% if child.gender %}
+                    <span class="badge" style="background: var(--light); color: var(--dark); padding: 0.5rem 1rem;">
+                        <i class="fas fa-{% if child.gender == 'M' %}mars{% else %}venus{% endif %} me-1" style="color: var(--primary);"></i>{{ child.get_gender_display }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="d-flex gap-2">
+                    <a href="{% url 'attendance:parent_dashboard' %}" class="btn-outline-gradient">
+                        <i class="fas fa-arrow-left"></i>
+                        <span class="d-none d-md-inline">Назад</span>
+                    </a>
+                    <select class="month-selector" id="monthSelector">
+                        {% for month in available_months %}
+                        <option value="{{ month.value }}" {% if month.value == selected_month %}selected{% endif %}>
+                            {{ month.label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="stat-value">{{ attendance_percentage }}%</div>
+                <div class="stat-label">Посещаемость</div>
+                <div class="progress-thin mt-2" style="height: 6px;">
+                    <div class="progress-bar" style="width: {{ attendance_percentage }}%; background: var(--gradient-primary);"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--gradient-success);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-value">{{ present_count }}</div>
+                <div class="stat-label">Присутствовал</div>
+                <small class="text-muted">дней</small>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #e74a3b, #c82333);">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stat-value">{{ absent_count }}</div>
+                <div class="stat-label">Отсутствовал</div>
+                <small class="text-muted">дней</small>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #f6c23e, #e0a800);">
+                    <i class="fas fa-temperature-high"></i>
+                </div>
+                <div class="stat-value">{{ sick_count }}</div>
+                <div class="stat-label">Болел</div>
+                <small class="text-muted">дней</small>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #36b9cc, #1f8f9c);">
+                    <i class="fas fa-umbrella-beach"></i>
+                </div>
+                <div class="stat-value">{{ vacation_count }}</div>
+                <div class="stat-label">В отпуске</div>
+                <small class="text-muted">дней</small>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #6c757d, #5a6268);">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                <div class="stat-value">{{ total_days }}</div>
+                <div class="stat-label">Всего дней</div>
+                <small class="text-muted">в периоде</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Календарь -->
+    <div class="calendar-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0">
+                <i class="fas fa-calendar-alt text-primary me-2"></i>Календарь посещаемости
+            </h4>
+            <div class="d-flex flex-wrap gap-2">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #d1f3e0, #a3e4c5);"></div>
+                    <span>Присутствовал</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #f8d7da, #f1aeb5);"></div>
+                    <span>Отсутствовал</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #fff3cd, #ffe69c);"></div>
+                    <span>Болел</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #d1ecf1, #b6e4f0);"></div>
+                    <span>Отпуск</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Заголовки дней недели -->
+        <div class="calendar-grid">
+            <div class="calendar-weekday">Пн</div>
+            <div class="calendar-weekday">Вт</div>
+            <div class="calendar-weekday">Ср</div>
+            <div class="calendar-weekday">Чт</div>
+            <div class="calendar-weekday">Пт</div>
+            <div class="calendar-weekday weekend">Сб</div>
+            <div class="calendar-weekday weekend">Вс</div>
+
+            <!-- Пустые ячейки для выравнивания -->
+            {% with first_day=calendar_data.0.date.weekday %}
+                {% if first_day != 0 %}
+                    {% for i in "1234567"|make_list %}
+                        {% if forloop.counter0 < first_day %}
+                            <div class="calendar-day day-empty"></div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Дни месяца -->
+            {% for day in calendar_data %}
+            <div class="calendar-day 
+                {% if day.is_weekend %}weekend{% endif %}
+                {% if day.is_today %}today{% endif %}
+                {% if day.attendance %}
+                    {% if day.attendance.status == 'present' %}day-present
+                    {% elif day.attendance.status == 'absent' %}day-absent
+                    {% elif day.attendance.status == 'sick' %}day-sick
+                    {% elif day.attendance.status == 'vacation' %}day-vacation
+                    {% endif %}
+                {% else %}
+                    day-not-marked
+                {% endif %}"
+                data-bs-toggle="tooltip" 
+                title="{% if day.attendance %}{{ day.attendance.get_status_display }}{% if day.attendance.arrival_time %} ({{ day.attendance.arrival_time|time:'H:i' }}{% if day.attendance.departure_time %} - {{ day.attendance.departure_time|time:'H:i' }}{% endif %}){% endif %}{% else %}Не отмечен{% endif %}">
+                
+                {{ day.date.day }}
+                
+                <!-- Индикаторы питания -->
+                {% if day.meals %}
+                <div class="meal-indicators">
+                    {% if 'breakfast' in day.meals %}
+                    <div class="meal-dot breakfast" title="Завтрак"></div>
+                    {% endif %}
+                    {% if 'lunch' in day.meals %}
+                    <div class="meal-dot lunch" title="Обед"></div>
+                    {% endif %}
+                    {% if 'snack' in day.meals %}
+                    <div class="meal-dot snack" title="Полдник"></div>
+                    {% endif %}
+                    {% if 'dinner' in day.meals %}
+                    <div class="meal-dot dinner" title="Ужин"></div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Легенда питания -->
+        <div class="mt-4 pt-3 border-top">
+            <div class="d-flex flex-wrap gap-3">
+                <span class="legend-item">
+                    <div class="meal-dot breakfast me-2"></div>
+                    <small>Завтрак</small>
+                </span>
+                <span class="legend-item">
+                    <div class="meal-dot lunch me-2"></div>
+                    <small>Обед</small>
+                </span>
+                <span class="legend-item">
+                    <div class="meal-dot snack me-2"></div>
+                    <small>Полдник</small>
+                </span>
+                <span class="legend-item">
+                    <div class="meal-dot dinner me-2"></div>
+                    <small>Ужин</small>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Детальная таблица -->
+    <div class="table-card">
+        <h4 class="mb-4">
+            <i class="fas fa-list-alt text-primary me-2"></i>Подробная информация за месяц
+        </h4>
+        
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>День недели</th>
+                        <th>Статус</th>
+                        <th>Время прихода</th>
+                        <th>Время ухода</th>
+                        <th>Питание</th>
+                        <th>Примечания</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day in calendar_data %}
+                    <tr>
+                        <td>
+                            <strong>{{ day.date|date:"d.m.Y" }}</strong>
+                            {% if day.is_today %}
+                            <span class="badge" style="background: var(--gradient-primary); color: white; margin-left: 0.5rem;">
+                                Сегодня
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if day.date.weekday == 0 %}Понедельник
+                            {% elif day.date.weekday == 1 %}Вторник
+                            {% elif day.date.weekday == 2 %}Среда
+                            {% elif day.date.weekday == 3 %}Четверг
+                            {% elif day.date.weekday == 4 %}Пятница
+                            {% elif day.date.weekday == 5 %}Суббота
+                            {% elif day.date.weekday == 6 %}Воскресенье
+                            {% endif %}
+                            {% if day.is_weekend %}
+                            <small class="text-muted">(выходной)</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if day.attendance %}
+                                {% if day.attendance.status == 'present' %}
+                                <span class="status-badge" style="background: #d1f3e0; color: #0f5132;">
+                                    <i class="fas fa-check-circle"></i> Присутствовал
+                                </span>
+                                {% elif day.attendance.status == 'absent' %}
+                                <span class="status-badge" style="background: #f8d7da; color: #721c24;">
+                                    <i class="fas fa-times-circle"></i> Отсутствовал
+                                </span>
+                                {% elif day.attendance.status == 'sick' %}
+                                <span class="status-badge" style="background: #fff3cd; color: #856404;">
+                                    <i class="fas fa-temperature-high"></i> Болел
+                                </span>
+                                {% elif day.attendance.status == 'vacation' %}
+                                <span class="status-badge" style="background: #d1ecf1; color: #0c5460;">
+                                    <i class="fas fa-umbrella-beach"></i> В отпуске
+                                </span>
+                                {% endif %}
+                            {% else %}
+                            <span class="status-badge" style="background: #f8f9fc; color: #858796;">
+                                <i class="fas fa-minus-circle"></i> Не отмечен
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if day.attendance and day.attendance.arrival_time %}
+                            <div class="time-badge">
+                                <i class="fas fa-sign-in-alt" style="color: #1cc88a;"></i>
+                                {{ day.attendance.arrival_time|time:"H:i" }}
+                            </div>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if day.attendance and day.attendance.departure_time %}
+                            <div class="time-badge">
+                                <i class="fas fa-sign-out-alt" style="color: #e74a3b;"></i>
+                                {{ day.attendance.departure_time|time:"H:i" }}
+                            </div>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% if day.meals %}
+                                    {% if 'breakfast' in day.meals %}
+                                    <span class="badge" style="background: #1cc88a; color: white;">З</span>
+                                    {% endif %}
+                                    {% if 'lunch' in day.meals %}
+                                    <span class="badge" style="background: #36b9cc; color: white;">О</span>
+                                    {% endif %}
+                                    {% if 'snack' in day.meals %}
+                                    <span class="badge" style="background: #f6c23e; color: white;">П</span>
+                                    {% endif %}
+                                    {% if 'dinner' in day.meals %}
+                                    <span class="badge" style="background: #e74a3b; color: white;">У</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {% if day.attendance and day.attendance.notes %}
+                                {{ day.attendance.notes }}
+                                {% else %}
+                                —
+                                {% endif %}
+                            </small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Переключение месяцев
+    const monthSelector = document.getElementById('monthSelector');
+    if (monthSelector) {
+        monthSelector.addEventListener('change', function() {
+            const [year, month] = this.value.split('-');
+            const url = new URL(window.location.href);
+            url.searchParams.set('year', year);
+            url.searchParams.set('month', month);
+            window.location.href = url.toString();
+        });
+    }
+
+    // Инициализация тултипов Bootstrap
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Анимация при наведении на дни календаря
+    document.querySelectorAll('.calendar-day:not(.day-empty)').forEach(day => {
+        day.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.1)';
+            this.style.zIndex = '100';
+            this.style.boxShadow = 'var(--shadow-lg)';
+        });
+        day.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+            this.style.zIndex = '1';
+            this.style.boxShadow = 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

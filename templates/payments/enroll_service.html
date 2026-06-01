@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Запись на услугу - {{ service.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-pen me-2"></i>
+                        Запись на услугу: {{ service.name }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Информация об услуге -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 bg-light">
+                                <h6 class="text-primary mb-3">Информация об услуге</h6>
+                                <p class="mb-2">
+                                    <i class="fas fa-tag text-muted me-2"></i>
+                                    <strong>Тип:</strong> {{ service.get_service_type_display }}
+                                </p>
+                                <p class="mb-2">
+                                    <i class="fas fa-ruble-sign text-muted me-2"></i>
+                                    <strong>Стоимость:</strong> {{ service.price_per_month }} ₽ / месяц
+                                </p>
+                                {% if service.teacher %}
+                                <p class="mb-2">
+                                    <i class="fas fa-chalkboard-teacher text-muted me-2"></i>
+                                    <strong>Преподаватель:</strong> {{ service.teacher }}
+                                </p>
+                                {% endif %}
+                                <p class="mb-2">
+                                    <i class="fas fa-child text-muted me-2"></i>
+                                    <strong>Возраст:</strong> {{ service.age_min }} - {{ service.age_max }} лет
+                                </p>
+                                {% if service.schedule %}
+                                <p class="mb-2">
+                                    <i class="fas fa-calendar-alt text-muted me-2"></i>
+                                    <strong>Расписание:</strong> {{ service.schedule }}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 bg-light">
+                                <h6 class="text-primary mb-3">Программа занятий</h6>
+                                <p class="small mb-0">{{ service.program|linebreaks|default:"Программа не указана" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if service.description %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {{ service.description }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Форма записи -->
+                    <form method="post" action="{% url 'payments:enroll_in_service' service.id %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Выберите ребенка <span class="text-danger">*</span></label>
+                            <select name="child_id" class="form-select" required>
+                                <option value="">-- Выберите ребенка --</option>
+                                {% for child_data in children %}
+                                <option value="{{ child_data.child.id }}" 
+                                        {% if not child_data.is_age_ok %}disabled{% endif %}>
+                                    {{ child_data.child.full_name }} ({{ child_data.age }} лет)
+                                    {% if not child_data.is_age_ok %}
+                                    - не подходит по возрасту (нужно {{ service.age_min }}-{{ service.age_max }} лет)
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Возраст ребенка должен быть от {{ service.age_min }} до {{ service.age_max }} лет.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Дата начала занятий</label>
+                            <input type="date" name="start_date" class="form-control" value="{{ today|date:'Y-m-d' }}">
+                            <div class="form-text">Укажите желаемую дату начала посещения занятий</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Примечания</label>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="При необходимости укажите дополнительную информацию"></textarea>
+                            <div class="form-text">Необязательное поле</div>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'payments:services_catalog' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Назад к услугам
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i> Отправить заявку
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Предупреждение при выборе ребенка не подходящего возраста
+document.querySelector('select[name="child_id"]').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption.disabled) {
+        alert('Выбранный ребенок не подходит по возрасту для этой услуги.');
+        this.value = '';
+    }
+});
+</script>
+
+<style>
+.card {
+    border: none;
+    border-radius: 16px;
+}
+.card-header {
+    border-radius: 16px 16px 0 0 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+</style>
+{% endblock %}

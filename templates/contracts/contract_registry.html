@@ -1,0 +1,788 @@
+<!-- templates/contracts/contract_registry.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Реестр договоров{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== MODERN VARIABLES ===== */
+    :root {
+        --primary: #5b21b6;
+        --primary-light: #7c3aed;
+        --primary-dark: #4c1d95;
+        --secondary: #0ea5e9;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --dark: #1e293b;
+        --gray: #64748b;
+        --light: #f1f5f9;
+        --white: #ffffff;
+        --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+        --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .page-container {
+        max-width: 1600px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== HEADER ===== */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1.5rem 2rem;
+        background: var(--white);
+        border-radius: 24px;
+        box-shadow: var(--shadow-medium);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--bg-gradient);
+    }
+
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .header-title h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        background: var(--bg-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
+    .back-btn {
+        padding: 0.75rem 1.5rem;
+        background: var(--white);
+        border-radius: 16px;
+        color: var(--gray);
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+        border: 2px solid var(--light);
+    }
+
+    .back-btn:hover {
+        color: var(--primary);
+        border-color: var(--primary-light);
+        transform: translateX(-5px);
+    }
+
+    /* ===== STATS CARDS ===== */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-medium);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--bg-gradient);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-large);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--bg-gradient);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--dark);
+        line-height: 1.2;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--gray);
+        font-weight: 500;
+    }
+
+    /* ===== FILTERS ===== */
+    .filters-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-medium);
+    }
+
+    .filters-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filters-title i {
+        color: var(--primary);
+    }
+
+    .filter-form {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .filter-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--light);
+        border-radius: 16px;
+        font-size: 0.95rem;
+        transition: var(--transition);
+        background: linear-gradient(145deg, #f8fafc 0%, #ffffff 100%);
+    }
+
+    .filter-select:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+    }
+
+    .filter-btn {
+        padding: 0.75rem 2rem;
+        background: var(--bg-gradient);
+        border: none;
+        border-radius: 16px;
+        color: white;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+    }
+
+    .filter-reset {
+        padding: 0.75rem 1.5rem;
+        background: var(--light);
+        border: none;
+        border-radius: 16px;
+        color: var(--gray);
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-reset:hover {
+        background: var(--gray);
+        color: white;
+    }
+
+    /* ===== REGISTRY TABLE ===== */
+    .registry-card {
+        background: var(--white);
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: var(--shadow-large);
+    }
+
+    .registry-header {
+        background: var(--bg-gradient);
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .registry-header h3 {
+        color: white;
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .registry-count {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: white;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .registry-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .registry-table th {
+        background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--gray);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid var(--light);
+    }
+
+    .registry-table td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--light);
+        color: var(--dark);
+        font-size: 0.95rem;
+        vertical-align: middle;
+    }
+
+    .registry-table tr {
+        transition: var(--transition);
+    }
+
+    .registry-table tr:hover {
+        background: linear-gradient(145deg, rgba(124, 58, 237, 0.02) 0%, rgba(124, 58, 237, 0.05) 100%);
+    }
+
+    .contract-link {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .contract-link:hover {
+        text-decoration: underline;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 1rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+    }
+
+    .status-draft {
+        background: rgba(245, 158, 11, 0.1);
+        color: #92400e;
+    }
+
+    .status-signed {
+        background: rgba(59, 130, 246, 0.1);
+        color: #1e40af;
+    }
+
+    .status-terminated {
+        background: rgba(239, 68, 68, 0.1);
+        color: #991b1b;
+    }
+
+    .agreement-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .agreement-yes {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+    }
+
+    .agreement-no {
+        background: rgba(239, 68, 68, 0.1);
+        color: #991b1b;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gray);
+        background: var(--light);
+        transition: var(--transition);
+        text-decoration: none;
+    }
+
+    .action-btn:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-3px);
+    }
+
+    /* ===== PAGINATION ===== */
+    .pagination-container {
+        padding: 1.5rem;
+        display: flex;
+        justify-content: center;
+        border-top: 1px solid var(--light);
+    }
+
+    .pagination {
+        display: flex;
+        gap: 0.5rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .page-item {
+        display: inline-block;
+    }
+
+    .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: var(--light);
+        color: var(--gray);
+        text-decoration: none;
+        transition: var(--transition);
+        font-weight: 500;
+    }
+
+    .page-link:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    .page-item.active .page-link {
+        background: var(--bg-gradient);
+        color: white;
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--gray);
+        margin-bottom: 1rem;
+    }
+
+    .empty-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-text {
+        color: var(--gray);
+        margin-bottom: 1.5rem;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .filter-form {
+            flex-direction: column;
+        }
+        
+        .filter-group {
+            width: 100%;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .action-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-title">
+            <h1>Реестр договоров</h1>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'contracts:contract_list' %}" class="back-btn">
+                <i class="bi bi-arrow-left"></i>
+                К списку договоров
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="bi bi-file-text"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ total_entries }}</div>
+                <div class="stat-label">Всего записей в реестре</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="bi bi-file-earmark-plus"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ with_agreements }}</div>
+                <div class="stat-label">С доп. соглашениями</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ checked_this_month }}</div>
+                <div class="stat-label">Проверено в этом месяце</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-card">
+        <div class="filters-title">
+            <i class="bi bi-funnel"></i>
+            Фильтры
+        </div>
+        
+        <form method="get" class="filter-form">
+            <div class="filter-group">
+                <select name="has_agreements" class="filter-select">
+                    <option value="">Все договоры</option>
+                    <option value="yes" {% if request.GET.has_agreements == 'yes' %}selected{% endif %}>С доп. соглашениями</option>
+                    <option value="no" {% if request.GET.has_agreements == 'no' %}selected{% endif %}>Без доп. соглашений</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="filter-btn">
+                <i class="bi bi-search"></i>
+                Применить
+            </button>
+            
+            <a href="{% url 'contracts:contract_registry' %}" class="filter-reset">
+                <i class="bi bi-x-circle"></i>
+                Сбросить
+            </a>
+        </form>
+    </div>
+
+    <!-- Registry Table -->
+    <div class="registry-card">
+        <div class="registry-header">
+            <h3>
+                <i class="bi bi-journal-text"></i>
+                Реестр договоров
+            </h3>
+            <span class="registry-count">{{ page_obj.paginator.count }} записей</span>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="registry-table">
+                <thead>
+                    <tr>
+                        <th>№ в реестре</th>
+                        <th>№ договора</th>
+                        <th>Ребенок</th>
+                        <th>Родитель</th>
+                        <th>Статус</th>
+                        <th>Доп. соглашения</th>
+                        <th>Последняя проверка</th>
+                        <th>Место хранения</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in page_obj %}
+                    <tr>
+                        <td>
+                            <strong>{{ entry.registry_number }}</strong>
+                        </td>
+                        <td>
+                            <a href="{% url 'contracts:contract_detail' entry.contract.pk %}" class="contract-link">
+                                <i class="bi bi-file-text"></i>
+                                {{ entry.contract.contract_number }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if entry.contract.child %}
+                                <a href="{% url 'children:child_detail' entry.contract.child.id %}" class="contract-link">
+                                    {{ entry.contract.child.full_name }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">{{ entry.contract.child_full_name }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ entry.contract.parent.user.get_full_name }}</td>
+                        <td>
+                            <span class="status-badge status-{{ entry.contract.status }}">
+                                <i class="bi 
+                                    {% if entry.contract.status == 'active' %}bi-check-circle-fill
+                                    {% elif entry.contract.status == 'draft' %}bi-pencil-fill
+                                    {% elif entry.contract.status == 'signed' %}bi-signature
+                                    {% elif entry.contract.status == 'terminated' %}bi-x-circle-fill
+                                    {% endif %}">
+                                </i>
+                                {{ entry.contract.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if entry.has_additional_agreements %}
+                                <span class="agreement-badge agreement-yes">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    Есть
+                                </span>
+                                {% if entry.additional_agreements_info %}
+                                    <small class="d-block text-muted">{{ entry.additional_agreements_info|truncatechars:30 }}</small>
+                                {% endif %}
+                            {% else %}
+                                <span class="agreement-badge agreement-no">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    Нет
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if entry.last_check_date %}
+                                <span title="Проверил: {{ entry.checked_by.get_full_name|default:'Неизвестно' }}">
+                                    <i class="bi bi-calendar-check"></i>
+                                    {{ entry.last_check_date|date:"d.m.Y" }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Не проверялось</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <i class="bi bi-folder"></i>
+                            {{ entry.storage_location }}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'contracts:contract_detail' entry.contract.pk %}" class="action-btn" title="Просмотр договора">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'contracts:contract_registry_detail' entry.contract.pk %}" class="action-btn" title="Редактировать запись в реестре">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'contracts:generate_contract' entry.contract.pk %}" class="action-btn" title="Скачать договор">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <div class="empty-icon">
+                                <i class="bi bi-journal-text"></i>
+                            </div>
+                            <div class="empty-title">Реестр пуст</div>
+                            <div class="empty-text">В реестре еще нет записей</div>
+                            <a href="{% url 'contracts:contract_list' %}" class="filter-btn">
+                                <i class="bi bi-file-text"></i>
+                                Перейти к договорам
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination-container">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.has_agreements %}&has_agreements={{ request.GET.has_agreements }}{% endif %}">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.has_agreements %}&has_agreements={{ request.GET.has_agreements }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.has_agreements %}&has_agreements={{ request.GET.has_agreements }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.has_agreements %}&has_agreements={{ request.GET.has_agreements }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.has_agreements %}&has_agreements={{ request.GET.has_agreements }}{% endif %}">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Подсветка активных фильтров
+document.addEventListener('DOMContentLoaded', function() {
+    const select = document.querySelector('.filter-select');
+    if (select) {
+        select.addEventListener('change', function() {
+            if (this.value) {
+                this.style.borderColor = 'var(--primary)';
+            } else {
+                this.style.borderColor = 'var(--light)';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

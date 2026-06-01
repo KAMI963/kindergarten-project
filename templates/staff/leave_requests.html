@@ -1,0 +1,158 @@
+<!-- staff/templates/staff/leave_requests.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Заявления на отпуск{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <h1>
+            <i class="fas fa-envelope-open-text"></i>
+            Заявления на отпуск
+        </h1>
+        <p class="mb-0 opacity-75">Обработка заявлений сотрудников</p>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row">
+        <!-- Заявления на рассмотрении -->
+        <div class="col-md-6 mb-4">
+            <div class="staff-card h-100">
+                <div class="card-header bg-warning text-dark">
+                    <i class="fas fa-clock"></i>
+                    На рассмотрении ({{ pending_requests.count }})
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for request in pending_requests %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ request.employee.full_name }}</h6>
+                                    <p class="mb-1 small">
+                                        {{ request.get_leave_type_display }} с {{ request.start_date|date:"d.m.Y" }} 
+                                        по {{ request.end_date|date:"d.m.Y" }} ({{ request.duration }} дн.)
+                                    </p>
+                                    <small class="text-muted">Подано: {{ request.request_date|date:"d.m.Y" }}</small>
+                                </div>
+                                <a href="{% url 'staff:leave_request_process' request.id %}" class="btn btn-sm btn-warning">
+                                    Рассмотреть
+                                </a>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item text-center py-4">
+                            <p class="text-muted mb-0">Нет заявлений на рассмотрении</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Последние обработанные -->
+        <div class="col-md-6 mb-4">
+            <div class="staff-card h-100">
+                <div class="card-header bg-success text-white">
+                    <i class="fas fa-check-circle"></i>
+                    Последние обработанные
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for request in requests|slice:":5" %}
+                        {% if request.status != 'pending' %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ request.employee.full_name }}</h6>
+                                    <p class="mb-1 small">
+                                        {{ request.get_leave_type_display }} - {{ request.duration }} дн.
+                                    </p>
+                                    <small class="text-muted">
+                                        Статус: 
+                                        {% if request.status == 'approved' %}
+                                        <span class="badge bg-success">Утвержден</span>
+                                        {% elif request.status == 'rejected' %}
+                                        <span class="badge bg-danger">Отклонен</span>
+                                        {% elif request.status == 'rescheduled' %}
+                                        <span class="badge bg-info">Перенесен</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <small class="text-muted">{{ request.processed_date|date:"d.m.Y" }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% empty %}
+                        <div class="list-group-item text-center py-4">
+                            <p class="text-muted mb-0">Нет обработанных заявлений</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Все заявления -->
+    <div class="staff-card">
+        <div class="card-header">
+            <i class="fas fa-list"></i>
+            Все заявления
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="staff-table table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Сотрудник</th>
+                            <th>Тип отпуска</th>
+                            <th>Период</th>
+                            <th>Дней</th>
+                            <th>Дата подачи</th>
+                            <th>Статус</th>
+                            <th>Дата рассмотрения</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in requests %}
+                        <tr>
+                            <td>{{ request.employee.full_name }}</td>
+                            <td>{{ request.get_leave_type_display }}</td>
+                            <td>{{ request.start_date|date:"d.m.Y" }} - {{ request.end_date|date:"d.m.Y" }}</td>
+                            <td>{{ request.duration }}</td>
+                            <td>{{ request.request_date|date:"d.m.Y" }}</td>
+                            <td>
+                                {% if request.status == 'pending' %}
+                                <span class="badge bg-warning">На рассмотрении</span>
+                                {% elif request.status == 'approved' %}
+                                <span class="badge bg-success">Утвержден</span>
+                                {% elif request.status == 'rejected' %}
+                                <span class="badge bg-danger">Отклонен</span>
+                                {% elif request.status == 'rescheduled' %}
+                                <span class="badge bg-info">Перенесен</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ request.processed_date|date:"d.m.Y"|default:"—" }}</td>
+                            <td>
+                                {% if request.status == 'pending' %}
+                                <a href="{% url 'staff:leave_request_process' request.id %}" class="btn btn-sm btn-warning">
+                                    Рассмотреть
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">Нет заявлений</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

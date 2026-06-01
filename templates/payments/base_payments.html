@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Платежи{% endblock %}
+
+{% block extra_css %}
+<style>
+    .payment-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        border-left: 4px solid #4e73df;
+    }
+
+    .payment-card-success {
+        border-left-color: #1cc88a;
+    }
+
+    .payment-card-warning {
+        border-left-color: #f6c23e;
+    }
+
+    .payment-card-danger {
+        border-left-color: #e74a3b;
+    }
+
+    .payment-stat {
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .payment-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #5a5c69;
+    }
+
+    .payment-stat-text {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #858796;
+    }
+
+    .payment-table th {
+        background: #f8f9fc;
+        font-weight: 700;
+        color: #5a5c69;
+    }
+
+    .payment-badge {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}

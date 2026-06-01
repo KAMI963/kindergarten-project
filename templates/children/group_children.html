@@ -1,0 +1,834 @@
+<!-- templates/children/group_children.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Дети группы {{ group.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #4f46e5;
+        --primary-light: #818cf8;
+        --primary-dark: #3730a3;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #3b82f6;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --gray-800: #1f2937;
+    }
+
+    .group-children-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .content-wrapper {
+        max-width: 1400px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Header Card */
+    .header-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .header-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 300px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-radius: 50%;
+        transform: translate(100px, -100px);
+        pointer-events: none;
+    }
+
+    .group-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--gray-800);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .group-badge {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 100px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-box {
+        background: white;
+        border-radius: 16px;
+        padding: 1.25rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--gray-600);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .search-input {
+        border: 2px solid var(--gray-200);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .filter-select {
+        border: 2px solid var(--gray-200);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        width: 100%;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .sort-link {
+        color: var(--gray-600);
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .sort-link:hover {
+        color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    .sort-link.active {
+        color: var(--primary);
+        font-weight: 700;
+    }
+
+    /* Export Buttons - УЛУЧШЕННАЯ ВЕРСИЯ */
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .btn-back {
+        background: white;
+        border: 2px solid var(--gray-200);
+        color: var(--gray-700);
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .btn-back:hover {
+        background: var(--gray-50);
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    .export-buttons {
+        display: flex;
+        gap: 1rem;
+        position: relative;
+        z-index: 10;
+    }
+
+    .btn-export {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        cursor: pointer;
+        border: none;
+        position: relative;
+        z-index: 10;
+    }
+
+    .btn-excel {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-excel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        color: white;
+    }
+
+    .btn-word {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-word:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        color: white;
+    }
+
+    .btn-export:active {
+        transform: translateY(0);
+    }
+
+    /* Children Table */
+    .children-table-container {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .children-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .children-table thead {
+        background: linear-gradient(135deg, var(--gray-50), var(--gray-100));
+    }
+
+    .children-table th {
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-weight: 700;
+        color: var(--gray-700);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--gray-200);
+    }
+
+    .children-table td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        color: var(--gray-700);
+    }
+
+    .children-table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .children-table tbody tr:hover {
+        background: var(--gray-50);
+        transform: translateX(5px);
+    }
+
+    /* Child Avatar */
+    .child-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .child-name {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 600;
+    }
+
+    /* Gender Badges */
+    .gender-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 100px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .gender-male {
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        color: #1e40af;
+    }
+
+    .gender-female {
+        background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+        color: #9d174d;
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1.5rem;
+        background: white;
+        border-top: 1px solid var(--gray-200);
+        flex-wrap: wrap;
+    }
+
+    .page-link {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        color: var(--gray-600);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        background: var(--gray-50);
+    }
+
+    .page-link:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .page-link.active {
+        background: var(--primary);
+        color: white;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .header-actions {
+            margin-top: 1.5rem;
+            justify-content: flex-start;
+        }
+        
+        .group-title {
+            font-size: 1.5rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .group-children-container {
+            padding: 1rem;
+        }
+
+        .header-card {
+            padding: 1.5rem;
+        }
+
+        .export-buttons {
+            width: 100%;
+            justify-content: stretch;
+        }
+
+        .btn-export {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-back {
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .header-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .children-table thead {
+            display: none;
+        }
+
+        .children-table tbody tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .children-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .children-table td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            color: var(--gray-600);
+            margin-right: 1rem;
+        }
+
+        .children-table td:last-child {
+            border-bottom: none;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .group-title {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .filter-bar .row > div {
+            margin-bottom: 1rem;
+        }
+    }
+
+    /* Анимация загрузки для кнопок */
+    .btn-export.loading {
+        opacity: 0.7;
+        cursor: wait;
+        transform: none;
+    }
+    
+    .btn-export.loading i {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="group-children-container">
+    <div class="content-wrapper">
+        <!-- Header Card -->
+        <div class="header-card">
+            <div class="row">
+                <div class="col-md-7">
+                    <div class="group-title">
+                        <i class="fas fa-users" style="color: var(--primary);"></i>
+                        {{ group.name }}
+                        <span class="group-badge">{{ group.get_age_category_display }}</span>
+                    </div>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-door-open me-2"></i>Комната №{{ group.room_number }}
+                        {% if group.teacher %}
+                        · <i class="fas fa-user-tie me-2"></i>{{ group.teacher.get_full_name }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-5">
+                    <div class="header-actions">
+                        <a href="{% url 'children:group_list' %}" class="btn-back">
+                            <i class="fas fa-arrow-left"></i> Назад к группам
+                        </a>
+                        <div class="export-buttons">
+                            <a href="#" onclick="exportGroupData('excel', {{ group.id }})" class="btn-export btn-excel" id="excelExportBtn">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </a>
+                            <a href="#" onclick="exportGroupData('word', {{ group.id }})" class="btn-export btn-word" id="wordExportBtn">
+                                <i class="fas fa-file-word"></i> Word
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-number">{{ total_children }}</div>
+                <div class="stat-label">Всего детей</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ boys_count }}</div>
+                <div class="stat-label">Мальчиков</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ girls_count }}</div>
+                <div class="stat-label">Девочек</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ avg_age }}</div>
+                <div class="stat-label">Средний возраст</div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <form method="get" class="row g-3" id="filterForm">
+                <div class="col-md-4">
+                    <input type="text" name="search" class="search-input" 
+                           placeholder="🔍 Поиск по ФИО, родителям..." 
+                           value="{{ search_query }}">
+                </div>
+                <div class="col-md-2">
+                    <select name="gender" class="filter-select">
+                        <option value="">Все полы</option>
+                        <option value="M" {% if current_gender == 'M' %}selected{% endif %}>Мальчики</option>
+                        <option value="F" {% if current_gender == 'F' %}selected{% endif %}>Девочки</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="age" class="filter-select">
+                        <option value="">Все возраста</option>
+                        <option value="3-4" {% if current_age == '3-4' %}selected{% endif %}>3-4 года</option>
+                        <option value="5-6" {% if current_age == '5-6' %}selected{% endif %}>5-6 лет</option>
+                        <option value="7+" {% if current_age == '7+' %}selected{% endif %}>7+ лет</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter"></i> Применить фильтры
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Sort Options -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="d-flex gap-3 flex-wrap">
+                        <span class="text-muted">Сортировка:</span>
+                        <a href="#" onclick="applySort('full_name')" 
+                           class="sort-link {% if current_sort == 'full_name' %}active{% endif %}" id="sortFullName">
+                            По имени 
+                            {% if current_sort == 'full_name' %}
+                                <i class="fas fa-sort-{% if current_order == 'asc' %}up{% else %}down{% endif %}"></i>
+                            {% endif %}
+                        </a>
+                        <a href="#" onclick="applySort('birth_date')" 
+                           class="sort-link {% if current_sort == 'birth_date' %}active{% endif %}" id="sortBirthDate">
+                            По возрасту
+                            {% if current_sort == 'birth_date' %}
+                                <i class="fas fa-sort-{% if current_order == 'asc' %}up{% else %}down{% endif %}"></i>
+                            {% endif %}
+                        </a>
+                        <a href="#" onclick="applySort('enrollment_date')" 
+                           class="sort-link {% if current_sort == 'enrollment_date' %}active{% endif %}" id="sortEnrollment">
+                            По дате зачисления
+                            {% if current_sort == 'enrollment_date' %}
+                                <i class="fas fa-sort-{% if current_order == 'asc' %}up{% else %}down{% endif %}"></i>
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Children Table -->
+        <div class="children-table-container">
+            {% if children %}
+            <div class="table-responsive">
+                <table class="children-table">
+                    <thead>
+                        <tr>
+                            <th>ФИО ребенка</th>
+                            <th>Дата рождения</th>
+                            <th>Возраст</th>
+                            <th>Пол</th>
+                            <th>Родители</th>
+                            <th>Дата зачисления</th>
+                            <th>Статус</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for child in children %}
+                        <tr>
+                            <td data-label="ФИО">
+                                <div class="child-name">
+                                    <div class="child-avatar">
+                                        {{ child.full_name|first|upper }}
+                                    </div>
+                                    {{ child.full_name }}
+                                </div>
+                            </td>
+                            <td data-label="Дата рождения">{{ child.birth_date|date:"d.m.Y" }}</td>
+                            <td data-label="Возраст">{{ child.age_display }}</td>
+                            <td data-label="Пол">
+                                <span class="gender-badge {% if child.gender == 'M' %}gender-male{% else %}gender-female{% endif %}">
+                                    <i class="fas fa-{% if child.gender == 'M' %}mars{% else %}venus{% endif %}"></i>
+                                    {{ child.get_gender_display }}
+                                </span>
+                            </td>
+                            <td data-label="Родители">
+                                {% for parent in child.parents.all %}
+                                    <div><small>{{ parent.full_name }}</small></div>
+                                {% empty %}
+                                    <span class="text-muted">Не указаны</span>
+                                {% endfor %}
+                            </td>
+                            <td data-label="Дата зачисления">
+                                {{ child.enrollment_date|date:"d.m.Y"|default:"-" }}
+                            </td>
+                            <td data-label="Статус">
+                                {% if child.is_active %}
+                                    <span class="badge bg-success">Активен</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Неактивен</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Действия">
+                                <a href="{% url 'children:child_detail' child.id %}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if children.has_other_pages %}
+            <div class="pagination">
+                {% if children.has_previous %}
+                    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if current_gender %}&gender={{ current_gender }}{% endif %}{% if current_age %}&age={{ current_age }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if current_order %}&order={{ current_order }}{% endif %}" 
+                       class="page-link">« Первая</a>
+                    <a href="?page={{ children.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_gender %}&gender={{ current_gender }}{% endif %}{% if current_age %}&age={{ current_age }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if current_order %}&order={{ current_order }}{% endif %}" 
+                       class="page-link">‹ Предыдущая</a>
+                {% endif %}
+                
+                <span class="page-link active">
+                    Страница {{ children.number }} из {{ children.paginator.num_pages }}
+                </span>
+                
+                {% if children.has_next %}
+                    <a href="?page={{ children.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_gender %}&gender={{ current_gender }}{% endif %}{% if current_age %}&age={{ current_age }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if current_order %}&order={{ current_order }}{% endif %}" 
+                       class="page-link">Следующая ›</a>
+                    <a href="?page={{ children.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_gender %}&gender={{ current_gender }}{% endif %}{% if current_age %}&age={{ current_age }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if current_order %}&order={{ current_order }}{% endif %}" 
+                       class="page-link">Последняя »</a>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-child"></i>
+                </div>
+                <h4>В группе пока нет детей</h4>
+                <p class="text-muted">Дети будут отображаться здесь после добавления в группу</p>
+                <a href="{% url 'children:child_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Добавить ребенка
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Функция для экспорта данных
+function exportGroupData(format, groupId) {
+    const btn = document.getElementById(`${format}ExportBtn`);
+    const originalContent = btn.innerHTML;
+    
+    // Блокируем кнопку и показываем загрузку
+    btn.classList.add('loading');
+    btn.innerHTML = `<i class="fas fa-spinner"></i> Загрузка...`;
+    btn.style.pointerEvents = 'none';
+    
+    // Получаем текущие параметры фильтрации
+    const searchQuery = document.querySelector('input[name="search"]').value;
+    const genderFilter = document.querySelector('select[name="gender"]').value;
+    const ageFilter = document.querySelector('select[name="age"]').value;
+    
+    // Формируем URL с параметрами
+    let url = `/children/groups/${groupId}/export/${format}/?`;
+    if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}&`;
+    if (genderFilter) url += `gender=${genderFilter}&`;
+    if (ageFilter) url += `age=${ageFilter}&`;
+    
+    // Создаем ссылку для скачивания
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Восстанавливаем кнопку через секунду
+    setTimeout(() => {
+        btn.classList.remove('loading');
+        btn.innerHTML = originalContent;
+        btn.style.pointerEvents = 'auto';
+    }, 1000);
+    
+    return false;
+}
+
+// Функция для применения сортировки
+function applySort(sortField) {
+    const currentUrl = new URL(window.location.href);
+    const currentSort = currentUrl.searchParams.get('sort');
+    const currentOrder = currentUrl.searchParams.get('order');
+    
+    let newOrder = 'asc';
+    if (currentSort === sortField && currentOrder === 'asc') {
+        newOrder = 'desc';
+    }
+    
+    currentUrl.searchParams.set('sort', sortField);
+    currentUrl.searchParams.set('order', newOrder);
+    currentUrl.searchParams.set('page', '1');
+    
+    window.location.href = currentUrl.toString();
+    return false;
+}
+
+// Сохраняем параметры фильтрации при отправке формы
+document.getElementById('filterForm')?.addEventListener('submit', function(e) {
+    const formData = new FormData(this);
+    const url = new URL(window.location.href);
+    
+    for (let [key, value] of formData.entries()) {
+        if (value) {
+            url.searchParams.set(key, value);
+        } else {
+            url.searchParams.delete(key);
+        }
+    }
+    url.searchParams.set('page', '1');
+    
+    window.location.href = url.toString();
+    e.preventDefault();
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Анимация появления
+    const elements = document.querySelectorAll('.header-card, .stat-box, .filter-bar, .children-table-container');
+    elements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            el.style.transition = 'all 0.5s ease';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Подсветка активных фильтров
+    const activeFilters = [];
+    if (document.querySelector('input[name="search"]').value) activeFilters.push('поиск');
+    if (document.querySelector('select[name="gender"]').value) activeFilters.push('пол');
+    if (document.querySelector('select[name="age"]').value) activeFilters.push('возраст');
+    
+    if (activeFilters.length > 0) {
+        const filterBar = document.querySelector('.filter-bar');
+        const filterBadge = document.createElement('div');
+        filterBadge.className = 'alert alert-info mt-3 mb-0';
+        filterBadge.innerHTML = `<small><i class="fas fa-filter"></i> Активные фильтры: ${activeFilters.join(', ')}. <a href="?">Сбросить все</a></small>`;
+        filterBar.appendChild(filterBadge);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1867 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Управление очередью зачислений{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================
+   УПРАВЛЕНИЕ ОЧЕРЕДЬЮ
+   ============================================ */
+
+.queue-container {
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.page-header {
+    background: linear-gradient(135deg, #1a1f36 0%, #2d2852 100%);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.page-header h2 {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    color: white;
+}
+
+.page-header p {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.7);
+    margin: 4px 0 0;
+}
+
+.stats-card {
+    background: white;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid #e9edf2;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102,126,234,0.1);
+}
+
+.stats-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.stats-number {
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 2px;
+    color: #1f2937;
+}
+
+.stats-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+}
+
+.age-card {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.age-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+}
+
+.age-title {
+    font-size: 0.65rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    opacity: 0.9;
+    color: white;
+}
+
+.age-number {
+    font-size: 1.2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: white;
+}
+
+.age-label {
+    font-size: 0.55rem;
+    opacity: 0.8;
+    margin-top: 3px;
+    color: white;
+}
+
+.free-places {
+    font-size: 0.55rem;
+    opacity: 0.7;
+    margin-top: 2px;
+    color: #c4e0ff;
+}
+
+.filter-section {
+    background: white;
+    border-radius: 12px;
+    padding: 15px 18px;
+    margin-bottom: 20px;
+    border: 1px solid #e9edf2;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.filter-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    background: #f3f4f6;
+    border-color: #667eea;
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-color: transparent;
+}
+
+.form-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    margin-bottom: 5px;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    border: 1px solid #e5e7eb;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102,126,234,0.1);
+}
+
+.table-container {
+    background: white;
+    border-radius: 12px;
+    overflow-x: auto;
+    border: 1px solid #e9edf2;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.queue-table {
+    margin-bottom: 0;
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+}
+
+.queue-table thead th {
+    background: #f8fafc;
+    padding: 10px 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    border-bottom: 1px solid #e9edf2;
+}
+
+.queue-table tbody td {
+    padding: 10px 12px;
+    vertical-align: middle;
+    font-size: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.queue-table tbody tr:hover {
+    background: #fafaff;
+}
+
+.queue-table tbody tr.guaranteed {
+    background: linear-gradient(90deg, #f0fdf4 0%, #dcfce7 100%);
+    border-left: 4px solid #10b981;
+}
+
+.queue-table tbody tr.borderline {
+    background: linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%);
+    border-left: 4px solid #f59e0b;
+}
+
+.position-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.position-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.position-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
+.position-2 { background: linear-gradient(135deg, #cbd5e1, #94a3b8); color: white; }
+.position-3 { background: linear-gradient(135deg, #fb923c, #f97316); color: white; }
+.position-other { background: #f1f5f9; color: #64748b; }
+
+.movement-arrow {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    cursor: help;
+}
+
+.movement-arrow-up {
+    background: #dcfce7;
+    color: #059669;
+}
+
+.movement-arrow-down {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.movement-arrow-stable {
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+
+.child-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.badge-status {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.badge-draft { background: #f3f4f6; color: #6b7280; }
+.badge-pending { background: #fef3c7; color: #d97706; }
+.badge-queue { background: #e0e7ff; color: #4338ca; }
+.badge-invited { background: #dcfce7; color: #059669; }
+.badge-processing { background: #e0f2fe; color: #0284c7; }
+.badge-enrolled { background: #dbeafe; color: #1e40af; }
+
+.benefit-badge {
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.benefit-extraordinary {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #b45309;
+}
+
+.benefit-priority {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.benefit-preferential {
+    background: #dcfce7;
+    color: #059669;
+}
+
+.benefit-none {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.action-buttons-group {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+.action-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.7rem;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.action-btn.history:hover {
+    background: #0ea5e9;
+    color: white;
+}
+
+.action-btn.view:hover {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.action-btn.invite:hover {
+    background: #059669;
+    color: white;
+}
+
+.form-check-input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.pagination {
+    margin: 0;
+    gap: 4px;
+}
+
+.pagination .page-link {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    color: #4b5563;
+    font-size: 0.75rem;
+    padding: 0;
+    background: white;
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: transparent;
+    color: white;
+}
+
+.stream-separator {
+    background: #f8fafc;
+}
+
+.stream-separator td {
+    padding: 8px 12px !important;
+    background: #f1f5f9;
+}
+
+.stream-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #475569;
+}
+
+.stream-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+.stream-badge.benefit {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.stream-badge.general {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.guarantee-progress {
+    margin-top: 4px;
+    width: 100%;
+    height: 3px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.guarantee-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 3px;
+}
+
+.batch-actions {
+    background: #1f2937;
+    border-radius: 40px;
+    padding: 8px 20px;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.batch-actions.show {
+    display: flex;
+    transform: translateX(-50%) translateY(0);
+}
+
+.batch-actions .selected-count {
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.15);
+    padding: 5px 12px;
+    border-radius: 30px;
+}
+
+.batch-actions button {
+    background: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+/* ============================================
+   МОДАЛЬНОЕ ОКНО ПРОСМОТРА ЗАЯВЛЕНИЯ (полная информация)
+   ============================================ */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999999;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-window {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header-custom {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header-custom h4 {
+    color: white;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.modal-body-custom {
+    padding: 20px;
+    max-height: calc(85vh - 70px);
+    overflow-y: auto;
+}
+
+/* Стили для просмотра файлов */
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.document-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #e9edf2;
+    transition: all 0.2s;
+}
+
+.document-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.document-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.3rem;
+}
+
+.document-info {
+    flex: 1;
+}
+
+.document-name {
+    font-weight: 600;
+    font-size: 0.75rem;
+    word-break: break-word;
+}
+
+.document-size {
+    font-size: 0.65rem;
+    color: #6b7280;
+}
+
+.document-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.doc-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.doc-action-btn:hover {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-color: transparent;
+}
+
+/* PDF просмотрщик */
+.pdf-viewer-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.95);
+    z-index: 1000000;
+    display: none;
+    flex-direction: column;
+}
+
+.pdf-viewer-modal.active {
+    display: flex;
+}
+
+.pdf-viewer-header {
+    background: #1f2937;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.pdf-viewer-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.pdf-viewer-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #111;
+}
+
+.pdf-viewer-content iframe {
+    width: 90%;
+    height: 90%;
+    border: none;
+    background: white;
+    border-radius: 8px;
+}
+
+.image-viewer-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.95);
+    z-index: 1000000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-viewer-modal.active {
+    display: flex;
+}
+
+.image-viewer-content {
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.image-viewer-content img {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+}
+
+.image-viewer-close {
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 36px;
+    cursor: pointer;
+    z-index: 1000001;
+}
+
+/* Фото родителя */
+.parent-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #667eea;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.parent-photo:hover {
+    transform: scale(1.05);
+}
+
+.info-section {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.info-section-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #667eea;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
+}
+
+.info-row {
+    display: flex;
+    margin-bottom: 8px;
+    font-size: 0.75rem;
+}
+
+.info-label {
+    width: 130px;
+    font-weight: 600;
+    color: #4a5568;
+    flex-shrink: 0;
+}
+
+.info-value {
+    color: #1f2937;
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .stats-number { font-size: 1.1rem; }
+    .position-badge { width: 32px; height: 32px; font-size: 0.8rem; }
+    .child-avatar { width: 30px; height: 30px; font-size: 0.7rem; }
+    .info-label { width: 100px; font-size: 0.7rem; }
+    .documents-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="queue-container">
+    <!-- ЗАГОЛОВОК -->
+    <div class="page-header mb-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h2><i class="fas fa-chart-line me-2"></i>Управление очередью</h2>
+                <p>Мониторинг позиций и движения заявлений</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button id="exportExcelBtn" class="btn btn-sm btn-light rounded-pill px-3">
+                    <i class="fas fa-file-excel me-1 text-success"></i>Экспорт
+                </button>
+                <button id="recalculateBtn" class="btn btn-sm btn-light rounded-pill px-3">
+                    <i class="fas fa-sync-alt me-1 text-primary"></i>Пересчитать
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- СТАТИСТИКА -->
+    <div class="row g-2 mb-3">
+        <div class="col-md-3 col-sm-6">
+            <div class="stats-card" data-filter-status="queue">
+                <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stats-number">{{ stats.queue|default:"0" }}</div>
+                <div class="stats-label">В очереди</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stats-card" data-filter-status="pending">
+                <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div class="stats-number">{{ stats.pending|default:"0" }}</div>
+                <div class="stats-label">На проверке</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stats-card" data-filter-status="invited">
+                <div class="stats-icon bg-success bg-opacity-10 text-success">
+                    <i class="fas fa-envelope-open-text"></i>
+                </div>
+                <div class="stats-number">{{ stats.invited|default:"0" }}</div>
+                <div class="stats-label">Приглашены</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stats-card" data-filter-status="enrolled">
+                <div class="stats-icon bg-info bg-opacity-10 text-info">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-number">{{ stats.enrolled|default:"0" }}</div>
+                <div class="stats-label">Зачислены</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ВОЗРАСТНЫЕ КАТЕГОРИИ -->
+    <div class="row g-2 mb-3">
+        {% for cat_code, cat_data in stats.age_stats.items %}
+        <div class="col-md-2 col-sm-4 col-6">
+            <div class="age-card" data-age-category="{{ cat_code }}">
+                <div class="age-title">{{ cat_data.name|truncatechars:12 }}</div>
+                <div class="age-number">{{ cat_data.queue|default:"0" }}</div>
+                <div class="age-label">в очереди</div>
+                {% if cat_data.free_places is not None %}
+                <div class="free-places">свободно: {{ cat_data.free_places }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ФИЛЬТРЫ -->
+    <div class="filter-section mb-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-filter me-1"></i>Статус</label>
+                <select id="statusFilter" class="form-select">
+                    <option value="">Все статусы</option>
+                    <option value="pending">На проверке</option>
+                    <option value="queue">В очереди</option>
+                    <option value="invited">Приглашены</option>
+                    <option value="processing">На оформлении</option>
+                    <option value="enrolled">Зачислены</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-star me-1"></i>Льгота</label>
+                <select id="benefitFilter" class="form-select">
+                    <option value="">Все льготы</option>
+                    <option value="extraordinary">Внеочередное</option>
+                    <option value="priority">Первоочередное</option>
+                    <option value="preferential">Преимущественное</option>
+                    <option value="none">Без льготы</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label"><i class="fas fa-search me-1"></i>Поиск</label>
+                <input type="text" id="searchInput" class="form-control" placeholder="ФИО ребёнка или родителя">
+            </div>
+            <div class="col-md-2">
+                <button id="resetFilters" class="btn btn-outline-secondary w-100 rounded-pill">
+                    <i class="fas fa-undo-alt me-1"></i>Сброс
+                </button>
+            </div>
+        </div>
+        
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-stream="all">📋 Все</button>
+            <button class="filter-btn" data-stream="benefit">⭐ Льготники</button>
+            <button class="filter-btn" data-stream="general">👥 Общая очередь</button>
+            <button class="filter-btn" data-stream="guaranteed">✅ Точно попадают</button>
+            <button class="filter-btn" data-stream="borderline">⚠️ Пограничные</button>
+        </div>
+    </div>
+
+    <!-- ТАБЛИЦА -->
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="queue-table">
+                <thead>
+                    <tr>
+                        <th style="width: 35px;"><input type="checkbox" id="selectAllCheckbox" class="form-check-input"></th>
+                        <th style="width: 100px;">Позиция</th>
+                        <th>Ребёнок</th>
+                        <th>Дата рождения</th>
+                        <th>Дата подачи</th>
+                        <th>Льгота</th>
+                        <th>Статус</th>
+                        <th style="width: 100px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% regroup applications by stream_group as stream_list %}
+                    {% for stream in stream_list %}
+                        {% if stream.grouper %}
+                        <tr class="stream-separator">
+                            <td colspan="8">
+                                <div class="stream-title">
+                                    <i class="fas fa-{% if stream.grouper == 'benefit' %}star{% else %}clock{% endif %} me-2"></i>
+                                    {% if stream.grouper == 'benefit' %}
+                                        ⭐ ЛЬГОТНИКИ (приоритетный поток)
+                                    {% else %}
+                                        📋 ОБЩАЯ ОЧЕРЕДЬ (по дате подачи)
+                                    {% endif %}
+                                    <span class="stream-badge {% if stream.grouper == 'benefit' %}benefit{% else %}general{% endif %}">
+                                        {{ stream.list|length }} заявлений
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% for app in stream.list %}
+                        <tr data-id="{{ app.id }}" 
+                            data-benefit="{{ app.benefit_category }}" 
+                            data-status="{{ app.status }}" 
+                            data-name="{{ app.child_full_name|lower }}"
+                            data-stream="{% if app.benefit_category != 'none' %}benefit{% else %}general{% endif %}"
+                            class="{% if app.is_guaranteed %}guaranteed{% elif app.is_borderline %}borderline{% endif %}">
+                            
+                            <td><input type="checkbox" class="form-check-input row-checkbox" data-id="{{ app.id }}"></td>
+                            
+                            <td>
+                                <div class="position-container">
+                                    <div class="position-badge position-{% if forloop.parentloop.counter0|add:forloop.counter == 1 %}1{% elif forloop.parentloop.counter0|add:forloop.counter == 2 %}2{% elif forloop.parentloop.counter0|add:forloop.counter == 3 %}3{% else %}other{% endif %}">
+                                        {{ forloop.parentloop.counter0|add:forloop.counter }}
+                                    </div>
+                                    {% if app.movement %}
+                                        <div class="movement-arrow movement-arrow-{{ app.movement.type }}" 
+                                             title="{{ app.movement.description }}">
+                                            <i class="fas fa-arrow-{% if app.movement.type == 'up' %}up{% elif app.movement.type == 'down' %}down{% else %}minus{% endif %}"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="child-avatar">{{ app.child_full_name|slice:":1"|upper }}</div>
+                                    <div>
+                                        <div class="fw-semibold" style="font-size: 0.75rem;">{{ app.child_full_name|truncatechars:30 }}</div>
+                                        <small class="text-muted" style="font-size: 0.65rem;">
+                                            родитель: {{ app.parent.user.get_full_name|default:app.parent.user.username|truncatechars:20 }}
+                                        </small>
+                                        {% if app.is_guaranteed %}
+                                        <div class="guarantee-progress mt-1">
+                                            <div class="guarantee-progress-fill" style="width: 100%"></div>
+                                        </div>
+                                        <small class="text-success fw-bold">✅ Гарантированное место</small>
+                                        {% elif app.is_borderline %}
+                                        <div class="guarantee-progress mt-1">
+                                            <div class="guarantee-progress-fill" style="width: 65%"></div>
+                                        </div>
+                                        <small class="text-warning fw-bold">⚠️ Пограничная зона</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <td>
+                                <div>{{ app.child_birth_date|date:"d.m.Y" }}</div>
+                                <small class="text-muted">{{ app.get_age }} лет</small>
+                            </td>
+                            
+                            <td>
+                                <div>{{ app.created_at|date:"d.m.Y" }}</div>
+                                <small class="text-muted">{{ app.created_at|date:"H:i" }}</small>
+                            </td>
+                            
+                            <td>
+                                <span class="benefit-badge benefit-{{ app.benefit_category }}">
+                                    <i class="fas fa-{% if app.benefit_category == 'extraordinary' %}crown{% elif app.benefit_category == 'priority' %}medal{% elif app.benefit_category == 'preferential' %}star{% else %}times{% endif %} me-1"></i>
+                                    {{ app.get_benefit_category_display|default:"Нет"|truncatechars:12 }}
+                                </span>
+                            </td>
+                            
+                            <td>
+                                <span class="badge-status badge-{{ app.status }}">
+                                    <i class="fas fa-{% if app.status == 'queue' %}clock{% elif app.status == 'invited' %}envelope{% elif app.status == 'processing' %}spinner{% elif app.status == 'enrolled' %}check{% endif %} me-1"></i>
+                                    {{ app.get_status_display_verbose|default:app.get_status_display }}
+                                </span>
+                            </td>
+                            
+                            <td>
+                                <div class="action-buttons-group">
+                                    {% if app.status == 'queue' %}
+                                    <button class="action-btn invite" data-action="invite" data-id="{{ app.id }}" title="Пригласить">
+                                        <i class="fas fa-envelope"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button class="action-btn history" data-action="history" data-id="{{ app.id }}" title="История">
+                                        <i class="fas fa-chart-line"></i>
+                                    </button>
+                                    <button class="action-btn view" data-action="view" data-id="{{ app.id }}" title="Просмотр">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                Нет заявлений
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ПАГИНАЦИЯ -->
+    {% if applications.has_other_pages %}
+    <div class="d-flex justify-content-center mt-3">
+        <nav>
+            <ul class="pagination">
+                {% if applications.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if status_filter %}&status={{ status_filter }}{% endif %}{% if benefit_filter %}&benefit={{ benefit_filter }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ applications.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if benefit_filter %}&benefit={{ benefit_filter }}{% endif %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in applications.paginator.page_range %}
+                    {% if num == applications.number %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > applications.number|add:'-3' and num < applications.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if benefit_filter %}&benefit={{ benefit_filter }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if applications.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ applications.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if benefit_filter %}&benefit={{ benefit_filter }}{% endif %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ applications.paginator.num_pages }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if benefit_filter %}&benefit={{ benefit_filter }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ПЛАВАЮЩАЯ ПАНЕЛЬ -->
+<div id="batchActions" class="batch-actions">
+    <span id="selectedCount" class="selected-count">0 выбрано</span>
+    <button id="batchInviteBtn"><i class="fas fa-envelope me-1"></i> Пригласить</button>
+    <button id="closeBatchBtn"><i class="fas fa-times"></i></button>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ПРОСМОТРА ЗАЯВЛЕНИЯ (полная информация) -->
+<div id="viewModal" class="modal-overlay">
+    <div class="modal-window">
+        <div class="modal-header-custom">
+            <h4 id="viewModalTitle"><i class="fas fa-file-alt me-2"></i>Заявление</h4>
+            <button class="modal-close" onclick="closeViewModal()">&times;</button>
+        </div>
+        <div id="viewModalBody" class="modal-body-custom">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <p class="mt-3 text-muted">Загрузка данных...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ИСТОРИИ -->
+<div id="historyModal" class="modal-overlay">
+    <div class="modal-window">
+        <div class="modal-header-custom">
+            <h4><i class="fas fa-chart-line me-2"></i>История движения</h4>
+            <button class="modal-close" onclick="closeHistoryModal()">&times;</button>
+        </div>
+        <div id="historyModalBody" class="modal-body-custom">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <p class="mt-3 text-muted">Загрузка истории...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PDF просмотрщик -->
+<div id="pdfViewerModal" class="pdf-viewer-modal">
+    <div class="pdf-viewer-header">
+        <span><i class="fas fa-file-pdf me-2"></i>Просмотр документа</span>
+        <button class="pdf-viewer-close" onclick="closePdfViewer()">&times;</button>
+    </div>
+    <div class="pdf-viewer-content">
+        <iframe id="pdfViewerIframe" src=""></iframe>
+    </div>
+</div>
+
+<!-- Просмотр изображения -->
+<div id="imageViewerModal" class="image-viewer-modal">
+    <button class="image-viewer-close" onclick="closeImageViewer()">&times;</button>
+    <div class="image-viewer-content">
+        <img id="imageViewerImg" src="" alt="Просмотр изображения">
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    
+    let csrfToken = null;
+    let currentStreamFilter = 'all';
+    
+    function getCsrfToken() {
+        if (csrfToken) return csrfToken;
+        const token = document.querySelector('[name=csrf-token]')?.getAttribute('content');
+        if (token) {
+            csrfToken = token;
+            return token;
+        }
+        const cookieMatch = document.cookie.match(/csrftoken=([^;]+)/);
+        csrfToken = cookieMatch ? cookieMatch[1] : '';
+        return csrfToken;
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function formatFileSize(bytes) {
+        if (!bytes) return '0 Б';
+        if (bytes < 1024) return bytes + ' Б';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' КБ';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' МБ';
+    }
+    
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed; bottom: 80px; right: 20px;
+            background: ${type === 'success' ? '#10b981' : '#ef4444'};
+            color: white; padding: 10px 18px; border-radius: 30px;
+            font-size: 0.8rem; font-weight: 500; z-index: 1000000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        `;
+        notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i> ${message}`;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+    }
+    
+    // ========== ПРОСМОТР ФАЙЛОВ ==========
+    function openFileViewer(url, fileType) {
+        if (fileType === 'pdf') {
+            const pdfViewer = document.getElementById('pdfViewerModal');
+            const iframe = document.getElementById('pdfViewerIframe');
+            if (iframe && pdfViewer) {
+                iframe.src = url;
+                pdfViewer.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        } else if (fileType === 'image') {
+            const imageViewer = document.getElementById('imageViewerModal');
+            const img = document.getElementById('imageViewerImg');
+            if (img && imageViewer) {
+                img.src = url;
+                imageViewer.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        } else {
+            window.open(url, '_blank');
+        }
+    }
+    
+    function downloadFile(url, fileName) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    function getFileType(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        if (ext === 'pdf') return 'pdf';
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) return 'image';
+        return 'other';
+    }
+    
+    window.closePdfViewer = function() {
+        const pdfViewer = document.getElementById('pdfViewerModal');
+        const iframe = document.getElementById('pdfViewerIframe');
+        if (pdfViewer) {
+            pdfViewer.classList.remove('active');
+            if (iframe) iframe.src = '';
+            document.body.style.overflow = '';
+        }
+    };
+    
+    window.closeImageViewer = function() {
+        const imageViewer = document.getElementById('imageViewerModal');
+        const img = document.getElementById('imageViewerImg');
+        if (imageViewer) {
+            imageViewer.classList.remove('active');
+            if (img) img.src = '';
+            document.body.style.overflow = '';
+        }
+    };
+    
+    // ========== МОДАЛЬНОЕ ОКНО ПРОСМОТРА ==========
+    window.openViewModal = function(applicationId) {
+        const modal = document.getElementById('viewModal');
+        const body = document.getElementById('viewModalBody');
+        const title = document.getElementById('viewModalTitle');
+        
+        if (!modal) return;
+        
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        if (title) title.innerHTML = `<i class="fas fa-file-alt me-2"></i>Заявление №${applicationId}`;
+        if (body) {
+            body.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-3 text-muted">Загрузка данных...</p>
+                </div>
+            `;
+        }
+        
+        fetch(`/applications/api/application/${applicationId}/`, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (body) {
+                const statusMap = {
+                    'draft': 'Черновик', 'pending': 'На проверке', 'queue': 'В очереди',
+                    'invited': 'Приглашен', 'processing': 'На оформлении', 'enrolled': 'Зачислен'
+                };
+                const benefitMap = {
+                    'extraordinary': 'Внеочередное', 'priority': 'Первоочередное',
+                    'preferential': 'Преимущественное', 'none': 'Нет'
+                };
+                
+                // Формируем HTML с полной информацией
+                let documentsHtml = '';
+                if (data.documents && data.documents.length > 0) {
+                    documentsHtml = `
+                        <div class="info-section">
+                            <div class="info-section-title"><i class="fas fa-paperclip me-2"></i>Прикрепленные документы</div>
+                            <div class="documents-grid">
+                                ${data.documents.map(doc => {
+                                    const fileType = getFileType(doc.name);
+                                    const typeIcon = fileType === 'pdf' ? 'fa-file-pdf' : (fileType === 'image' ? 'fa-file-image' : 'fa-file');
+                                    const typeColor = fileType === 'pdf' ? '#dc2626' : (fileType === 'image' ? '#10b981' : '#6b7280');
+                                    return `
+                                        <div class="document-card d-flex align-items-center gap-3">
+                                            <div class="document-icon" style="background: ${typeColor}">
+                                                <i class="fas ${typeIcon}"></i>
+                                            </div>
+                                            <div class="document-info">
+                                                <div class="document-name">${escapeHtml(doc.name)}</div>
+                                                <div class="document-size">${formatFileSize(doc.size)}</div>
+                                            </div>
+                                            <div class="document-actions">
+                                                <button class="doc-action-btn" onclick="openFileViewer('${doc.url}', '${fileType}')" title="Просмотреть">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="doc-action-btn" onclick="downloadFile('${doc.url}', '${escapeHtml(doc.name)}')" title="Скачать">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Фото родителя
+                const parentPhotoHtml = data.parent_photo ? `
+                    <div class="text-center mb-3">
+                        <img src="${data.parent_photo}" class="parent-photo" alt="Фото родителя" onclick="openFileViewer('${data.parent_photo}', 'image')">
+                        <div class="mt-2 small text-muted">${escapeHtml(data.parent_name || 'Родитель')}</div>
+                    </div>
+                ` : '';
+                
+                body.innerHTML = `
+                    ${parentPhotoHtml}
+                    
+                    <div class="info-section">
+                        <div class="info-section-title"><i class="fas fa-child me-2"></i>Информация о ребенке</div>
+                        <div class="info-row">
+                            <div class="info-label">ФИО ребенка:</div>
+                            <div class="info-value"><strong>${escapeHtml(data.child_full_name || '—')}</strong></div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Дата рождения:</div>
+                            <div class="info-value">${data.child_birth_date || '—'} (${data.child_age || '?'} лет)</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">СНИЛС ребенка:</div>
+                            <div class="info-value">${escapeHtml(data.child_snils || '—')}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Полис ОМС:</div>
+                            <div class="info-value">${escapeHtml(data.insurance_policy || '—')}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <div class="info-section-title"><i class="fas fa-users me-2"></i>Информация о родителях</div>
+                        ${data.mother_full_name ? `
+                        <div class="info-row">
+                            <div class="info-label">Мать:</div>
+                            <div class="info-value">${escapeHtml(data.mother_full_name)}</div>
+                        </div>
+                        ` : ''}
+                        ${data.mother_phone ? `
+                        <div class="info-row">
+                            <div class="info-label">Телефон матери:</div>
+                            <div class="info-value">${escapeHtml(data.mother_phone)}</div>
+                        </div>
+                        ` : ''}
+                        ${data.father_full_name ? `
+                        <div class="info-row">
+                            <div class="info-label">Отец:</div>
+                            <div class="info-value">${escapeHtml(data.father_full_name)}</div>
+                        </div>
+                        ` : ''}
+                        ${data.father_phone ? `
+                        <div class="info-row">
+                            <div class="info-label">Телефон отца:</div>
+                            <div class="info-value">${escapeHtml(data.father_phone)}</div>
+                        </div>
+                        ` : ''}
+                        <div class="info-row">
+                            <div class="info-label">Email:</div>
+                            <div class="info-value">${escapeHtml(data.email || '—')}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Адрес:</div>
+                            <div class="info-value">${escapeHtml(data.address || '—')}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <div class="info-section-title"><i class="fas fa-info-circle me-2"></i>Информация о заявлении</div>
+                        <div class="info-row">
+                            <div class="info-label">Номер заявления:</div>
+                            <div class="info-value">${data.application_number || data.id || '—'}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Дата подачи:</div>
+                            <div class="info-value">${data.created_at || '—'}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Позиция в очереди:</div>
+                            <div class="info-value"><span class="badge bg-primary">${data.queue_position || '—'}</span></div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Льгота:</div>
+                            <div class="info-value"><span class="benefit-badge benefit-${data.benefit_category || 'none'}">${benefitMap[data.benefit_category] || 'Нет'}</span></div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Статус:</div>
+                            <div class="info-value"><span class="badge-status badge-${data.status || 'pending'}">${statusMap[data.status] || data.status}</span></div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Желаемая группа:</div>
+                            <div class="info-value">${escapeHtml(data.desired_group || '—')}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Доп. информация:</div>
+                            <div class="info-value">${escapeHtml(data.additional_info || '—')}</div>
+                        </div>
+                    </div>
+                    
+                    ${documentsHtml}
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            if (body) {
+                body.innerHTML = '<div class="text-center py-4 text-danger">❌ Ошибка загрузки данных</div>';
+            }
+            showNotification('Ошибка загрузки данных', 'error');
+        });
+    };
+    
+    window.closeViewModal = function() {
+        const modal = document.getElementById('viewModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    };
+    
+    // ========== ИСТОРИЯ ==========
+    window.openHistoryModal = function(applicationId) {
+        const modal = document.getElementById('historyModal');
+        const body = document.getElementById('historyModalBody');
+        
+        if (!modal) return;
+        
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        if (body) {
+            body.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-3 text-muted">Загрузка истории...</p>
+                </div>
+            `;
+        }
+        
+        fetch(`/applications/api/application/${applicationId}/history/`, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (body) {
+                if (data.history && data.history.length > 0) {
+                    body.innerHTML = data.history.map(item => `
+                        <div class="d-flex gap-2 p-2 bg-light rounded mb-2" style="border-left: 3px solid #667eea;">
+                            <i class="fas fa-arrow-${item.movement_type === 'up' ? 'up text-success' : item.movement_type === 'down' ? 'down text-danger' : 'right text-muted'}"></i>
+                            <div>
+                                <strong>${item.old_position || '?'} → ${item.new_position}</strong>
+                                <div class="small text-muted">${item.date || ''}</div>
+                                ${item.reason ? `<div class="small text-muted mt-1">📝 ${escapeHtml(item.reason)}</div>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    body.innerHTML = '<div class="text-center py-4 text-muted">📭 Нет истории движений</div>';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            if (body) {
+                body.innerHTML = '<div class="text-center py-4 text-danger">❌ Ошибка загрузки истории</div>';
+            }
+            showNotification('Ошибка загрузки истории', 'error');
+        });
+    };
+    
+    window.closeHistoryModal = function() {
+        const modal = document.getElementById('historyModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    };
+    
+    // ========== ПРИГЛАШЕНИЕ ==========
+    window.inviteApplication = function(applicationId, button) {
+        if (!confirm('Пригласить родителя на оформление?')) return;
+        
+        const originalHtml = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+        
+        fetch(`/applications/api/application/${applicationId}/invite/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('✅ Приглашение отправлено!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification(data.error || '❌ Ошибка', 'error');
+                button.innerHTML = originalHtml;
+                button.disabled = false;
+            }
+        })
+        .catch(() => {
+            showNotification('❌ Ошибка сети', 'error');
+            button.innerHTML = originalHtml;
+            button.disabled = false;
+        });
+    };
+    
+    // ========== ФИЛЬТРЫ ==========
+    function applyFilters() {
+        const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+        const benefit = document.getElementById('benefitFilter')?.value || '';
+        const status = document.getElementById('statusFilter')?.value || '';
+        
+        document.querySelectorAll('#tableBody tr[data-id]').forEach(row => {
+            const name = row.dataset.name || '';
+            const benefitVal = row.dataset.benefit || '';
+            const statusVal = row.dataset.status || '';
+            
+            const matchSearch = !search || name.includes(search);
+            const matchBenefit = !benefit || benefitVal === benefit;
+            const matchStatus = !status || statusVal === status;
+            
+            row.style.display = (matchSearch && matchBenefit && matchStatus) ? '' : 'none';
+        });
+        
+        const rows = document.querySelectorAll('#tableBody tr[data-id]');
+        rows.forEach(row => {
+            const stream = row.dataset.stream;
+            let show = true;
+            
+            if (currentStreamFilter === 'benefit') {
+                show = stream === 'benefit';
+            } else if (currentStreamFilter === 'general') {
+                show = stream === 'general';
+            } else if (currentStreamFilter === 'guaranteed') {
+                show = row.classList.contains('guaranteed');
+            } else if (currentStreamFilter === 'borderline') {
+                show = row.classList.contains('borderline');
+            }
+            
+            if (show && row.style.display !== 'none') {
+                row.style.display = '';
+            } else if (!show) {
+                row.style.display = 'none';
+            }
+        });
+        
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            if (btn.dataset.stream === currentStreamFilter) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        document.querySelectorAll('.stream-separator').forEach(sep => {
+            let hasVisible = false;
+            let next = sep.nextElementSibling;
+            while (next && !next.classList.contains('stream-separator')) {
+                if (next.style.display !== 'none') {
+                    hasVisible = true;
+                    break;
+                }
+                next = next.nextElementSibling;
+            }
+            sep.style.display = hasVisible ? '' : 'none';
+        });
+    }
+    
+    function resetFilters() {
+        const search = document.getElementById('searchInput');
+        const benefit = document.getElementById('benefitFilter');
+        const status = document.getElementById('statusFilter');
+        
+        if (search) search.value = '';
+        if (benefit) benefit.value = '';
+        if (status) status.value = '';
+        
+        currentStreamFilter = 'all';
+        applyFilters();
+    }
+    
+    // ========== МАССОВЫЕ ОПЕРАЦИИ ==========
+    function updateBatchActions() {
+        const checked = document.querySelectorAll('.row-checkbox:checked');
+        const panel = document.getElementById('batchActions');
+        const countSpan = document.getElementById('selectedCount');
+        
+        if (checked.length > 0 && panel && countSpan) {
+            panel.classList.add('show');
+            countSpan.textContent = `${checked.length} выбрано`;
+        } else if (panel) {
+            panel.classList.remove('show');
+        }
+    }
+    
+    function batchInvite() {
+        const checked = document.querySelectorAll('.row-checkbox:checked');
+        if (checked.length === 0) return;
+        if (!confirm(`Пригласить ${checked.length} заявителей?`)) return;
+        
+        let successCount = 0;
+        let failCount = 0;
+        const promises = Array.from(checked).map(cb => {
+            const id = parseInt(cb.dataset.id);
+            return fetch(`/applications/api/application/${id}/invite/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken(), 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(data => data.success ? successCount++ : failCount++)
+            .catch(() => failCount++);
+        });
+        
+        Promise.all(promises).then(() => {
+            showNotification(`Приглашено: ${successCount}, ошибок: ${failCount}`, successCount > 0 ? 'success' : 'error');
+            document.querySelectorAll('.row-checkbox:checked').forEach(cb => cb.checked = false);
+            updateBatchActions();
+            if (successCount > 0) setTimeout(() => location.reload(), 1500);
+        });
+    }
+    
+    // ========== ПЕРЕСЧЕТ ==========
+    function recalculateQueue() {
+        const btn = document.getElementById('recalculateBtn');
+        if (!btn || !confirm('Пересчитать очередь?')) return;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>';
+        
+        fetch('/applications/queue/recalculate/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCsrfToken() }
+        })
+        .then(response => {
+            if (response.ok) {
+                showNotification('Очередь пересчитана!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                throw new Error();
+            }
+        })
+        .catch(() => {
+            showNotification('Ошибка пересчёта', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Пересчитать';
+        });
+    }
+    
+    // ========== ЭКСПОРТ ==========
+    function exportToCSV() {
+        const rows = document.querySelectorAll('#tableBody tr[data-id]:visible');
+        if (!rows.length) {
+            showNotification('Нет данных для экспорта', 'warning');
+            return;
+        }
+        
+        let csv = "\uFEFFПозиция,Ребёнок,Родитель,Дата рождения,Дата подачи,Льгота,Статус\n";
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const pos = cells[1]?.querySelector('.position-badge')?.innerText || '';
+            const child = cells[2]?.querySelector('.fw-semibold')?.innerText || '';
+            const parent = cells[2]?.querySelector('small')?.innerText.replace('родитель: ', '') || '';
+            const birthdate = cells[3]?.innerText.split('\n')[0] || '';
+            const created = cells[4]?.innerText.split('\n')[0] || '';
+            const benefit = cells[5]?.innerText || '';
+            const status = cells[6]?.innerText || '';
+            
+            csv += `"${pos}","${child}","${parent}","${birthdate}","${created}","${benefit}","${status}"\n`;
+        });
+        
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `очередь_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        showNotification(`Экспортировано ${rows.length} записей`, 'success');
+    }
+    
+    // ========== ИНИЦИАЛИЗАЦИЯ ==========
+    function init() {
+        // Кнопки действий
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const action = this.dataset.action;
+                const id = parseInt(this.dataset.id);
+                
+                if (action === 'view') {
+                    window.openViewModal(id);
+                } else if (action === 'history') {
+                    window.openHistoryModal(id);
+                } else if (action === 'invite') {
+                    window.inviteApplication(id, this);
+                }
+            });
+        });
+        
+        // Закрытие модалок по Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.closeViewModal();
+                window.closeHistoryModal();
+                window.closePdfViewer();
+                window.closeImageViewer();
+            }
+        });
+        
+        // Закрытие по клику на оверлей
+        document.getElementById('viewModal')?.addEventListener('click', function(e) {
+            if (e.target === this) window.closeViewModal();
+        });
+        document.getElementById('historyModal')?.addEventListener('click', function(e) {
+            if (e.target === this) window.closeHistoryModal();
+        });
+        document.getElementById('pdfViewerModal')?.addEventListener('click', function(e) {
+            if (e.target === this || e.target.classList.contains('pdf-viewer-content')) {
+                window.closePdfViewer();
+            }
+        });
+        document.getElementById('imageViewerModal')?.addEventListener('click', function(e) {
+            if (e.target === this) window.closeImageViewer();
+        });
+        
+        // Фильтры
+        const searchInput = document.getElementById('searchInput');
+        const benefitFilter = document.getElementById('benefitFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const resetBtn = document.getElementById('resetFilters');
+        
+        if (searchInput) searchInput.addEventListener('keyup', applyFilters);
+        if (benefitFilter) benefitFilter.addEventListener('change', applyFilters);
+        if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+        if (resetBtn) resetBtn.addEventListener('click', resetFilters);
+        
+        // Быстрые фильтры
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentStreamFilter = btn.dataset.stream;
+                applyFilters();
+            });
+        });
+        
+        // Карточки статистики
+        document.querySelectorAll('.stats-card[data-filter-status]').forEach(card => {
+            card.addEventListener('click', () => {
+                const statusFilterEl = document.getElementById('statusFilter');
+                if (statusFilterEl) {
+                    statusFilterEl.value = card.dataset.filterStatus;
+                    applyFilters();
+                }
+            });
+        });
+        
+        // Возрастные карточки
+        document.querySelectorAll('.age-card[data-age-category]').forEach(card => {
+            card.addEventListener('click', () => {
+                const params = new URLSearchParams(window.location.search);
+                params.set('age_category', card.dataset.ageCategory);
+                window.location.href = window.location.pathname + '?' + params.toString();
+            });
+        });
+        
+        // Массовые операции
+        const selectAll = document.getElementById('selectAllCheckbox');
+        if (selectAll) {
+            selectAll.addEventListener('change', (e) => {
+                document.querySelectorAll('.row-checkbox:visible').forEach(cb => cb.checked = e.target.checked);
+                updateBatchActions();
+            });
+        }
+        
+        document.querySelectorAll('.row-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateBatchActions);
+        });
+        
+        const batchInviteBtn = document.getElementById('batchInviteBtn');
+        if (batchInviteBtn) batchInviteBtn.addEventListener('click', batchInvite);
+        
+        const closeBatchBtn = document.getElementById('closeBatchBtn');
+        if (closeBatchBtn) {
+            closeBatchBtn.addEventListener('click', () => {
+                document.querySelectorAll('.row-checkbox:checked').forEach(cb => cb.checked = false);
+                updateBatchActions();
+            });
+        }
+        
+        const recalcBtn = document.getElementById('recalculateBtn');
+        if (recalcBtn) recalcBtn.addEventListener('click', recalculateQueue);
+        
+        const exportBtn = document.getElementById('exportExcelBtn');
+        if (exportBtn) exportBtn.addEventListener('click', exportToCSV);
+        
+        console.log('✅ Страница очереди инициализирована');
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    
+    document.addEventListener('pjax:complete', () => setTimeout(init, 100));
+})();
+</script>
+{% endblock %}

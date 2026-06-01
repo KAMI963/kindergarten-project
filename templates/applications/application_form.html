@@ -1,0 +1,1175 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 10px;
+    }
+    
+    .form-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .form-card .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 12px 20px;
+        border-bottom: none;
+    }
+    
+    .form-card .card-header h4 {
+        color: white;
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .form-card .card-body {
+        padding: 0;
+    }
+    
+    .vertical-tabs-container {
+        display: flex;
+        min-height: auto;
+    }
+    
+    .tabs-sidebar {
+        width: 280px;
+        background: #f8fafc;
+        border-right: 1px solid #e2e8f0;
+        padding: 15px 0;
+        flex-shrink: 0;
+    }
+    
+    .sidebar-progress {
+        padding: 0 15px 15px;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 15px;
+    }
+    
+    .progress-label {
+        font-size: 0.65rem;
+        color: #64748b;
+        margin-bottom: 5px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .progress {
+        height: 4px;
+        border-radius: 2px;
+        background: #e2e8f0;
+    }
+    
+    .progress-bar {
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transition: width 0.3s ease;
+    }
+    
+    .tab-btn {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 8px 15px;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+        border-left: 3px solid transparent;
+    }
+    
+    .tab-btn i {
+        width: 20px;
+        margin-right: 8px;
+        font-size: 0.85rem;
+    }
+    
+    .tab-btn:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+    
+    .tab-btn.active {
+        background: white;
+        color: #667eea;
+        border-left-color: #667eea;
+        font-weight: 600;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    
+    .tab-btn.completed {
+        color: #10b981;
+    }
+    
+    .tab-btn.completed i {
+        color: #10b981;
+    }
+    
+    .tab-badge {
+        margin-left: auto;
+        font-size: 0.6rem;
+        background: #e2e8f0;
+        padding: 1px 5px;
+        border-radius: 20px;
+    }
+    
+    .tab-btn.completed .tab-badge {
+        background: #d1fae5;
+        color: #059669;
+    }
+    
+    .tabs-content {
+        flex: 1;
+        padding: 15px 20px;
+        background: white;
+        overflow-y: visible;
+        max-height: none;
+    }
+    
+    .tab-pane {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .tab-pane.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-section {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 12px 15px;
+        margin-bottom: 15px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .form-section-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .form-group {
+        margin-bottom: 10px;
+    }
+    
+    .form-control, select, textarea {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        border-radius: 6px;
+    }
+    
+    label {
+        font-size: 0.75rem;
+        margin-bottom: 3px;
+    }
+    
+    .btn-sync {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 4px 12px;
+        font-size: 0.7rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 10px;
+    }
+    
+    .btn-navigation {
+        padding: 6px 18px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    .child-photo-container {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    
+    .child-photo-preview {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #667eea;
+        margin-bottom: 8px;
+        background: #f8fafc;
+    }
+    
+    .child-photo-placeholder {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+    }
+    
+    .child-photo-placeholder i {
+        font-size: 40px;
+        color: white;
+    }
+    
+    .priority-alert {
+        background: #e0f2fe;
+        border-left: 4px solid #0284c7;
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    
+    .priority-alert i {
+        color: #0284c7;
+        margin-right: 8px;
+    }
+    
+    @media (max-width: 768px) {
+        .vertical-tabs-container {
+            flex-direction: column;
+        }
+        .tabs-sidebar {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 10px;
+            overflow-x: auto;
+            display: flex;
+            gap: 5px;
+        }
+        .tab-btn {
+            width: auto;
+            padding: 6px 12px;
+            border-left: none;
+            border-bottom: 2px solid transparent;
+        }
+        .tab-btn.active {
+            border-left: none;
+            border-bottom-color: #667eea;
+        }
+        .sidebar-progress {
+            display: none;
+        }
+        .tabs-content {
+            padding: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid form-container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-header">
+                    <h4>
+                        <i class="fas fa-file-alt me-2"></i>
+                        {{ title }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="vertical-tabs-container">
+                        <div class="tabs-sidebar">
+                            <div class="sidebar-progress">
+                                <div class="progress-label">
+                                    <span>Заполнение заявления</span>
+                                    <span id="progressText">0/7</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="tab-btn active" data-tab="1">
+                                <i class="fas fa-child"></i>
+                                Данные ребенка
+                                <span class="tab-badge">Обязательно</span>
+                            </button>
+                            <button type="button" class="tab-btn" data-tab="2">
+                                <i class="fas fa-certificate"></i>
+                                Свидетельство
+                                <span class="tab-badge">Обязательно</span>
+                            </button>
+                            <button type="button" class="tab-btn" data-tab="3">
+                                <i class="fas fa-folder-open"></i>
+                                Документы ребенка
+                                <span class="tab-badge">Рекомендуется</span>
+                            </button>
+                            <button type="button" class="tab-btn" data-tab="4">
+                                <i class="fas fa-users"></i>
+                                Заявители
+                                <span class="tab-badge">Обязательно</span>
+                            </button>
+                            <button type="button" class="tab-btn" data-tab="5">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Адреса
+                                <span class="tab-badge">Обязательно</span>
+                            </button>
+                            <button type="button" class="tab-btn" data-tab="6">
+                                <i class="fas fa-notes-medical"></i>
+                                Медицина
+                                <span class="tab-badge">Рекомендуется</span>
+                            </button>
+                            <button type="button" class="tab-btn" data-tab="7">
+                                <i class="fas fa-gavel"></i>
+                                Льготы и согласия
+                                <span class="tab-badge">Обязательно</span>
+                            </button>
+                        </div>
+                        
+                        <div class="tabs-content">
+                            <div class="text-end">
+                                <button type="button" class="btn-sync" onclick="syncFromProfile()">
+                                    <i class="fas fa-sync-alt me-1"></i> Заполнить из профиля
+                                </button>
+                            </div>
+                            
+                            <form method="post" enctype="multipart/form-data" id="applicationForm" novalidate>
+                                {% csrf_token %}
+                                
+                                <!-- Вкладка 1: Данные ребенка -->
+                                <div class="tab-pane active" data-tab="1" id="tab1">
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-child"></i>
+                                            Основные данные ребенка
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12 mb-2">
+                                                {{ form.child_full_name|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.child_birth_date|as_crispy_field }}
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.child_gender|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12 mb-2">
+                                                {{ form.child_snils|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Формат: 123-456-789 01
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-camera"></i>
+                                            Фотография ребенка
+                                        </div>
+                                        <div class="child-photo-container">
+                                            <div id="childPhotoPreview">
+                                                {% if form.child_photo.value %}
+                                                    <img src="{{ form.child_photo.value.url }}" class="child-photo-preview" id="childPhotoImg">
+                                                {% else %}
+                                                    <div class="child-photo-placeholder" id="childPhotoPlaceholder">
+                                                        <i class="fas fa-child"></i>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="mt-2">
+                                                {{ form.child_photo }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Рекомендуемый размер: 300x300 пикселей. Форматы: JPG, PNG (до 5MB)
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Вкладка 2: Свидетельство о рождении -->
+                                <div class="tab-pane" data-tab="2" id="tab2">
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-certificate"></i>
+                                            Свидетельство о рождении
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-2">
+                                                {{ form.birth_certificate_series|as_crispy_field }}
+                                                <small class="text-muted" style="font-size: 0.65rem;">Формат: IV-АМ</small>
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                {{ form.birth_certificate_number|as_crispy_field }}
+                                                <small class="text-muted" style="font-size: 0.65rem;">6 цифр</small>
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                {{ form.birth_certificate_issue_date|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.birth_certificate_issued_by|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.birth_certificate_file|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Скан свидетельства о рождении (PDF, JPG, PNG)
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.birth_certificate_translation|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Для иностранных граждан
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Вкладка 3: Документы ребенка (НОВЫЕ) -->
+                                <div class="tab-pane" data-tab="3" id="tab3">
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-id-card"></i>
+                                            СНИЛС и документы
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.child_snils_file|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Скан СНИЛС ребенка (если есть)
+                                                </small>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.insurance_policy_file|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Скан полиса ОМС/ДМС
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-syringe"></i>
+                                            Медицинские документы
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.vaccination_certificate_file|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Сертификат о прививках форма № 063/у
+                                                </small>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.medical_card_a4_file|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Медицинская карта форма № 026/у (А4)
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-stethoscope"></i>
+                                            Дополнительные медицинские документы
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.medical_card|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Основная медицинская карта *
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.health_certificate_oz|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Для оздоровительной группы
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.pmpk_conclusion|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Для компенсирующей группы
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Вкладка 4: Заявители (ОБНОВЛЕНА) -->
+                                <div class="tab-pane" data-tab="4" id="tab4">
+                                    <!-- ЗАЯВИТЕЛЬ 1 (ОСНОВНОЙ) -->
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-user-check"></i>
+                                            Заявитель (лицо, подписывающее документы)
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.applicant1_full_name|as_crispy_field }}
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.applicant1_phone|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12 mb-2">
+                                                <div class="form-check">
+                                                    {{ form.applicant1_is_primary }}
+                                                    <label class="form-check-label" for="{{ form.applicant1_is_primary.id_for_label }}">
+                                                        {{ form.applicant1_is_primary.label }}
+                                                    </label>
+                                                    <small class="text-muted d-block">
+                                                        Основной заявитель будет указан в договоре как плательщик
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.applicant1_passport_file|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Скан паспорта (главная страница + прописка) *
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- ЗАЯВИТЕЛЬ 2 (ВТОРОЙ РОДИТЕЛЬ) -->
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-user-friends"></i>
+                                            Второй заявитель (при наличии)
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.applicant2_full_name|as_crispy_field }}
+                                                <small class="text-muted">Если заполнено, потребуется согласие второго родителя</small>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.applicant2_phone|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.applicant2_passport_file|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Контактные данные (общие) -->
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-phone-alt"></i>
+                                            Контактные данные для связи
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.phone_number|as_crispy_field }}
+                                                <small class="text-muted">Основной телефон для связи</small>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.email|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Вкладка 5: Адреса -->
+                                <div class="tab-pane" data-tab="5" id="tab5">
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-home"></i>
+                                            Адреса проживания
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.registration_address|as_crispy_field }}
+                                                <small class="text-muted">Адрес постоянной регистрации</small>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.actual_address|as_crispy_field }}
+                                                <small class="text-muted">Если отличается от адреса регистрации</small>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.residence_certificate|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Справка о регистрации (форма №9) или выписка из домовой книги *
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Вкладка 6: Медицина -->
+                                <div class="tab-pane" data-tab="6" id="tab6">
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-notes-medical"></i>
+                                            Медицинские данные
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.blood_type|as_crispy_field }}
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                {{ form.has_vaccinations|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.allergies|as_crispy_field }}
+                                                <small class="text-muted">Аллергические реакции (пищевые, лекарственные и т.д.)</small>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.chronic_diseases|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.special_needs|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Вкладка 7: Льготы и согласия (ОБНОВЛЕНА) -->
+                                <div class="tab-pane" data-tab="7" id="tab7">
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-star-of-life"></i>
+                                            Категория льготы
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-3">
+                                                {{ form.benefit_category|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Отображение очерёдности зачисления -->
+                                        <div id="priorityDisplay" class="priority-alert" style="display: none;">
+                                            <i class="fas fa-chart-line"></i>
+                                            <strong>Очерёдность зачисления:</strong> 
+                                            <span id="priorityText"></span>
+                                        </div>
+                                        
+                                        <!-- Динамическое поле для выбора брата/сестры -->
+                                        <div class="row" id="siblingSelectRow" style="display: none;">
+                                            <div class="col-12 mb-2">
+                                                <label class="form-label">Выберите брата/сестру, который уже посещает детский сад</label>
+                                                {{ form.sibling_child_id }}
+                                                <small class="text-muted d-block mt-1">
+                                                    Если брат/сестра уже посещает наш детский сад, выберите его из списка
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                {{ form.benefit_document_right|as_crispy_field }}
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">
+                                                    Подтверждающий документ для льготы (удостоверение, справка, решение суда и т.д.)
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                <div class="form-check">
+                                                    {{ form.sibling_in_kindergarten }}
+                                                    <label class="form-check-label" for="{{ form.sibling_in_kindergarten.id_for_label }}">
+                                                        {{ form.sibling_in_kindergarten.label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-balance-scale"></i>
+                                            Особые обстоятельства
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    {{ form.is_foreign_citizen }}
+                                                    <label class="form-check-label" for="{{ form.is_foreign_citizen.id_for_label }}">
+                                                        {{ form.is_foreign_citizen.label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    {{ form.is_guardianship }}
+                                                    <label class="form-check-label" for="{{ form.is_guardianship.id_for_label }}">
+                                                        {{ form.is_guardianship.label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    {{ form.require_health_group }}
+                                                    <label class="form-check-label" for="{{ form.require_health_group.id_for_label }}">
+                                                        {{ form.require_health_group.label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    {{ form.require_compensating_group }}
+                                                    <label class="form-check-label" for="{{ form.require_compensating_group.id_for_label }}">
+                                                        {{ form.require_compensating_group.label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-section">
+                                        <div class="form-section-title">
+                                            <i class="fas fa-file-signature"></i>
+                                            Согласия
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            {{ form.data_processing_consent }}
+                                            <label class="form-check-label" for="{{ form.data_processing_consent.id_for_label }}" style="font-size: 0.75rem;">
+                                                {{ form.data_processing_consent.label }}
+                                            </label>
+                                            <small class="form-text text-muted d-block" style="font-size: 0.65rem;">
+                                                <a href="/media/documents/Согласие.pdf" target="_blank">Скачать Согласие</a>
+                                            </small>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            {{ form.rules_acquainted }}
+                                            <label class="form-check-label" for="{{ form.rules_acquainted.id_for_label }}" style="font-size: 0.75rem;">
+                                                {{ form.rules_acquainted.label }}
+                                            </label>
+                                            <small class="form-text text-muted d-block" style="font-size: 0.65rem;">
+                                                <a href="/media/documents/Правила_внутреннего_распорядка_воспитанников.pdf" target="_blank">Скачать Правила</a>
+                                            </small>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            {{ form.medical_examination_consent }}
+                                            <label class="form-check-label" for="{{ form.medical_examination_consent.id_for_label }}" style="font-size: 0.75rem;">
+                                                {{ form.medical_examination_consent.label }}
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            {{ form.photo_video_consent }}
+                                            <label class="form-check-label" for="{{ form.photo_video_consent.id_for_label }}" style="font-size: 0.75rem;">
+                                                {{ form.photo_video_consent.label }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3 d-flex justify-content-between">
+                                    <button type="button" class="btn btn-secondary btn-navigation" id="prevBtn">
+                                        <i class="fas fa-chevron-left"></i> Назад
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-navigation" id="nextBtn">
+                                        Далее <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                    <button type="submit" class="btn btn-success btn-navigation" id="submitBtn" style="display: none;">
+                                        <i class="fas fa-save"></i> Сохранить заявление
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+// Глобальная функция инициализации
+window.initApplicationForm = function() {
+    console.log('Инициализация формы заявления...');
+    
+    let currentTab = 1;
+    const totalTabs = 7;
+    let completedTabs = [];
+    
+    // Функция для получения текста приоритета по выбранной льготе
+    function getPriorityText(categoryValue) {
+        const priorityMap = {
+            'extraordinary_sibling': 'ВНЕОЧЕРЕДНОЕ право (150 баллов) - приоритет 1',
+            'extraordinary': 'ВНЕОЧЕРЕДНОЕ право (100 баллов) - приоритет 1',
+            'extraordinary_judge': 'ВНЕОЧЕРЕДНОЕ право (100 баллов) - приоритет 1',
+            'extraordinary_military_svo': 'ВНЕОЧЕРЕДНОЕ право (100 баллов) - приоритет 1',
+            'extraordinary_chernobyl': 'ВНЕОЧЕРЕДНОЕ право (100 баллов) - приоритет 1',
+            'priority_sibling': 'ПЕРВООЧЕРЕДНОЕ право (80 баллов) - приоритет 2',
+            'priority': 'ПЕРВООЧЕРЕДНОЕ право (50 баллов) - приоритет 2',
+            'priority_disability': 'ПЕРВООЧЕРЕДНОЕ право (50 баллов) - приоритет 2',
+            'priority_large_family': 'ПЕРВООЧЕРЕДНОЕ право (50 баллов) - приоритет 2',
+            'priority_parent_disability': 'ПЕРВООЧЕРЕДНОЕ право (50 баллов) - приоритет 2',
+            'priority_military': 'ПЕРВООЧЕРЕДНОЕ право (50 баллов) - приоритет 2',
+            'priority_police': 'ПЕРВООЧЕРЕДНОЕ право (50 баллов) - приоритет 2',
+            'preferential_sibling': 'ПРЕИМУЩЕСТВЕННОЕ право (30 баллов) - приоритет 3',
+            'preferential': 'ПРЕИМУЩЕСТВЕННОЕ право (25 баллов) - приоритет 3',
+            'none': 'БЕЗ ЛЬГОТЫ (0 баллов) - общая очередь'
+        };
+        return priorityMap[categoryValue] || 'Обычная очередь';
+    }
+    
+    // Функция обновления отображения приоритета
+    function updatePriorityDisplay() {
+        const benefitSelect = document.getElementById('id_benefit_category');
+        const priorityDiv = document.getElementById('priorityDisplay');
+        const priorityTextSpan = document.getElementById('priorityText');
+        
+        if (benefitSelect && priorityDiv && priorityTextSpan) {
+            const selectedValue = benefitSelect.value;
+            const priorityText = getPriorityText(selectedValue);
+            priorityTextSpan.textContent = priorityText;
+            priorityDiv.style.display = 'block';
+        }
+    }
+    
+    // Функция для показа/скрытия выбора брата/сестры
+    function toggleSiblingSelect() {
+        const benefitSelect = document.getElementById('id_benefit_category');
+        const siblingRow = document.getElementById('siblingSelectRow');
+        const siblingCheckbox = document.getElementById('id_sibling_in_kindergarten');
+        
+        if (benefitSelect && siblingRow) {
+            const siblingCategories = ['extraordinary_sibling', 'priority_sibling', 'preferential_sibling'];
+            const showSiblingSelect = siblingCategories.includes(benefitSelect.value);
+            siblingRow.style.display = showSiblingSelect ? 'block' : 'none';
+            
+            // Если показываем выбор, скрываем чекбокс
+            if (siblingCheckbox) {
+                if (showSiblingSelect) {
+                    siblingCheckbox.closest('.form-check').style.display = 'none';
+                } else {
+                    siblingCheckbox.closest('.form-check').style.display = 'block';
+                }
+            }
+        }
+    }
+    
+    // Показ вкладки
+    function showTab(tabNumber) {
+        $('.tab-pane').removeClass('active');
+        $(`.tab-pane[data-tab="${tabNumber}"]`).addClass('active');
+        
+        $('.tab-btn').removeClass('active');
+        $(`.tab-btn[data-tab="${tabNumber}"]`).addClass('active');
+        
+        currentTab = tabNumber;
+        updateNavigationButtons();
+    }
+    
+    // Проверка обязательных полей
+    function validateCurrentTab() {
+        const currentPane = $(`.tab-pane[data-tab="${currentTab}"]`);
+        const requiredFields = currentPane.find('input[required], select[required], textarea[required], input[type="file"][required]');
+        let isValid = true;
+        
+        requiredFields.each(function() {
+            const $field = $(this);
+            if ($field.attr('type') === 'file') {
+                if (!this.files || this.files.length === 0) {
+                    $field.addClass('is-invalid');
+                    if ($field.next('.invalid-feedback').length === 0) {
+                        $field.after('<div class="invalid-feedback">Это поле обязательно для заполнения</div>');
+                    }
+                    isValid = false;
+                } else {
+                    $field.removeClass('is-invalid');
+                    $field.next('.invalid-feedback').remove();
+                }
+            } else if (!$field.val() || $field.val().trim() === '') {
+                $field.addClass('is-invalid');
+                if ($field.next('.invalid-feedback').length === 0) {
+                    $field.after('<div class="invalid-feedback">Это поле обязательно для заполнения</div>');
+                }
+                isValid = false;
+            } else {
+                $field.removeClass('is-invalid');
+                $field.next('.invalid-feedback').remove();
+            }
+        });
+        
+        if (!isValid) {
+            showNotification('Пожалуйста, заполните все обязательные поля', 'danger');
+        }
+        
+        return isValid;
+    }
+    
+    // Отметить вкладку как заполненную
+    function markTabCompleted(tabNumber) {
+        if (!completedTabs.includes(tabNumber)) {
+            completedTabs.push(tabNumber);
+            $(`.tab-btn[data-tab="${tabNumber}"]`).addClass('completed');
+            updateProgress();
+        }
+    }
+    
+    // Обновление прогресса
+    function updateProgress() {
+        const completedCount = completedTabs.length;
+        const percentage = (completedCount / totalTabs) * 100;
+        $('#progressBar').css('width', percentage + '%');
+        $('#progressText').text(`${completedCount}/${totalTabs}`);
+    }
+    
+    // Обновление кнопок
+    function updateNavigationButtons() {
+        $('#prevBtn').prop('disabled', currentTab === 1);
+        
+        if (currentTab === totalTabs) {
+            $('#nextBtn').hide();
+            $('#submitBtn').show();
+        } else {
+            $('#nextBtn').show();
+            $('#submitBtn').hide();
+        }
+    }
+    
+    // Переход на следующую вкладку
+    function nextTab() {
+        if (validateCurrentTab()) {
+            markTabCompleted(currentTab);
+            
+            if (currentTab < totalTabs) {
+                showTab(currentTab + 1);
+            }
+        }
+    }
+    
+    // Переход на предыдущую вкладку
+    function prevTab() {
+        if (currentTab > 1) {
+            showTab(currentTab - 1);
+        }
+    }
+    
+    // Инициализация масок
+    function initMasks() {
+        $('input[name="applicant1_phone"], input[name="applicant2_phone"], input[name="phone_number"]').off('input').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            if (value.length > 0) {
+                if (value.startsWith('7') || value.startsWith('8')) {
+                    value = value.substring(1);
+                }
+                let formatted = '+7(';
+                if (value.length > 0) formatted += value.substring(0, Math.min(3, value.length));
+                if (value.length > 3) formatted += ')' + value.substring(3, Math.min(6, value.length));
+                if (value.length > 6) formatted += '-' + value.substring(6, Math.min(8, value.length));
+                if (value.length > 8) formatted += '-' + value.substring(8, Math.min(10, value.length));
+                $(this).val(formatted);
+            }
+        });
+        
+        $('#id_child_snils').off('input').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            if (value.length >= 11) {
+                value = value.slice(0, 11);
+                $(this).val(`${value.slice(0,3)}-${value.slice(3,6)}-${value.slice(6,9)} ${value.slice(9,11)}`);
+            }
+        });
+    }
+    
+    // Превью фото
+    function initPhotoPreview() {
+        const photoInput = $('input[type="file"][name="child_photo"]');
+        photoInput.off('change').on('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('Размер файла не должен превышать 5MB', 'danger');
+                    $(this).val('');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#childPhotoPreview').html(`<img src="${e.target.result}" class="child-photo-preview">`);
+                };
+                reader.readAsDataURL(file);
+                showNotification('Фото выбрано. Оно будет сохранено при отправке заявления', 'success');
+            }
+        });
+    }
+    
+    // Отслеживание изменений полей
+    function trackFieldChanges() {
+        $('input, select, textarea').off('change').on('change', function() {
+            const currentPane = $(`.tab-pane[data-tab="${currentTab}"]`);
+            const requiredFields = currentPane.find('input[required], select[required], textarea[required]');
+            let allFilled = true;
+            
+            requiredFields.each(function() {
+                if (!$(this).val() || $(this).val().trim() === '') {
+                    allFilled = false;
+                    return false;
+                }
+            });
+            
+            if (allFilled && !completedTabs.includes(currentTab)) {
+                completedTabs.push(currentTab);
+                $(`.tab-btn[data-tab="${currentTab}"]`).addClass('completed');
+                updateProgress();
+            }
+        });
+    }
+    
+    // Обработчики для льгот
+    function initBenefitHandlers() {
+        const benefitSelect = document.getElementById('id_benefit_category');
+        if (benefitSelect) {
+            benefitSelect.addEventListener('change', function() {
+                updatePriorityDisplay();
+                toggleSiblingSelect();
+            });
+            updatePriorityDisplay();
+            toggleSiblingSelect();
+        }
+        
+        // Обработчик чекбокса "Брат/сестра уже посещает"
+        const siblingCheckbox = document.getElementById('id_sibling_in_kindergarten');
+        if (siblingCheckbox) {
+            siblingCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    showNotification('Если брат/сестра уже посещает сад, выберите его в выпадающем списке при выборе соответствующей льготы', 'info');
+                }
+            });
+        }
+    }
+    
+    // Обработчики кнопок
+    $('#nextBtn').off('click').on('click', nextTab);
+    $('#prevBtn').off('click').on('click', prevTab);
+    
+    // Обработчики кликов по вкладкам
+    $('.tab-btn').off('click').on('click', function() {
+        const tabNum = parseInt($(this).data('tab'));
+        if (validateCurrentTab()) {
+            markTabCompleted(currentTab);
+            showTab(tabNum);
+        }
+    });
+    
+    // Инициализация
+    showTab(1);
+    initMasks();
+    initPhotoPreview();
+    trackFieldChanges();
+    initBenefitHandlers();
+    
+    console.log('Инициализация завершена');
+};
+
+// Функция синхронизации с профилем
+window.syncFromProfile = function() {
+    fetch('/applications/sync-from-profile/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.phone_number) {
+                const phoneField = document.querySelector('input[name="phone_number"]');
+                if (phoneField && !phoneField.value) phoneField.value = data.phone_number;
+            }
+            if (data.email) {
+                const emailField = document.querySelector('input[name="email"]');
+                if (emailField && !emailField.value) emailField.value = data.email;
+            }
+            if (data.registration_address) {
+                const regField = document.querySelector('textarea[name="registration_address"]');
+                if (regField && !regField.value) regField.value = data.registration_address;
+            }
+            if (data.actual_address) {
+                const actField = document.querySelector('textarea[name="actual_address"]');
+                if (actField && !actField.value) actField.value = data.actual_address;
+            }
+            if (data.applicant1_full_name) {
+                const applicantField = document.querySelector('input[name="applicant1_full_name"]');
+                if (applicantField && !applicantField.value) applicantField.value = data.applicant1_full_name;
+            }
+            if (data.applicant1_phone) {
+                const applicantPhoneField = document.querySelector('input[name="applicant1_phone"]');
+                if (applicantPhoneField && !applicantPhoneField.value) applicantPhoneField.value = data.applicant1_phone;
+            }
+            showNotification('Данные из профиля загружены!', 'success');
+        } else {
+            showNotification('Ошибка: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при синхронизации', 'danger');
+    });
+};
+
+// Уведомления
+function showNotification(message, type) {
+    const alertDiv = $(`
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert" style="padding: 8px 12px; font-size: 0.8rem;">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" style="padding: 2px;"></button>
+        </div>
+    `);
+    $('.tabs-content').prepend(alertDiv);
+    setTimeout(() => {
+        alertDiv.alert('close');
+    }, 5000);
+}
+
+// Инициализация при загрузке страницы
+$(document).ready(function() {
+    window.initApplicationForm();
+});
+</script>
+{% endblock %}
+{% endblock %}

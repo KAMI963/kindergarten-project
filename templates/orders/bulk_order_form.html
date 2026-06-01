@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Массовое создание приказов - МБДОУ "Рябинушка"{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        {{ title }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="bulkOrderForm">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">{{ form.order_date.label }} *</label>
+                                    {{ form.order_date }}
+                                    {% if form.order_date.errors %}
+                                    <div class="text-danger">{{ form.order_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">{{ form.enrollment_date.label }} *</label>
+                                    {{ form.enrollment_date }}
+                                    {% if form.enrollment_date.errors %}
+                                    <div class="text-danger">{{ form.enrollment_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">{{ form.group.label }}</label>
+                                    {{ form.group }}
+                                    <small class="form-text text-muted">{{ form.group.help_text }}</small>
+                                    {% if form.group.errors %}
+                                    <div class="text-danger">{{ form.group.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label">{{ form.basis_documents.label }} *</label>
+                                    {{ form.basis_documents }}
+                                    {% if form.basis_documents.errors %}
+                                    <div class="text-danger">{{ form.basis_documents.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Список заявлений -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-list-check me-2"></i>
+                                            Выберите заявления для зачисления
+                                            <span class="badge bg-primary ms-2" id="selectedCount">0</span>
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if form.applications.field.queryset %}
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th width="50px">
+                                                            <input type="checkbox" id="selectAll" class="form-check-input">
+                                                        </th>
+                                                        <th>ФИО ребенка</th>
+                                                        <th>Дата рождения</th>
+                                                        <th>Возраст</th>
+                                                        <th>Предпочтительная группа</th>
+                                                        <th>Родитель</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for application in form.applications.field.queryset %}
+                                                    <tr>
+                                                        <td>
+                                                            <input type="checkbox" name="applications" 
+                                                                   value="{{ application.id }}" 
+                                                                   class="form-check-input application-checkbox"
+                                                                   data-age="{{ application.child_age }}"
+                                                                   data-preferred-group="{{ application.preferred_group|default:'' }}">
+                                                        </td>
+                                                        <td>
+                                                            <strong>{{ application.child_full_name }}</strong>
+                                                            <br><small class="text-muted">{{ application.child_gender }}</small>
+                                                        </td>
+                                                        <td>{{ application.child_birth_date|date:"d.m.Y" }}</td>
+                                                        <td>
+                                                            <span class="badge bg-info">{{ application.child_age }} лет</span>
+                                                        </td>
+                                                        <td>
+                                                            {% if application.preferred_group %}
+                                                            <span class="badge bg-warning">{{ application.preferred_group }}</span>
+                                                            {% else %}
+                                                            <span class="text-muted">Не указана</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ application.parent.user.get_full_name }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {% else %}
+                                        <div class="text-center py-4">
+                                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                                            <h5 class="text-muted">Нет доступных заявлений</h5>
+                                            <p class="text-muted">Все одобренные заявления уже обработаны или отсутствуют</p>
+                                            <a href="{% url 'applications:applications_list' %}" class="btn btn-primary">
+                                                <i class="fas fa-external-link-alt me-1"></i>Перейти к заявлениям
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Автоматическое распределение -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-robot me-2"></i>
+                                            Автоматическое распределение по группам
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <button type="button" id="autoAssignGroups" class="btn btn-outline-primary">
+                                                    <i class="fas fa-magic me-1"></i>Автораспределить по возрасту
+                                                </button>
+                                                <small class="form-text text-muted">
+                                                    Система автоматически определит подходящие группы по возрасту детей
+                                                </small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div id="groupAssignmentPreview" class="bg-light p-3 rounded">
+                                                    <small class="text-muted">Выберите заявления для просмотра распределения</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'orders:orders_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i>Назад к списку
+                                    </a>
+                                    <div>
+                                        <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                                            <i class="fas fa-file-contract me-1"></i>{{ submit_text }}
+                                        </button>
+                                        <button type="button" class="btn btn-primary" id="previewWord">
+                                            <i class="fas fa-file-word me-1"></i>Предпросмотр Word
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.application-checkbox');
+    const selectedCount = document.getElementById('selectedCount');
+    const submitBtn = document.getElementById('submitBtn');
+    const groupSelect = document.getElementById('id_group');
+    const autoAssignBtn = document.getElementById('autoAssignGroups');
+    const previewDiv = document.getElementById('groupAssignmentPreview');
+
+    // Выделить все
+    selectAll.addEventListener('change', function() {
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateSelection();
+    });
+
+    // Обновление счетчика выбранных
+    function updateSelection() {
+        const selected = document.querySelectorAll('.application-checkbox:checked');
+        selectedCount.textContent = selected.length;
+        submitBtn.disabled = selected.length === 0;
+        
+        // Показать предварительное распределение
+        showGroupAssignmentPreview(selected);
+    }
+
+    // Показать распределение по группам
+    function showGroupAssignmentPreview(selectedCheckboxes) {
+        if (selectedCheckboxes.length === 0) {
+            previewDiv.innerHTML = '<small class="text-muted">Выберите заявления для просмотра распределения</small>';
+            return;
+        }
+
+        const ageGroups = {
+            'nursery': { min: 1.5, max: 3, name: 'Ясельная', applications: [] },
+            'junior': { min: 3, max: 4, name: 'Младшая', applications: [] },
+            'middle': { min: 4, max: 5, name: 'Средняя', applications: [] },
+            'senior': { min: 5, max: 6, name: 'Старшая', applications: [] },
+            'preparatory': { min: 6, max: 7, name: 'Подготовительная', applications: [] }
+        };
+
+        selectedCheckboxes.forEach(checkbox => {
+            const age = parseFloat(checkbox.dataset.age);
+            for (const [key, group] of Object.entries(ageGroups)) {
+                if (age >= group.min && age < group.max) {
+                    group.applications.push(checkbox.closest('tr').querySelector('td:nth-child(2) strong').textContent);
+                    break;
+                }
+            }
+        });
+
+        let html = '<h6>Предварительное распределение:</h6>';
+        for (const [key, group] of Object.entries(ageGroups)) {
+            if (group.applications.length > 0) {
+                html += `<div class="mb-2">
+                    <strong>${group.name}:</strong> ${group.applications.length} детей
+                    <br><small class="text-muted">${group.applications.join(', ')}</small>
+                </div>`;
+            }
+        }
+
+        previewDiv.innerHTML = html;
+    }
+
+    // Автоматическое распределение
+    autoAssignBtn.addEventListener('click', function() {
+        const selected = document.querySelectorAll('.application-checkbox:checked');
+        if (selected.length === 0) {
+            alert('Сначала выберите заявления');
+            return;
+        }
+
+        // Здесь можно добавить логику автоматического выбора группы
+        // на основе возраста большинства детей
+        alert('Функция автоматического распределения будет реализована в следующей версии');
+    });
+
+    // Предпросмотр Word
+    document.getElementById('previewWord').addEventListener('click', function() {
+        const selected = Array.from(document.querySelectorAll('.application-checkbox:checked'))
+            .map(cb => cb.value);
+        
+        if (selected.length === 0) {
+            alert('Выберите хотя бы одно заявление');
+            return;
+        }
+
+        // Создаем временную форму для отправки
+        const tempForm = document.createElement('form');
+        tempForm.method = 'post';
+        tempForm.action = '{% url "orders:generate_bulk_orders_word" %}';
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = '{{ csrf_token }}';
+        tempForm.appendChild(csrfInput);
+
+        selected.forEach(appId => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'applications';
+            input.value = appId;
+            tempForm.appendChild(input);
+        });
+
+        const orderDateInput = document.createElement('input');
+        orderDateInput.type = 'hidden';
+        orderDateInput.name = 'order_date';
+        orderDateInput.value = document.getElementById('id_order_date').value;
+        tempForm.appendChild(orderDateInput);
+
+        const enrollmentDateInput = document.createElement('input');
+        enrollmentDateInput.type = 'hidden';
+        enrollmentDateInput.name = 'enrollment_date';
+        enrollmentDateInput.value = document.getElementById('id_enrollment_date').value;
+        tempForm.appendChild(enrollmentDateInput);
+
+        if (groupSelect.value) {
+            const groupInput = document.createElement('input');
+            groupInput.type = 'hidden';
+            groupInput.name = 'group';
+            groupInput.value = groupSelect.value;
+            tempForm.appendChild(groupInput);
+        }
+
+        document.body.appendChild(tempForm);
+        tempForm.submit();
+    });
+
+    // Инициализация
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelection);
+    });
+    updateSelection();
+});
+</script>
+{% endblock %}

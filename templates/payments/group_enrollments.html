@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Заявки на дополнительные услуги{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-users me-2"></i>
+            Управление заявками на услуги
+        </h1>
+        <div>
+            <a href="{% url 'payments:director_payments_dashboard' %}" class="btn btn-outline-primary">
+                <i class="fas fa-chart-line me-1"></i> Мониторинг оплат
+            </a>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Статус</label>
+                    <select name="status" class="form-select">
+                        <option value="">Все статусы</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Услуга</label>
+                    <select name="service" class="form-select">
+                        <option value="">Все услуги</option>
+                        {% for service in services %}
+                        <option value="{{ service.id }}" {% if current_service|stringformat:"s" == service.id|stringformat:"s" %}selected{% endif %}>
+                            {{ service.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i> Применить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if enrollments %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Заявки на дополнительные услуги</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Дата</th>
+                            <th>Ребенок</th>
+                            <th>Группа</th>
+                            <th>Услуга</th>
+                            <th>Тип</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for enrollment in enrollments %}
+                        <tr>
+                            <td>{{ enrollment.enrollment_date|date:"d.m.Y" }}</td>
+                            <td>
+                                <strong>{{ enrollment.child.full_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ enrollment.child.get_age }} лет</small>
+                            </td>
+                            <td>{{ enrollment.child.group.name|default:"—" }}</td>
+                            <td>{{ enrollment.service.name }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ enrollment.service.get_service_type_display }}</span>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if enrollment.status == 'approved' %}bg-success
+                                    {% elif enrollment.status == 'pending' %}bg-warning text-dark
+                                    {% elif enrollment.status == 'rejected' %}bg-danger
+                                    {% elif enrollment.status == 'completed' %}bg-info
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ enrollment.get_status_display }}
+                                </span>
+                             </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    {% if enrollment.status == 'pending' %}
+                                    <form method="post" action="{% url 'payments:update_enrollment_status' enrollment.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="approved">
+                                        <button type="submit" class="btn btn-success" onclick="return confirm('Зачислить ребенка на услугу?')">
+                                            <i class="fas fa-check me-1"></i> Зачислить
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'payments:update_enrollment_status' enrollment.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="rejected">
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Отказать в зачислении?')">
+                                            <i class="fas fa-times me-1"></i> Отказать
+                                        </button>
+                                    </form>
+                                    {% elif enrollment.status == 'approved' %}
+                                    <form method="post" action="{% url 'payments:update_enrollment_status' enrollment.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="completed">
+                                        <button type="submit" class="btn btn-info" onclick="return confirm('Завершить обучение?')">
+                                            <i class="fas fa-flag-checkered me-1"></i> Завершить
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#serviceNoteModal{{ enrollment.id }}">
+                                        <i class="fas fa-sticky-note me-1"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Модальное окно для заметок -->
+                                <div class="modal fade" id="serviceNoteModal{{ enrollment.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Заметка по занятию</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form method="post" action="{% url 'payments:update_enrollment_status' enrollment.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="{{ enrollment.status }}">
+                                                <div class="modal-body">
+                                                    <textarea name="notes" class="form-control" rows="3" placeholder="Добавьте заметку...">{{ enrollment.notes }}</textarea>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                             </td>
+                         </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle fa-2x mb-2 d-block"></i>
+        <p>Нет заявок на дополнительные услуги.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.table th {
+    font-weight: 600;
+    border-bottom-width: 1px;
+}
+.btn-group .btn {
+    margin: 0 2px;
+}
+</style>
+{% endblock %}

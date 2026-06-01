@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Табели посещаемости{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        position: relative;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .page-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 2px;
+    }
+
+    .sheet-card {
+        border: none;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02), 0 10px 15px rgba(0,0,0,0.03);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.03);
+    }
+    
+    .sheet-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+    }
+
+    .status-dot {
+        height: 10px;
+        width: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+        box-shadow: 0 0 10px currentColor;
+    }
+    .status-dot.approved { color: #10b981; background-color: #10b981; }
+    .status-dot.draft { color: #f59e0b; background-color: #f59e0b; }
+
+    .card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .bg-icon-approved { background: #d1fae5; color: #059669; }
+    .bg-icon-draft { background: #fef3c7; color: #d97706; }
+
+    .card-actions {
+        background: #f8fafc;
+        border-top: 1px solid #edf2f7;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .btn-action {
+        flex: 1;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        padding: 8px;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-decoration: none;
+        text-align: center;
+        display: inline-block;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+    }
+    
+    .btn-action:hover { 
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    .btn-action.text-primary:hover { background: #e0e7ff; }
+    .btn-action.text-dark:hover { background: #e5e7eb; }
+    .btn-action.text-success:hover { background: #d1fae5; }
+    .btn-action.text-secondary:hover { background: #f3f4f6; }
+
+    /* Staggered Animation */
+    @keyframes slideInUpFade {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-item {
+        opacity: 0;
+        animation: slideInUpFade 0.6s ease forwards;
+    }
+    
+    /* Анимация печати */
+    .print-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .print-overlay.active {
+        display: flex;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .print-animation-container {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        min-width: 400px;
+        position: relative;
+    }
+    
+    .document-animation {
+        position: relative;
+        width: 150px;
+        height: 180px;
+        margin: 0 auto 30px;
+    }
+    
+    .document-sheet {
+        position: absolute;
+        width: 100px;
+        height: 140px;
+        background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+        border: 2px solid #4CAF50;
+        border-radius: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .document-sheet:nth-child(1) {
+        animation: slideIn 0.5s ease forwards;
+        z-index: 3;
+    }
+    
+    .document-sheet:nth-child(2) {
+        animation: slideIn 0.5s ease 0.1s forwards;
+        z-index: 2;
+        opacity: 0;
+    }
+    
+    .document-sheet:nth-child(3) {
+        animation: slideIn 0.5s ease 0.2s forwards;
+        z-index: 1;
+        opacity: 0;
+    }
+    
+    .document-lines {
+        position: absolute;
+        top: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+    }
+    
+    .line {
+        height: 4px;
+        background: #ddd;
+        margin: 8px 0;
+        border-radius: 2px;
+        animation: loading 0.5s ease forwards;
+        transform-origin: left;
+        transform: scaleX(0);
+    }
+    
+    .line:nth-child(1) { animation-delay: 0.3s; }
+    .line:nth-child(2) { animation-delay: 0.4s; width: 70%; }
+    .line:nth-child(3) { animation-delay: 0.5s; width: 85%; }
+    .line:nth-child(4) { animation-delay: 0.6s; width: 60%; }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    }
+    
+    @keyframes loading {
+        from {
+            transform: scaleX(0);
+        }
+        to {
+            transform: scaleX(1);
+        }
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    
+    .print-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #4CAF50;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .print-status {
+        font-size: 18px;
+        color: #333;
+        margin: 20px 0;
+    }
+    
+    .print-progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 20px;
+    }
+    
+    .print-progress-fill {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #4CAF50, #8BC34A);
+        transition: width 0.3s ease;
+    }
+    
+    .print-success {
+        color: #4CAF50;
+        font-size: 48px;
+        animation: bounceIn 0.5s ease;
+    }
+    
+    @keyframes bounceIn {
+        0% {
+            transform: scale(0);
+        }
+        50% {
+            transform: scale(1.2);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .btn-cancel-print {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    /* Кнопка в состоянии загрузки */
+    .btn-action.printing {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-end mb-5 page-header">
+        <div>
+            <h1 class="fw-bold mb-1 display-5">Журнал табелей</h1>
+            <p class="text-muted mb-0">Управление посещаемостью групп</p>
+        </div>
+        {% if not is_director %}
+        <a href="{% url 'attendance:attendance_sheet_create' %}" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm d-flex align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+            <i class="bi bi-plus-lg me-2"></i> Новый табель
+        </a>
+        {% endif %}
+    </div>
+    
+    {% if sheets %}
+    <div class="row g-4">
+        {% for sheet in sheets %}
+        <div class="col-md-6 col-lg-4 animate-item" style="animation-delay: {{ forloop.counter0|add:1 }}00ms;">
+            <div class="sheet-card d-flex flex-column">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="card-icon {% if sheet.is_approved %}bg-icon-approved{% else %}bg-icon-draft{% endif %}">
+                            <i class="bi {% if sheet.is_approved %}bi-check-circle{% else %}bi-pencil{% endif %}"></i>
+                        </div>
+                        <div class="text-end">
+                            {% if sheet.is_approved %}
+                            <span class="badge bg-green-100 text-green-800 rounded-pill px-3 py-2 border border-success border-opacity-25 text-success bg-light">
+                                <span class="status-dot approved"></span> Утвержден
+                            </span>
+                            {% else %}
+                            <span class="badge bg-yellow-100 text-yellow-800 rounded-pill px-3 py-2 border border-warning border-opacity-25 text-warning bg-light">
+                                <span class="status-dot draft"></span> Черновик
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <h4 class="fw-bold mb-1">{{ sheet.group.name }}</h4>
+                    <p class="text-muted mb-3">{{ sheet.get_month_name }} {{ sheet.year }}</p>
+                    
+                    <div class="d-flex align-items-center text-muted small mt-4">
+                        <i class="bi bi-people me-2"></i>
+                        <span>Детей в списке: <strong>{{ sheet.records.count }}</strong></span>
+                    </div>
+                </div>
+                
+                <div class="card-actions">
+                    <a href="{% url 'attendance:attendance_sheet_view' sheet.id %}" class="btn-action text-primary">
+                        <i class="bi bi-eye"></i> Обзор
+                    </a>
+                    
+                    {% if not sheet.is_approved %}
+                        {% if not is_director %}
+                        <a href="{% url 'attendance:attendance_sheet_edit' sheet.id %}" class="btn-action text-dark">
+                            <i class="bi bi-pencil"></i> Изменить
+                        </a>
+                        {% endif %}
+                        {% if is_director %}
+                        <a href="{% url 'attendance:attendance_sheet_approve' sheet.id %}" class="btn-action text-success">
+                            <i class="bi bi-check-lg"></i> Провести
+                        </a>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'attendance:attendance_sheet_print_word' sheet.id %}" 
+                           class="btn-action text-secondary"
+                           target="_blank">
+                            <i class="bi bi-printer"></i> Печать
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5 animate-item">
+        <div class="mb-4">
+            <i class="bi bi-calendar-x" style="font-size: 80px; color: #ccc;"></i>
+        </div>
+        <h3 class="text-muted">Табелей пока нет</h3>
+        <p class="text-muted mb-4">Создайте первый табель, чтобы начать учет посещаемости</p>
+        {% if not is_director %}
+        <a href="{% url 'attendance:attendance_sheet_create' %}" class="btn btn-primary rounded-pill px-5">Создать</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Добавляем Bootstrap Icons
+    if (!document.querySelector('link[href*="bootstrap-icons"]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css';
+        document.head.appendChild(link);
+    }
+</script>
+{% endblock %}

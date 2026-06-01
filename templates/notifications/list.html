@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Уведомления{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-bell me-2 text-primary"></i>
+                            Уведомления
+                            {% if unread_count > 0 %}
+                            <span class="badge bg-danger ms-2">{{ unread_count }}</span>
+                            {% endif %}
+                        </h4>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="markAllRead()">
+                            <i class="fas fa-check-double me-1"></i>Все прочитаны
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if notifications %}
+                        <div class="list-group list-group-flush">
+                            {% for notif in notifications %}
+                            <div class="list-group-item {% if not notif.is_read %}bg-light{% endif %}" data-id="{{ notif.id }}">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="notification-icon notification-icon-{{ notif.notification_type }}">
+                                        <i class="fas 
+                                            {% if notif.notification_type == 'invite' %}fa-envelope
+                                            {% elif notif.notification_type == 'enrollment' %}fa-graduation-cap
+                                            {% elif notif.notification_type == 'warning' %}fa-exclamation-triangle
+                                            {% else %}fa-info-circle{% endif %} 
+                                            fa-lg"></i>
+                                    </div>
+                                    <div class="flex-grow-1" onclick="markRead({{ notif.id }}, '{{ notif.link }}')">
+                                        <div class="fw-semibold">{{ notif.title }}</div>
+                                        <div class="text-muted small">{{ notif.message }}</div>
+                                        <div class="text-muted small mt-1">
+                                            <i class="far fa-clock me-1"></i>{{ notif.created_at|date:"d.m.Y H:i" }}
+                                        </div>
+                                    </div>
+                                    {% if not notif.is_read %}
+                                    <div class="unread-dot bg-danger rounded-circle" style="width: 10px; height: 10px;"></div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-bell-slash fa-4x text-muted mb-3 opacity-50"></i>
+                            <p class="text-muted mb-0">У вас нет уведомлений</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.notification-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.notification-icon-invite { background: #d1fae5; color: #059669; }
+.notification-icon-enrollment { background: #dbeafe; color: #2563eb; }
+.notification-icon-warning { background: #fee2e2; color: #dc2626; }
+.notification-icon-info { background: #f3e8ff; color: #9333ea; }
+.list-group-item { cursor: pointer; transition: background 0.2s; }
+.list-group-item:hover { background: #f9fafb !important; }
+.unread-dot { margin-top: 8px; flex-shrink: 0; }
+</style>
+
+<script>
+function markRead(id, link) {
+    fetch('/notifications/api/mark-read/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ notification_id: id })
+    }).then(() => {
+        if (link) window.location.href = link;
+        else location.reload();
+    });
+}
+
+function markAllRead() {
+    fetch('/notifications/api/mark-all-read/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    }).then(() => location.reload());
+}
+</script>
+{% endblock %}

@@ -1,0 +1,699 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Меню питания моего ребенка{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --primary-dark: #3a56d4;
+        --success: #4cc9f0;
+        --warning: #f72585;
+        --info: #4895ef;
+        --danger: #e74a3b;
+        --dark: #1e1b4b;
+        --light: #f8f9fa;
+        --gray: #6c757d;
+        --border: #e9ecef;
+        --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
+        --shadow-md: 0 8px 24px rgba(0,0,0,0.1);
+        --shadow-lg: 0 16px 32px rgba(0,0,0,0.15);
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        --gradient-success: linear-gradient(135deg, #4cc9f0 0%, #4895ef 100%);
+        --gradient-warning: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+        --gradient-info: linear-gradient(135deg, #4895ef 0%, #4cc9f0 100%);
+    }
+
+    body {
+        background: #f5f7fb;
+    }
+
+    /* Заголовок */
+    .page-header {
+        background: white;
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(67, 97, 238, 0.03) 0%, transparent 70%);
+        animation: rotate 30s linear infinite;
+    }
+
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Карточки */
+    .nutrition-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.8rem;
+        margin-bottom: 1.8rem;
+        border: 1px solid var(--border);
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nutrition-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--gradient-primary);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .nutrition-card:hover {
+        transform: translateY(-5px) scale(1.01);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .nutrition-card:hover::after {
+        opacity: 1;
+    }
+
+    /* Заголовок дня */
+    .day-header {
+        background: var(--gradient-primary);
+        padding: 1.2rem 1.8rem;
+        border-radius: 16px;
+        margin-bottom: 1.8rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+    }
+
+    .day-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+        animation: rotate 20s linear infinite;
+    }
+
+    .day-header.today {
+        background: linear-gradient(135deg, var(--warning) 0%, #b5179e 100%);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.01); }
+    }
+
+    .day-header h5 {
+        position: relative;
+        z-index: 2;
+        font-weight: 600;
+    }
+
+    /* Карточка приема пищи */
+    .meal-card {
+        background: white;
+        border-radius: 18px;
+        padding: 1.5rem;
+        height: 100%;
+        border: 1px solid var(--border);
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .meal-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient-primary);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .meal-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .meal-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .meal-card.approved {
+        border-left: 4px solid #4cc9f0;
+    }
+
+    .meal-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: var(--gradient-primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Информация о питании */
+    .nutrition-info {
+        background: var(--light);
+        border-radius: 14px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .nutrition-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        background: linear-gradient(135deg, #4cc9f0 0%, #4895ef 100%);
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .nutrition-stat {
+        text-align: center;
+        padding: 0.5rem;
+        background: white;
+        border-radius: 10px;
+    }
+
+    /* Формы */
+    .filter-form {
+        background: white;
+        border-radius: 20px;
+        padding: 1.8rem;
+        border: 1px solid var(--border);
+        margin-bottom: 1.8rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 0.8rem 1.2rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        outline: none;
+    }
+
+    /* Кнопки */
+    .btn-gradient {
+        background: var(--gradient-primary);
+        color: white;
+        border: none;
+        padding: 0.8rem 1.8rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-gradient::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .btn-gradient:hover::before {
+        left: 100%;
+    }
+
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        color: white;
+    }
+
+    .btn-outline-gradient {
+        background: transparent;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        padding: 0.8rem 1.8rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-outline-gradient:hover {
+        background: var(--gradient-primary);
+        border-color: transparent;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    /* Бейджи */
+    .badge-gradient {
+        background: var(--gradient-success);
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .badge-gradient-success {
+        background: linear-gradient(135deg, #4cc9f0 0%, #4895ef 100%);
+    }
+
+    .badge-gradient-warning {
+        background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+    }
+
+    /* Информационные карточки внизу */
+    .info-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        height: 100%;
+        border: 1px solid var(--border);
+        transition: all 0.4s ease;
+    }
+
+    .info-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-lg);
+        border-color: transparent;
+    }
+
+    .info-card:nth-child(1):hover { background: linear-gradient(135deg, #fff5f5, #ffffff); }
+    .info-card:nth-child(2):hover { background: linear-gradient(135deg, #f0fff4, #ffffff); }
+    .info-card:nth-child(3):hover { background: linear-gradient(135deg, #e6f6ff, #ffffff); }
+
+    .info-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: white;
+        transition: all 0.4s ease;
+    }
+
+    .info-card:nth-child(1) .info-icon { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); }
+    .info-card:nth-child(2) .info-icon { background: linear-gradient(135deg, #4cc9f0 0%, #4895ef 100%); }
+    .info-card:nth-child(3) .info-icon { background: linear-gradient(135deg, var(--warning) 0%, #b5179e 100%); }
+
+    .info-card:hover .info-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    /* Пустое состояние */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        color: var(--border);
+        margin-bottom: 1.5rem;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .empty-state h3 {
+        color: var(--dark);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        color: var(--gray);
+        max-width: 400px;
+        margin: 0 auto 2rem;
+    }
+
+    /* Анимации */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .nutrition-card, .day-header {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem;
+        }
+
+        .day-header {
+            padding: 1rem 1.5rem;
+        }
+
+        .day-header h5 {
+            font-size: 1rem;
+        }
+
+        .meal-card {
+            padding: 1.2rem;
+        }
+
+        .nutrition-card {
+            padding: 1.5rem;
+        }
+
+        .info-card {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center position-relative">
+            <div>
+                <h1 class="h2 mb-2 fw-bold" style="color: var(--dark);">
+                    <i class="fas fa-utensils text-primary me-2"></i>Меню питания
+                </h1>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-child me-1"></i>{{ children|length }} детей • 
+                    <i class="fas fa-calendar me-1"></i>Неделя с {{ selected_week|date:"d.m.Y" }}
+                </p>
+            </div>
+            <div class="badge-gradient badge-gradient-success">
+                <i class="fas fa-check-circle"></i> Утверждено заведующей
+            </div>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="filter-form">
+        <form method="get" class="row g-4">
+            <div class="col-md-5">
+                <label class="form-label">
+                    <i class="fas fa-child text-primary me-1"></i>Выберите ребенка
+                </label>
+                <select name="child" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Все дети --</option>
+                    {% for child in children %}
+                    <option value="{{ child.id }}" {% if selected_child and selected_child.id == child.id %}selected{% endif %}>
+                        {{ child.full_name }}
+                        {% if child.group %}
+                        ({{ child.group.name }})
+                        {% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">
+                    <i class="fas fa-calendar text-primary me-1"></i>Выберите неделю
+                </label>
+                <input type="date" name="week" class="form-control" 
+                       value="{{ selected_week|date:'Y-m-d' }}" onchange="this.form.submit()">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <div class="btn-group w-100">
+                    <a href="?child={% if selected_child %}{{ selected_child.id }}{% endif %}&week={{ prev_week|date:'Y-m-d' }}" 
+                       class="btn-outline-gradient flex-fill">
+                        <i class="fas fa-chevron-left"></i>
+                        <span class="d-none d-md-inline">Пред.</span>
+                    </a>
+                    <a href="?child={% if selected_child %}{{ selected_child.id }}{% endif %}&week={{ next_week|date:'Y-m-d' }}" 
+                       class="btn-outline-gradient flex-fill">
+                        <span class="d-none d-md-inline">След.</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if selected_child and weekly_menu %}
+        <!-- Информация о ребенке -->
+        <div class="nutrition-card mb-4">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div class="meal-icon" style="width: 50px; height: 50px; font-size: 1.5rem;">
+                        <i class="fas fa-child"></i>
+                    </div>
+                </div>
+                <div class="col">
+                    <h4 class="mb-1 fw-bold">{{ selected_child.full_name }}</h4>
+                    <div class="d-flex gap-3">
+                        {% if selected_child.group %}
+                        <span class="badge" style="background: var(--light); color: var(--dark);">
+                            <i class="fas fa-users text-primary me-1"></i>{{ selected_child.group.name }}
+                        </span>
+                        {% endif %}
+                        <span class="badge" style="background: var(--light); color: var(--dark);">
+                            <i class="fas fa-birthday-cake text-primary me-1"></i>{{ selected_child.get_age }} лет
+                        </span>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="nutrition-stat">
+                        <small class="text-muted d-block">Всего блюд</small>
+                        <strong>{{ total_dishes }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ежедневное меню -->
+        {% for date, day_data in weekly_menu.items %}
+        <div class="day-header {% if day_data.is_today %}today{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-white">
+                    <i class="fas fa-{% if day_data.is_today %}star{% else %}calendar-day{% endif %} me-2"></i>
+                    {{ day_data.day_name }}, {{ date|date:"d.m.Y" }}
+                </h5>
+                {% if day_data.is_today %}
+                <span class="badge bg-white text-dark px-3 py-2">
+                    <i class="fas fa-utensils me-1"></i>Сегодня
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            {% for meal_type, meal in day_data.meals.items %}
+            <div class="col-md-6 col-lg-3">
+                <div class="meal-card {% if meal %}approved{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="meal-icon">
+                            {% if meal_type == 'breakfast' %}
+                                <i class="fas fa-egg"></i>
+                            {% elif meal_type == 'lunch' %}
+                                <i class="fas fa-utensils"></i>
+                            {% elif meal_type == 'snack' %}
+                                <i class="fas fa-apple-alt"></i>
+                            {% elif meal_type == 'dinner' %}
+                                <i class="fas fa-moon"></i>
+                            {% endif %}
+                        </div>
+                        {% if meal %}
+                        <span class="nutrition-badge">
+                            <i class="fas fa-check-circle"></i> Утверждено
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <h6 class="fw-bold text-primary mb-3">
+                        {% if meal_type == 'breakfast' %}Завтрак
+                        {% elif meal_type == 'lunch' %}Обед
+                        {% elif meal_type == 'snack' %}Полдник
+                        {% elif meal_type == 'dinner' %}Ужин
+                        {% endif %}
+                    </h6>
+                    
+                    {% if meal %}
+                    <div class="meal-content">
+                        <h5 class="fw-bold mb-3">{{ meal.dish_name }}</h5>
+                        
+                        {% if meal.description %}
+                        <p class="small text-muted mb-3">{{ meal.description }}</p>
+                        {% endif %}
+                        
+                        <div class="nutrition-info">
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <div class="nutrition-stat">
+                                        <small class="text-muted d-block">Вес</small>
+                                        <strong class="text-primary">{{ meal.weight }}г</strong>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="nutrition-stat">
+                                        <small class="text-muted d-block">Ккал</small>
+                                        <strong class="text-success">{{ meal.calories }}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="nutrition-stat">
+                                        <small class="text-muted d-block">БЖУ</small>
+                                        <strong class="text-info">{{ meal.proteins }}/{{ meal.fats }}/{{ meal.carbohydrates }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-utensils fa-3x mb-3" style="color: var(--border);"></i>
+                        <p class="mb-0 small">Меню не указано</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+    {% elif selected_child and not weekly_menu %}
+        <!-- Пустое состояние - нет меню -->
+        <div class="nutrition-card empty-state">
+            <i class="fas fa-utensils"></i>
+            <h3>Меню не найдено</h3>
+            <p class="text-muted">
+                Для выбранной недели нет утвержденного меню 
+                {% if selected_child.group %}
+                для группы "{{ selected_child.group.name }}"
+                {% endif %}
+            </p>
+            <a href="?child={{ selected_child.id }}&week={{ next_week|date:'Y-m-d' }}" class="btn-gradient">
+                <i class="fas fa-calendar me-1"></i>Посмотреть следующую неделю
+            </a>
+        </div>
+
+    {% else %}
+        <!-- Пустое состояние - выберите ребенка -->
+        <div class="nutrition-card empty-state">
+            <i class="fas fa-child"></i>
+            <h3>Выберите ребенка</h3>
+            <p class="text-muted">Для просмотра меню выберите ребенка из списка выше</p>
+        </div>
+    {% endif %}
+
+    <!-- Информация о питании -->
+    <div class="row g-4 mt-2">
+        <div class="col-md-4">
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Сбалансированное питание</h5>
+                <p class="text-muted small mb-0">Меню разработано с учетом возрастных потребностей детей</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Качественные продукты</h5>
+                <p class="text-muted small mb-0">Используются только свежие и качественные продукты</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Медицинский контроль</h5>
+                <p class="text-muted small mb-0">Меню утверждается заведующей и соответствует нормам</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Анимация при наведении на карточки
+    document.querySelectorAll('.meal-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px)';
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Подсветка сегодняшнего дня
+    const todayHeader = document.querySelector('.day-header.today');
+    if (todayHeader) {
+        todayHeader.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
+</script>
+{% endblock %}

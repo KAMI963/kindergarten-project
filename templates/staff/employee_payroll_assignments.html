@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Назначения начислений - {{ employee.full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .assignment-card {
+        border-left: 4px solid #4a6fa5;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    .assignment-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .amount-badge {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #27ae60;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 text-gray-800">Назначения начислений</h1>
+            <p class="text-muted">
+                <a href="{% url 'staff:employee_detail' employee.id %}" class="text-decoration-none">
+                    {{ employee.full_name }}
+                </a> - {{ employee.position }}
+            </p>
+        </div>
+        <a href="{% url 'staff:employee_payroll_assignment_add' employee.id %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Добавить начисление
+        </a>
+    </div>
+
+    <!-- Активные назначения -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Активные начисления</h5>
+        </div>
+        <div class="card-body">
+            {% if active_assignments %}
+                {% for assignment in active_assignments %}
+                <div class="card assignment-card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                <h6 class="mb-1">{{ assignment.payroll_type.name }}</h6>
+                                <small class="text-muted">Код: {{ assignment.payroll_type.code }}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="amount-badge">
+                                    {% if assignment.custom_value %}
+                                        {{ assignment.custom_value }}
+                                        {% if assignment.payroll_type.calculation_type == 'percent' %}
+                                            %
+                                        {% else %}
+                                            ₽
+                                        {% endif %}
+                                    {% else %}
+                                        {{ assignment.payroll_type.base_value }}
+                                        {% if assignment.payroll_type.calculation_type == 'percent' %}
+                                            %
+                                        {% else %}
+                                            ₽
+                                        {% endif %}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="col-md-2">
+                                <small>База: {{ assignment.get_calculation_base_display }}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <small>с {{ assignment.start_date|date:"d.m.Y" }}</small>
+                                {% if assignment.end_date %}
+                                    <br><small class="text-warning">до {{ assignment.end_date|date:"d.m.Y" }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <a href="{% url 'staff:employee_payroll_assignment_edit' assignment.id %}" 
+                                   class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'staff:employee_payroll_assignment_delete' assignment.id %}" 
+                                   class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% if assignment.order_number %}
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <small class="text-muted">
+                                    Приказ №{{ assignment.order_number }} 
+                                    от {{ assignment.order_date|date:"d.m.Y" }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted text-center py-3">Нет активных назначений</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Завершенные назначения -->
+    {% if past_assignments %}
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="fas fa-history me-2"></i>Завершенные назначения</h5>
+        </div>
+        <div class="card-body">
+            {% for assignment in past_assignments %}
+            <div class="card assignment-card" style="border-left-color: #95a5a6; opacity: 0.8;">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="mb-1">{{ assignment.payroll_type.name }}</h6>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted">
+                                {{ assignment.start_date|date:"d.m.Y" }} - 
+                                {{ assignment.end_date|date:"d.m.Y" }}
+                            </span>
+                        </div>
+                        <div class="col-md-3">
+                            <small>Приказ: {{ assignment.order_number|default:"—" }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

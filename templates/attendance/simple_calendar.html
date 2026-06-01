@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Календарь - {{ month_name }} {{ year }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .calendar-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .calendar-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .calendar-table th,
+    .calendar-table td {
+        border: 1px solid #dee2e6;
+        padding: 12px;
+        text-align: center;
+        vertical-align: top;
+        width: 14.28%;
+        min-width: 80px;
+    }
+    
+    .calendar-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+    
+    .calendar-table td.workday {
+        background: white;
+    }
+    
+    .calendar-table td.weekend {
+        background: #fff3e0;
+    }
+    
+    .calendar-table td.holiday {
+        background: #ffebee;
+    }
+    
+    .calendar-table td.empty {
+        background: #f5f5f5;
+    }
+    
+    .day-number {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .day-number.weekend {
+        color: #e65100;
+    }
+    
+    .day-number.holiday {
+        color: #c62828;
+    }
+    
+    .day-type-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        display: inline-block;
+        margin-top: 5px;
+    }
+    
+    .badge-workday {
+        background: #c8e6c9;
+        color: #2e7d32;
+    }
+    
+    .badge-weekend {
+        background: #fff3e0;
+        color: #e65100;
+    }
+    
+    .badge-holiday {
+        background: #ffcdd2;
+        color: #c62828;
+    }
+    
+    .holiday-name {
+        font-size: 10px;
+        color: #c62828;
+        margin-top: 4px;
+        font-style: italic;
+    }
+    
+    .month-nav {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .month-nav a {
+        text-decoration: none;
+        padding: 8px 15px;
+        border-radius: 8px;
+        background: white;
+        color: #667eea;
+        transition: all 0.3s;
+    }
+    
+    .month-nav a:hover {
+        background: #f0f0f0;
+        transform: translateY(-2px);
+    }
+    
+    .legend {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .legend-color {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+    }
+    
+    .legend-color.workday { background: white; border: 1px solid #ddd; }
+    .legend-color.weekend { background: #fff3e0; border: 1px solid #ffcc80; }
+    .legend-color.holiday { background: #ffebee; border: 1px solid #ef9a9a; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <h3 class="mb-0">
+                <i class="fas fa-calendar-alt me-2"></i>
+                Производственный календарь
+            </h3>
+            <div class="month-nav">
+                <a href="?year={{ prev_year }}&month={{ prev_month }}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                <h4 class="mb-0 mx-3">{{ month_name }} {{ year }}</h4>
+                <a href="?year={{ next_year }}&month={{ next_month }}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+        
+        <table class="calendar-table">
+            <thead>
+                <tr>
+                    {% for weekday in weekdays %}
+                        <th>{{ weekday }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for week in calendar_grid %}
+                <tr>
+                    {% for day in week %}
+                        {% if day.day %}
+                            <td class="{{ day.type }}">
+                                <div class="day-number {% if day.is_weekend %}weekend{% elif day.is_holiday %}holiday{% endif %}">
+                                    {{ day.day }}
+                                </div>
+                                <span class="day-type-badge badge-{{ day.type }}">
+                                    {% if day.type == 'workday' %}Рабочий
+                                    {% elif day.type == 'weekend' %}Выходной
+                                    {% elif day.type == 'holiday' %}Праздник
+                                    {% endif %}
+                                </span>
+                                {% if day.holiday_name %}
+                                    <div class="holiday-name">{{ day.holiday_name }}</div>
+                                {% endif %}
+                            </td>
+                        {% else %}
+                            <td class="empty"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color workday"></div>
+                <span>Рабочий день</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color weekend"></div>
+                <span>Выходной день</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color holiday"></div>
+                <span>Праздничный день</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

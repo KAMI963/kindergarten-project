@@ -1,0 +1,1066 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Управление очередью зачислений{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================
+   КОМПАКТНЫЙ ДИЗАЙН — Управление очередью
+   Совместимость с base.html
+   ============================================ */
+
+:root {
+    --gradient-start: #667eea;
+    --gradient-end: #764ba2;
+    --primary: #5a6fd8;
+    --success: #48bb78;
+    --warning: #ed8936;
+    --danger: #f56565;
+    --info: #4299e1;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --border-light: #e5e7eb;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 16px rgba(102, 126, 234, 0.1);
+}
+
+/* АНИМАЦИИ */
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* КОНТЕЙНЕР */
+.queue-container {
+    animation: fadeSlideUp 0.4s ease-out;
+}
+
+/* ЗАГОЛОВОК */
+.page-header {
+    background: linear-gradient(135deg, #1a1f36 0%, #2d2852 100%);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.page-header::after {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -5%;
+    width: 200px;
+    height: 200px;
+    background: rgba(102, 126, 234, 0.15);
+    border-radius: 50%;
+}
+
+.page-header h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.page-header p {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-bottom: 0;
+}
+
+/* КАРТОЧКИ СТАТИСТИКИ */
+.stats-card {
+    background: white;
+    border-radius: 14px;
+    padding: 16px 20px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid rgba(102, 126, 234, 0.08);
+    box-shadow: var(--shadow-sm);
+}
+
+.stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(102, 126, 234, 0.2);
+}
+
+.stats-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+}
+
+.stats-number {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.stats-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+/* ВОЗРАСТНЫЕ КАРТОЧКИ */
+.age-card {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 12px;
+    padding: 14px;
+    color: white;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.age-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.age-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    opacity: 0.9;
+}
+
+.age-number {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.age-label {
+    font-size: 0.6rem;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
+/* ФИЛЬТРЫ */
+.filter-section {
+    background: white;
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(102, 126, 234, 0.08);
+    box-shadow: var(--shadow-sm);
+}
+
+.form-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.form-control, .form-select {
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    border: 1px solid var(--border-light);
+    transition: all 0.2s;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ТАБЛИЦА */
+.table-container {
+    background: white;
+    border-radius: 16px;
+    overflow-x: auto;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(102, 126, 234, 0.08);
+}
+
+.table-custom {
+    margin-bottom: 0;
+    width: 100%;
+    min-width: 900px;
+}
+
+.table-custom thead th {
+    background: #f9fafb;
+    padding: 14px 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.table-custom tbody td {
+    padding: 14px 12px;
+    vertical-align: middle;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.table-custom tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table-custom tbody tr:hover {
+    background: #f9fafb;
+}
+
+/* ПОЗИЦИЯ */
+.position-cell {
+    min-width: 100px;
+}
+
+.position-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.position-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.position-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
+.position-2 { background: linear-gradient(135deg, #cbd5e1, #94a3b8); color: white; }
+.position-3 { background: linear-gradient(135deg, #fb923c, #f97316); color: white; }
+.position-other { background: #f3f4f6; color: var(--text-muted); border: 1px solid var(--border-light); }
+
+/* СТРЕЛКИ ДВИЖЕНИЯ */
+.movement-arrow {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    cursor: help;
+}
+
+.movement-arrow-up {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.movement-arrow-down {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.movement-arrow-stable {
+    background: #f3f4f6;
+    color: #9ca3af;
+}
+
+/* АВАТАР РЕБЕНКА */
+.child-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* СТАТУСЫ */
+.badge-status {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge-pending { background: #fef3c7; color: #d97706; }
+.badge-queue { background: #e0e7ff; color: #4338ca; }
+.badge-invited { background: #d1fae5; color: #059669; }
+.badge-enrolled { background: #dbeafe; color: #1e40af; }
+.badge-rejected { background: #fee2e2; color: #dc2626; }
+
+/* ЛЬГОТЫ */
+.benefit-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.benefit-extraordinary {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #b45309;
+}
+
+.benefit-priority {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.benefit-none {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* КНОПКИ ДЕЙСТВИЙ */
+.action-buttons-group {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.action-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background: white;
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+}
+
+.action-btn.history:hover {
+    background: var(--info);
+    color: white;
+    border-color: transparent;
+}
+
+.action-btn.view:hover {
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    color: white;
+    border-color: transparent;
+}
+
+/* ПАГИНАЦИЯ */
+.pagination .page-link {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    margin: 0 2px;
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    border-color: transparent;
+    color: white;
+}
+
+.pagination .page-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: var(--primary);
+}
+
+/* ПЛАВАЮЩАЯ ПАНЕЛЬ */
+.batch-actions {
+    background: rgba(31, 41, 55, 0.95);
+    backdrop-filter: blur(8px);
+    border-radius: 40px;
+    padding: 10px 20px;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.batch-actions.show {
+    display: flex;
+    transform: translateX(-50%) translateY(0);
+}
+
+.batch-actions .selected-count {
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    background: rgba(255,255,255,0.15);
+    padding: 6px 14px;
+    border-radius: 30px;
+}
+
+.batch-actions button {
+    background: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.batch-actions button:hover {
+    transform: translateY(-2px);
+}
+
+/* МОДАЛЬНОЕ ОКНО */
+.timeline-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--primary);
+}
+
+/* АДАПТИВНОСТЬ */
+@media (max-width: 768px) {
+    .stats-number { font-size: 1.3rem; }
+    .position-badge { width: 38px; height: 38px; font-size: 0.9rem; }
+    .child-avatar { width: 36px; height: 36px; font-size: 0.9rem; }
+    .batch-actions { padding: 8px 16px; gap: 10px; }
+    .batch-actions button { padding: 6px 14px; font-size: 0.75rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3 queue-container">
+    <!-- ЗАГОЛОВОК -->
+    <div class="page-header mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2>
+                    <i class="fas fa-chart-line me-2"></i>
+                    Управление очередью
+                </h2>
+                <p>
+                    <i class="fas fa-info-circle me-1"></i>
+                    Мониторинг позиций в очереди
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <button id="exportExcelBtn" class="btn btn-light rounded-pill px-3 py-2" style="font-size: 0.8rem;">
+                    <i class="fas fa-file-excel me-1 text-success"></i>Экспорт
+                </button>
+                <button id="recalculateBtn" class="btn btn-light rounded-pill px-3 py-2" style="font-size: 0.8rem;">
+                    <i class="fas fa-sync-alt me-1 text-primary"></i>Пересчитать
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- СТАТИСТИКА -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="stats-card" data-filter-status="queue">
+                <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stats-number">{{ stats.queue|default:0 }}</div>
+                <div class="stats-label">В очереди</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stats-card" data-filter-status="pending">
+                <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div class="stats-number">{{ stats.pending|default:0 }}</div>
+                <div class="stats-label">На проверке</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stats-card" data-filter-status="invited">
+                <div class="stats-icon bg-success bg-opacity-10 text-success">
+                    <i class="fas fa-envelope-open-text"></i>
+                </div>
+                <div class="stats-number">{{ stats.invited|default:0 }}</div>
+                <div class="stats-label">Приглашены</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stats-card" data-filter-status="enrolled">
+                <div class="stats-icon bg-info bg-opacity-10 text-info">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-number">{{ stats.enrolled|default:0 }}</div>
+                <div class="stats-label">Зачислены</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ВОЗРАСТНЫЕ КАТЕГОРИИ -->
+    <div class="row g-2 mb-4">
+        {% for cat_code, cat_data in stats.age_stats.items %}
+        <div class="col-md-2 col-sm-4 col-6">
+            <div class="age-card" data-age-category="{{ cat_code }}">
+                <div class="age-title">{{ cat_data.name|truncatechars:15 }}</div>
+                <div class="age-number">{{ cat_data.queue|default:0 }}</div>
+                <div class="age-label">в очереди</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ФИЛЬТРЫ -->
+    <div class="filter-section">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-filter me-1"></i>Статус</label>
+                <select id="statusFilter" class="form-select">
+                    <option value="">Все статусы</option>
+                    <option value="pending">На проверке</option>
+                    <option value="queue">В очереди</option>
+                    <option value="invited">Приглашены</option>
+                    <option value="enrolled">Зачислены</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-star me-1"></i>Льгота</label>
+                <select id="benefitFilter" class="form-select">
+                    <option value="">Все льготы</option>
+                    <option value="extraordinary">Внеочередное</option>
+                    <option value="priority">Первоочередное</option>
+                    <option value="none">Без льготы</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label"><i class="fas fa-search me-1"></i>Поиск</label>
+                <input type="text" id="searchInput" class="form-control" placeholder="ФИО ребёнка или родителя">
+            </div>
+            <div class="col-md-2">
+                <button id="resetFilters" class="btn btn-outline-secondary w-100 rounded-pill" style="font-size: 0.8rem;">
+                    <i class="fas fa-undo-alt me-1"></i>Сброс
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ТАБЛИЦА -->
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table table-custom">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"><input type="checkbox" id="selectAllCheckbox" class="form-check-input"></th>
+                        <th style="width: 110px;">Позиция</th>
+                        <th>Ребёнок</th>
+                        <th>Дата рождения</th>
+                        <th>Дата подачи</th>
+                        <th>Льгота</th>
+                        <th>Статус</th>
+                        <th style="width: 80px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% for app in applications %}
+                    <tr data-id="{{ app.id }}" 
+                        data-benefit="{{ app.benefit_category }}" 
+                        data-status="{{ app.status }}" 
+                        data-name="{{ app.child_full_name|lower }}"
+                        data-parent="{{ app.parent.user.get_full_name|default:''|lower }}">
+                        <td><input type="checkbox" class="form-check-input row-checkbox" data-id="{{ app.id }}"></td>
+                        <td class="position-cell">
+                            <div class="position-container">
+                                <div class="position-badge position-{% if app.queue_position == 1 %}1{% elif app.queue_position == 2 %}2{% elif app.queue_position == 3 %}3{% else %}other{% endif %}">
+                                    {{ app.queue_position|default:"—" }}
+                                </div>
+                                {% if app.movement %}
+                                    {% if app.movement.type == 'up' %}
+                                    <div class="movement-arrow movement-arrow-up" title="↑ Поднялся: {{ app.movement.description }}">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </div>
+                                    {% elif app.movement.type == 'down' %}
+                                    <div class="movement-arrow movement-arrow-down" title="↓ Опустился: {{ app.movement.description }}">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </div>
+                                    {% else %}
+                                    <div class="movement-arrow movement-arrow-stable" title="● Позиция не изменилась">
+                                        <i class="fas fa-circle" style="font-size: 6px;"></i>
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                <div class="movement-arrow movement-arrow-stable" title="● Нет данных">
+                                    <i class="fas fa-circle" style="font-size: 6px;"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="child-avatar">{{ app.child_full_name|slice:":1"|upper }}</div>
+                                <div>
+                                    <div class="fw-semibold">{{ app.child_full_name }}</div>
+                                    <small class="text-muted">родитель: {{ app.parent.user.get_full_name|default:"—"|truncatechars:20 }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>{{ app.child_birth_date|date:"d.m.Y" }}</div>
+                            <small class="text-muted">{{ app.get_age }} лет</small>
+                        </td>
+                        <td>
+                            <div>{{ app.created_at|date:"d.m.Y" }}</div>
+                            <small class="text-muted">{{ app.created_at|date:"H:i" }}</small>
+                        </td>
+                        <td>
+                            <span class="benefit-badge benefit-{{ app.benefit_category }}">
+                                <i class="fas fa-{% if app.benefit_category == 'extraordinary' %}crown{% elif app.benefit_category == 'priority' %}medal{% else %}times-circle{% endif %}"></i>
+                                {{ app.get_benefit_category_display|default:"Нет"|truncatechars:15 }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge-status badge-{{ app.status }}">
+                                <i class="fas fa-{% if app.status == 'queue' %}clock{% elif app.status == 'pending' %}spinner{% elif app.status == 'invited' %}envelope{% elif app.status == 'enrolled' %}check{% else %}times{% endif %}"></i>
+                                {{ app.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons-group">
+                                <button onclick="showApplicationHistory({{ app.id }})" class="action-btn history" title="История движения">
+                                    <i class="fas fa-chart-line"></i>
+                                </button>
+                                <button onclick="openModal({{ app.id }})" class="action-btn view" title="Просмотр">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="py-4">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3 opacity-50"></i>
+                                <p class="text-muted mb-0">Нет заявлений</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ПАГИНАЦИЯ -->
+    {% if applications.has_other_pages %}
+    <div class="d-flex justify-content-center mt-4">
+        <nav>
+            <ul class="pagination">
+                {% if applications.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1"><i class="fas fa-angle-double-left"></i></a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ applications.previous_page_number }}"><i class="fas fa-angle-left"></i></a>
+                </li>
+                {% endif %}
+                
+                {% for num in applications.paginator.page_range %}
+                    {% if num == applications.number %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > applications.number|add:'-3' and num < applications.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if applications.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ applications.next_page_number }}"><i class="fas fa-angle-right"></i></a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ applications.paginator.num_pages }}"><i class="fas fa-angle-double-right"></i></a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ПЛАВАЮЩАЯ ПАНЕЛЬ -->
+<div id="batchActions" class="batch-actions">
+    <span id="selectedCount" class="selected-count">0 выбрано</span>
+    <button id="batchInviteBtn"><i class="fas fa-envelope me-1"></i> Пригласить</button>
+    <button id="closeBatchBtn" style="background: transparent; color: white; border: 1px solid rgba(255,255,255,0.3);"><i class="fas fa-times"></i></button>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ИСТОРИИ -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); border: none;">
+                <h5 class="modal-title text-white"><i class="fas fa-chart-line me-2"></i>История движения</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div id="historyContent" style="max-height: 400px; overflow-y: auto;">
+                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
+let csrfToken = null;
+let currentApplicationData = null;
+let modalElement = null;
+
+function getCsrfToken() {
+    if (csrfToken) return csrfToken;
+    const token = document.querySelector('[name=csrf-token]')?.content;
+    if (token) { csrfToken = token; return token; }
+    const cookieMatch = document.cookie.match(/csrftoken=([^;]+)/);
+    csrfToken = cookieMatch ? cookieMatch[1] : '';
+    return csrfToken;
+}
+
+function showNotification(message, type = 'success') {
+    const colors = { success: '#10b981', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.style.cssText = `
+        position: fixed; top: 20px; right: 20px; background: ${colors[type]}; color: white;
+        padding: 12px 24px; border-radius: 40px; font-size: 0.85rem; font-weight: 600;
+        z-index: 9999999; box-shadow: 0 5px 15px rgba(0,0,0,0.2); animation: fadeSlideIn 0.3s ease;
+        display: flex; align-items: center; gap: 8px;
+    `;
+    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+// ===== МОДАЛЬНОЕ ОКНО =====
+function createModal() {
+    if (modalElement) modalElement.remove();
+    
+    const modalHTML = `
+        <div id="dynamicApplicationModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 999999; backdrop-filter: blur(4px);
+            align-items: center; justify-content: center; transition: opacity 0.3s;">
+            <div style="background: white; border-radius: 20px; width: 90%; max-width: 600px; max-height: 85vh; overflow: hidden;">
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 16px 20px; display: flex; justify-content: space-between;">
+                    <h4 id="dynamicModalTitle" style="color: white; margin: 0; font-size: 1.1rem; font-weight: 700;">Заявление</h4>
+                    <button id="dynamicModalClose" style="background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer;">&times;</button>
+                </div>
+                <div id="dynamicModalContent" style="padding: 20px; max-height: 65vh; overflow-y: auto;">
+                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    modalElement = document.getElementById('dynamicApplicationModal');
+    
+    document.getElementById('dynamicModalClose')?.addEventListener('click', closeModal);
+    modalElement?.addEventListener('click', (e) => { if (e.target === modalElement) closeModal(); });
+}
+
+function openModal(applicationId) {
+    if (!modalElement) createModal();
+    
+    modalElement.style.display = 'flex';
+    modalElement.style.opacity = '1';
+    document.body.style.overflow = 'hidden';
+    
+    document.getElementById('dynamicModalContent').innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>`;
+    
+    fetch(`/applications/api/application/${applicationId}/`)
+        .then(r => r.json())
+        .then(data => {
+            currentApplicationData = data;
+            document.getElementById('dynamicModalTitle').innerHTML = `Заявление №${data.id}`;
+            renderModalContent(data);
+        })
+        .catch(() => {
+            document.getElementById('dynamicModalContent').innerHTML = `<div class="text-center py-4 text-danger">Ошибка загрузки</div>`;
+        });
+}
+
+function closeModal() {
+    if (modalElement) {
+        modalElement.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+function renderModalContent(app) {
+    const statusMap = { 'pending': 'На проверке', 'queue': 'В очереди', 'invited': 'Приглашен', 'enrolled': 'Зачислен' };
+    const benefitMap = { 'extraordinary': 'Внеочередное', 'priority': 'Первоочередное', 'none': 'Нет' };
+    
+    const html = `
+        <div class="mb-3">
+            <div class="fw-bold text-primary mb-2"><i class="fas fa-child me-1"></i> Ребенок</div>
+            <div><strong>ФИО:</strong> ${app.child_full_name || '—'}</div>
+            <div><strong>Дата рождения:</strong> ${app.child_birth_date || '—'}</div>
+            <div><strong>СНИЛС:</strong> ${app.child_snils || '—'}</div>
+        </div>
+        <div class="mb-3">
+            <div class="fw-bold text-primary mb-2"><i class="fas fa-chart-line me-1"></i> Очередь</div>
+            <div><strong>Позиция:</strong> <span class="fw-bold fs-4 text-primary">${app.queue_position || '—'}</span></div>
+            <div><strong>Льгота:</strong> ${benefitMap[app.benefit_category] || 'Нет'}</div>
+            <div><strong>Статус:</strong> ${statusMap[app.status] || app.status}</div>
+        </div>
+        <div class="mb-3">
+            <div class="fw-bold text-primary mb-2"><i class="fas fa-map-marker-alt me-1"></i> Адреса</div>
+            <div><strong>Регистрация:</strong> ${app.registration_address || '—'}</div>
+            <div><strong>Проживание:</strong> ${app.actual_address || '—'}</div>
+        </div>
+        <div class="mb-3">
+            <div class="fw-bold text-primary mb-2"><i class="fas fa-phone me-1"></i> Контакты</div>
+            <div><strong>Телефон:</strong> ${app.phone_number || '—'}</div>
+            <div><strong>Email:</strong> ${app.email || '—'}</div>
+        </div>
+        <div>
+            <div class="fw-bold text-primary mb-2"><i class="fas fa-users me-1"></i> Родители</div>
+            <div><strong>Мать:</strong> ${app.mother_full_name || '—'}</div>
+            <div><strong>Отец:</strong> ${app.father_full_name || '—'}</div>
+        </div>
+    `;
+    document.getElementById('dynamicModalContent').innerHTML = html;
+}
+
+// ===== ИСТОРИЯ =====
+let historyModal = null;
+
+function showApplicationHistory(applicationId) {
+    if (!historyModal && typeof bootstrap !== 'undefined') {
+        historyModal = new bootstrap.Modal(document.getElementById('historyModal'));
+    }
+    if (historyModal) historyModal.show();
+    
+    document.getElementById('historyContent').innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>`;
+    
+    fetch(`/applications/api/application/${applicationId}/history/`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.history?.length) {
+                document.getElementById('historyContent').innerHTML = data.history.map(item => `
+                    <div class="timeline-item">
+                        <div><i class="fas fa-arrow-${item.movement_type === 'up' ? 'up text-success' : 'arrow-down text-danger'}"></i></div>
+                        <div>
+                            <div class="fw-semibold">Позиция: ${item.old_position || '?'} → ${item.new_position}</div>
+                            <div class="small text-muted">${item.date}</div>
+                            ${item.reason ? `<div class="small mt-1">${item.reason}</div>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                document.getElementById('historyContent').innerHTML = `<div class="text-center py-4 text-muted">Нет истории движений</div>`;
+            }
+        })
+        .catch(() => {
+            document.getElementById('historyContent').innerHTML = `<div class="text-center py-4 text-danger">Ошибка загрузки</div>`;
+        });
+}
+
+// ===== ФИЛЬТРАЦИЯ =====
+function applyFilters() {
+    const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+    const benefit = document.getElementById('benefitFilter')?.value || '';
+    const status = document.getElementById('statusFilter')?.value || '';
+    const rows = document.querySelectorAll('#tableBody tr[data-id]');
+    
+    rows.forEach(row => {
+        const name = row.dataset.name || '';
+        const parent = row.dataset.parent || '';
+        const benefitVal = row.dataset.benefit || '';
+        const statusVal = row.dataset.status || '';
+        
+        const matchesSearch = !searchTerm || name.includes(searchTerm) || parent.includes(searchTerm);
+        const matchesBenefit = !benefit || benefitVal === benefit;
+        const matchesStatus = !status || statusVal === status;
+        
+        row.style.display = (matchesSearch && matchesBenefit && matchesStatus) ? '' : 'none';
+    });
+}
+
+function initFilters() {
+    const search = document.getElementById('searchInput');
+    const benefit = document.getElementById('benefitFilter');
+    const status = document.getElementById('statusFilter');
+    const reset = document.getElementById('resetFilters');
+    
+    if (search) search.addEventListener('keyup', applyFilters);
+    if (benefit) benefit.addEventListener('change', applyFilters);
+    if (status) status.addEventListener('change', applyFilters);
+    if (reset) reset.addEventListener('click', () => {
+        if (search) search.value = '';
+        if (benefit) benefit.value = '';
+        if (status) status.value = '';
+        applyFilters();
+    });
+    
+    document.querySelectorAll('.stats-card[data-filter-status]').forEach(card => {
+        card.addEventListener('click', () => {
+            document.getElementById('statusFilter').value = card.dataset.filterStatus;
+            applyFilters();
+        });
+    });
+}
+
+// ===== МАССОВЫЕ ОПЕРАЦИИ =====
+function updateBatchActions() {
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    const batchPanel = document.getElementById('batchActions');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    
+    if (checkboxes.length > 0) {
+        batchPanel.classList.add('show');
+        selectedCountSpan.textContent = `${checkboxes.length} выбрано`;
+    } else {
+        batchPanel.classList.remove('show');
+    }
+}
+
+function initBatchOperations() {
+    const selectAll = document.getElementById('selectAllCheckbox');
+    
+    if (selectAll) {
+        selectAll.addEventListener('change', (e) => {
+            document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
+            updateBatchActions();
+        });
+    }
+    
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateBatchActions);
+    });
+    
+    document.getElementById('batchInviteBtn')?.addEventListener('click', () => {
+        const count = document.querySelectorAll('.row-checkbox:checked').length;
+        if (count > 0) showNotification(`Приглашения отправлены ${count} заявителям`, 'success');
+        document.querySelectorAll('.row-checkbox:checked').forEach(cb => cb.checked = false);
+        updateBatchActions();
+    });
+    
+    document.getElementById('closeBatchBtn')?.addEventListener('click', () => {
+        document.querySelectorAll('.row-checkbox:checked').forEach(cb => cb.checked = false);
+        updateBatchActions();
+    });
+}
+
+// ===== ПЕРЕСЧЁТ =====
+function initRecalculate() {
+    const btn = document.getElementById('recalculateBtn');
+    if (btn) {
+        btn.addEventListener('click', async () => {
+            if (confirm('Пересчитать очередь? Позиции обновятся.')) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>';
+                try {
+                    const response = await fetch('/applications/queue/recalculate/', {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': getCsrfToken() }
+                    });
+                    if (response.ok) {
+                        showNotification('Очередь пересчитана!', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else throw new Error();
+                } catch (error) {
+                    showNotification('Ошибка пересчёта', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Пересчитать';
+                }
+            }
+        });
+    }
+}
+
+// ===== ЭКСПОРТ =====
+function initExport() {
+    const btn = document.getElementById('exportExcelBtn');
+    if (btn) {
+        btn.addEventListener('click', () => {
+            const rows = document.querySelectorAll('#tableBody tr[data-id]:visible');
+            if (!rows.length) { showNotification('Нет данных для экспорта', 'warning'); return; }
+            
+            let csv = "\uFEFFПозиция,Движение,Ребёнок,Родитель,Дата рождения,Дата подачи,Льгота,Статус\n";
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const pos = cells[1]?.querySelector('.position-badge')?.innerText || '';
+                const arrow = cells[1]?.querySelector('.movement-arrow i')?.className.includes('arrow-up') ? '↑' : 
+                             (cells[1]?.querySelector('.movement-arrow i')?.className.includes('arrow-down') ? '↓' : '●');
+                const child = cells[2]?.querySelector('.fw-semibold')?.innerText || '';
+                const parent = cells[2]?.querySelector('small')?.innerText.replace('родитель: ', '') || '';
+                const birthdate = cells[3]?.innerText.split('\n')[0] || '';
+                const created = cells[4]?.innerText.split('\n')[0] || '';
+                const benefit = cells[5]?.innerText.split('\n')[0] || '';
+                const status = cells[6]?.innerText || '';
+                csv += `"${pos}","${arrow}","${child}","${parent}","${birthdate}","${created}","${benefit}","${status}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `очередь_${new Date().toISOString().slice(0,19)}.csv`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+            showNotification(`Экспортировано ${rows.length} записей`, 'success');
+        });
+    }
+}
+
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+document.addEventListener('DOMContentLoaded', () => {
+    createModal();
+    initFilters();
+    initBatchOperations();
+    initRecalculate();
+    initExport();
+    console.log('✅ Страница очереди загружена');
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modalElement?.style.display === 'flex') closeModal();
+    });
+});
+</script>
+{% endblock %}

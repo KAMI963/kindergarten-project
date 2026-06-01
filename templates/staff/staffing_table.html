@@ -1,0 +1,166 @@
+<!-- staff/templates/staff/staffing_table.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Штатное расписание{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-sitemap"></i>
+                    Штатное расписание
+                </h1>
+                <p class="mb-0 opacity-75">Управление штатными единицами и должностями</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'staff:staff_unit_create' %}" class="btn btn-light staff-btn me-2">
+                    <i class="fas fa-plus"></i> Новая единица
+                </a>
+                <a href="{% url 'staff:position_create' %}" class="btn btn-outline-light staff-btn">
+                    <i class="fas fa-briefcase"></i> Новая должность
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <!-- Статистика -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="staff-stat-card position-relative">
+                <i class="fas fa-users"></i>
+                <p class="stat-value">{{ total_units }}</p>
+                <p class="stat-label">Всего ставок</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="staff-stat-card position-relative" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <i class="fas fa-user-check"></i>
+                <p class="stat-value">{{ filled_units }}</p>
+                <p class="stat-label">Занято</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="staff-stat-card position-relative" style="background: linear-gradient(135deg, #fad961 0%, #f76b1c 100%);">
+                <i class="fas fa-user-plus"></i>
+                <p class="stat-value">{{ vacant_units }}</p>
+                <p class="stat-label">Вакансии</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="staff-stat-card position-relative" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="fas fa-chart-line"></i>
+                <p class="stat-value">{{ fill_percentage }}%</p>
+                <p class="stat-label">Укомплектованность</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Прогресс по категориям -->
+    <div class="row mb-4">
+        {% for category in staffing_by_category %}
+        <div class="col-md-6 mb-3">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-folder"></i>
+                    {{ category.name }}
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Всего: {{ category.total }} ставок</span>
+                        <span>Занято: {{ category.filled }} | Вакансий: {{ category.vacant }}</span>
+                    </div>
+                    <div class="staff-progress mb-3">
+                        <div class="staff-progress-bar" role="progressbar" 
+                             style="width: {{ category.fill_percentage }}%"></div>
+                    </div>
+                    
+                    {% for position in category.positions %}
+                    <div class="border-bottom py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ position.title }}</strong>
+                                <small class="text-muted d-block">{{ position.code }}</small>
+                            </div>
+                            <a href="#" class="btn btn-sm btn-outline-primary">Просмотр</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Детальная таблица -->
+    <div class="staff-card">
+        <div class="card-header">
+            <i class="fas fa-list"></i>
+            Детализация штатных единиц
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="staff-table table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Должность</th>
+                            <th>Категория</th>
+                            <th>Кол-во ставок</th>
+                            <th>Оклад</th>
+                            <th>Коэффициент</th>
+                            <th>Расчетный оклад</th>
+                            <th>Сотрудник</th>
+                            <th>Статус</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for unit in staff_units %}
+                        <tr>
+                            <td>
+                                <strong>{{ unit.position.title }}</strong>
+                                <small class="d-block text-muted">{{ unit.position.code }}</small>
+                            </td>
+                            <td>{{ unit.position.get_category_display }}</td>
+                            <td>{{ unit.quantity }}</td>
+                            <td>{{ unit.position.base_salary|floatformat:2 }} ₽</td>
+                            <td>{{ unit.salary_coefficient }}</td>
+                            <td><strong>{{ unit.calculated_salary|floatformat:2 }} ₽</strong></td>
+                            <td>
+                                {% if unit.employee %}
+                                <a href="{% url 'staff:employee_detail' unit.employee.id %}" class="text-decoration-none">
+                                    {{ unit.employee.full_name }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if unit.is_vacant %}
+                                <span class="badge bg-warning">Вакансия</span>
+                                {% else %}
+                                <span class="badge bg-success">Занято</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'staff:staff_unit_edit' unit.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'staff:staff_unit_delete' unit.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

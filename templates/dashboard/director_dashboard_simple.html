@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Панель заведующей{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-0 pb-3 mb-4 border-bottom">
+        <h1 class="h2 mb-0">Панель управления</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.href='{% url "attendance:statistics" %}'">
+                    <i class="fas fa-chart-line me-1"></i>Отчеты
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.href='{% url "applications:applications_list" %}'">
+                    <i class="fas fa-clipboard-list me-1"></i>Заявления
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="row mb-4 g-3">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-primary shadow h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                <i class="fas fa-clipboard-list me-1"></i> Новые заявления
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_applications_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-success shadow h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                <i class="fas fa-child me-1"></i> Всего детей
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_children_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-child fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-info shadow h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                <i class="fas fa-clipboard-check me-1"></i> Посещаемость
+                            </div>
+                            <div class="row no-gutters align-items-center">
+                                <div class="col-auto">
+                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{ attendance_rate }}%</div>
+                                </div>
+                            </div>
+                            <div class="progress mt-2" style="height: 8px;">
+                                <div class="progress-bar bg-info" role="progressbar" 
+                                     style="width: {{ attendance_rate }}%" 
+                                     aria-valuenow="{{ attendance_rate }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-warning shadow h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                <i class="fas fa-ruble-sign me-1"></i> Ожидающие оплату
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ pending_payments_count }}
+                                <small class="text-muted fs-6">на сумму {{ pending_payments_sum }} ₽</small>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-ruble-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="row g-3">
+        <!-- Заявления на рассмотрении -->
+        <div class="col-lg-6">
+            <div class="card shadow h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clock me-2"></i>Заявления на рассмотрении
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if pending_applications %}
+                        {% for application in pending_applications %}
+                        <div class="card mb-3 border-0 bg-light">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="card-title h6 mb-1">{{ application.child_full_name }}</h5>
+                                        <p class="card-text mb-2">
+                                            <small class="text-muted">
+                                                <i class="far fa-calendar-alt me-1"></i>
+                                                Дата рождения: {{ application.child_birth_date|date:"d.m.Y" }}<br>
+                                                <i class="fas fa-flag me-1"></i>
+                                                Приоритет: {{ application.get_priority_display }}
+                                            </small>
+                                        </p>
+                                    </div>
+                                    <span class="badge bg-warning text-dark">На рассмотрении</span>
+                                </div>
+                                <a href="{% url 'applications:application_detail' application.id %}" class="btn btn-primary btn-sm mt-2">
+                                    <i class="fas fa-eye me-1"></i>Рассмотреть
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center my-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <p class="text-muted">Нет заявлений на рассмотрении</p>
+                        </div>
+                    {% endif %}
+                </div>
+                {% if pending_applications_count > 5 %}
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'applications:applications_list' %}" class="btn btn-link btn-sm">
+                        Показать все ({{ pending_applications_count }}) <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Быстрый доступ -->
+        <div class="col-lg-6">
+            <div class="card shadow h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bolt me-2"></i>Быстрый доступ
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="{% url 'children:children_list' %}" class="btn btn-outline-primary w-100 py-3 text-start">
+                                <i class="fas fa-child fa-lg me-3"></i>
+                                <div>
+                                    <strong>Дети</strong><br>
+                                    <small>Список воспитанников</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'staff:employee_list' %}" class="btn btn-outline-success w-100 py-3 text-start">
+                                <i class="fas fa-users fa-lg me-3"></i>
+                                <div>
+                                    <strong>Сотрудники</strong><br>
+                                    <small>Управление персоналом</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'applications:applications_list' %}" class="btn btn-outline-info w-100 py-3 text-start">
+                                <i class="fas fa-clipboard-list fa-lg me-3"></i>
+                                <div>
+                                    <strong>Заявления</strong><br>
+                                    <small>Обработка заявлений</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'attendance:statistics' %}" class="btn btn-outline-warning w-100 py-3 text-start">
+                                <i class="fas fa-chart-bar fa-lg me-3"></i>
+                                <div>
+                                    <strong>Отчеты</strong><br>
+                                    <small>Статистика и аналитика</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="#" class="btn btn-outline-secondary w-100 py-3 text-start">
+                                <i class="fas fa-file-signature fa-lg me-3"></i>
+                                <div>
+                                    <strong>Договоры</strong><br>
+                                    <small>Управление договорами</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'payments:tariff_management' %}" class="btn btn-outline-danger w-100 py-3 text-start">
+                                <i class="fas fa-money-bill-wave fa-lg me-3"></i>
+                                <div>
+                                    <strong>Тарифы</strong><br>
+                                    <small>Настройка оплаты</small>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Дополнительная статистика (опционально) -->
+    <div class="row mt-4 g-3">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-pie me-2"></i>Краткая статистика
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <div class="text-muted small">Групп</div>
+                                <div class="h4 mb-0">{{ groups_count }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <div class="text-muted small">Сотрудников</div>
+                                <div class="h4 mb-0">{{ staff_count }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-3 text-center">
+                                <div class="text-muted small">Мальчиков</div>
+                                <div class="h4 mb-0">—</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-3 text-center">
+                                <div class="text-muted small">Девочек</div>
+                                <div class="h4 mb-0">—</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-calendar-alt me-2"></i>Активность сегодня
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <div class="text-muted small">Посещаемость</div>
+                                <div class="h4 mb-0">{{ attendance_rate }}%</div>
+                                <small class="text-success">
+                                    <i class="fas fa-arrow-up"></i> за месяц
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <div class="text-muted small">Заявлений сегодня</div>
+                                <div class="h4 mb-0">{{ pending_applications_count }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-left-primary {
+        border-left: 4px solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+    .border-left-info {
+        border-left: 4px solid #36b9cc !important;
+    }
+    .border-left-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+    .stat-card {
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .btn-outline-primary,
+    .btn-outline-success,
+    .btn-outline-info,
+    .btn-outline-warning,
+    .btn-outline-secondary,
+    .btn-outline-danger {
+        transition: all 0.3s;
+    }
+    .btn-outline-primary:hover,
+    .btn-outline-success:hover,
+    .btn-outline-info:hover,
+    .btn-outline-warning:hover,
+    .btn-outline-secondary:hover,
+    .btn-outline-danger:hover {
+        transform: translateX(5px);
+    }
+</style>
+{% endblock %}

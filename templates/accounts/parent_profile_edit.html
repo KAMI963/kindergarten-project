@@ -1,0 +1,376 @@
+<!-- templates/accounts/parent_profile_edit.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Редактирование анкеты - Детский сад{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .card-header-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem 2rem;
+    }
+    
+    .section-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .section-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 5px;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .section-title {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn-modern {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: #e74c3c;
+    }
+    
+    .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        cursor: pointer;
+    }
+    
+    .phone-mask {
+        font-family: monospace;
+    }
+    
+    .alert-info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border: none;
+        border-radius: 15px;
+        padding: 1rem 1.5rem;
+        color: #1565c0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card edit-card">
+                <div class="card-header card-header-gradient text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-user-edit fa-2x me-3"></i>
+                        <div>
+                            <h4 class="mb-1">Редактирование анкеты</h4>
+                            <p class="mb-0 opacity-75">Измените свои личные данные</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Измененные данные будут автоматически использоваться при подаче новых заявлений.
+                    </div>
+                    
+                    <form method="post" id="profileEditForm">
+                        {% csrf_token %}
+                        
+                        <!-- Основные сведения -->
+                        <div class="section-header">
+                            <h5 class="section-title">
+                                <i class="fas fa-user-circle"></i>
+                                Основные сведения
+                            </h5>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label required-field">ФИО родителя</label>
+                                <input type="text" name="full_name" class="form-control" 
+                                       value="{{ profile.full_name|default:'' }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required-field">Дата рождения</label>
+                                <input type="date" name="birth_date" class="form-control" 
+                                       value="{{ profile.birth_date|date:'Y-m-d'|default:'' }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required-field">Национальность</label>
+                                <input type="text" name="nationality" class="form-control" 
+                                       value="{{ profile.nationality|default:'' }}" 
+                                       placeholder="Начните вводить национальность..."
+                                       list="nationalitiesList" required>
+                                <datalist id="nationalitiesList">
+                                    {% for nat in nationalities %}
+                                    <option>{{ nat }}</option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                        </div>
+                        
+                        <!-- Паспортные данные -->
+                        <div class="section-header mt-4">
+                            <h5 class="section-title">
+                                <i class="fas fa-id-card"></i>
+                                Паспортные данные
+                            </h5>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Серия паспорта</label>
+                                <input type="text" name="passport_series" class="form-control" 
+                                       value="{{ profile.passport_series|default:'' }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Номер паспорта</label>
+                                <input type="text" name="passport_number" class="form-control" 
+                                       value="{{ profile.passport_number|default:'' }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Дата выдачи</label>
+                                <input type="date" name="passport_issue_date" class="form-control" 
+                                       value="{{ profile.passport_issue_date|date:'Y-m-d'|default:'' }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Кем выдан</label>
+                                <input type="text" name="passport_issued_by" class="form-control" 
+                                       value="{{ profile.passport_issued_by|default:'' }}">
+                            </div>
+                        </div>
+                        
+                        <!-- Адреса -->
+                        <div class="section-header mt-4">
+                            <h5 class="section-title">
+                                <i class="fas fa-home"></i>
+                                Адреса
+                            </h5>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label required-field">Адрес регистрации</label>
+                                <textarea name="registration_address" class="form-control" rows="2" 
+                                          required>{{ profile.registration_address|default:'' }}</textarea>
+                                <small class="text-muted">Пример: 123456, г. Москва, ул. Примерная, д. 1, кв. 1</small>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" name="address_same_as_registration" 
+                                           class="form-check-input" id="addressSame"
+                                           {% if profile.address_same_as_registration %}checked{% endif %}>
+                                    <label class="form-check-label" for="addressSame">
+                                        Совпадает с адресом прописки
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-12 mb-3" id="actualAddressField" 
+                                 style="display: {% if profile.address_same_as_registration %}none{% else %}block{% endif %};">
+                                <label class="form-label">Фактический адрес проживания</label>
+                                <textarea name="actual_address" class="form-control" rows="2">{{ profile.actual_address|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Телефоны -->
+                        <div class="section-header mt-4">
+                            <h5 class="section-title">
+                                <i class="fas fa-phone"></i>
+                                Контактные телефоны
+                            </h5>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required-field">Мобильный телефон</label>
+                                <input type="tel" name="mobile_phone" class="form-control phone-mask" 
+                                       value="{{ profile.mobile_phone|default:'' }}" 
+                                       placeholder="+7 (XXX) XXX-XX-XX" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Домашний телефон</label>
+                                <input type="tel" name="home_phone" class="form-control phone-mask" 
+                                       value="{{ profile.home_phone|default:'' }}" 
+                                       placeholder="+7 (XXX) XXX-XX-XX">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Рабочий телефон</label>
+                                <input type="tel" name="work_phone" class="form-control phone-mask" 
+                                       value="{{ profile.work_phone|default:'' }}" 
+                                       placeholder="+7 (XXX) XXX-XX-XX">
+                            </div>
+                        </div>
+                        
+                        <!-- Место работы -->
+                        <div class="section-header mt-4">
+                            <h5 class="section-title">
+                                <i class="fas fa-briefcase"></i>
+                                Место работы
+                            </h5>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" name="not_working" class="form-check-input" id="notWorking"
+                                           {% if profile.not_working %}checked{% endif %}>
+                                    <label class="form-check-label" for="notWorking">
+                                        Не работаю
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-8 mb-3" id="workplaceField" 
+                                 style="display: {% if profile.not_working %}none{% else %}block{% endif %};">
+                                <label class="form-label">Место работы</label>
+                                <input type="text" name="workplace" class="form-control" 
+                                       value="{{ profile.workplace|default:'' }}">
+                            </div>
+                            <div class="col-md-4 mb-3" id="positionField" 
+                                 style="display: {% if profile.not_working %}none{% else %}block{% endif %};">
+                                <label class="form-label">Должность</label>
+                                <input type="text" name="position" class="form-control" 
+                                       value="{{ profile.position|default:'' }}">
+                            </div>
+                        </div>
+                        
+                        <!-- Кнопки -->
+                        <div class="row mt-5">
+                            <div class="col-12">
+                                <div class="d-flex gap-3 justify-content-end">
+                                    <a href="{% url 'accounts:profile' %}" class="btn btn-secondary btn-modern">
+                                        <i class="fas fa-times me-2"></i>Отмена
+                                    </a>
+                                    <button type="submit" class="btn btn-primary btn-modern">
+                                        <i class="fas fa-save me-2"></i>Сохранить изменения
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Копирование адреса
+    const addressSame = document.getElementById('addressSame');
+    const actualField = document.getElementById('actualAddressField');
+    const regAddress = document.querySelector('textarea[name="registration_address"]');
+    const actualAddress = document.querySelector('textarea[name="actual_address"]');
+    
+    if (addressSame) {
+        addressSame.addEventListener('change', function() {
+            if (actualField) {
+                actualField.style.display = this.checked ? 'none' : 'block';
+            }
+            if (this.checked && regAddress && actualAddress) {
+                actualAddress.value = regAddress.value;
+            }
+        });
+    }
+    
+    if (regAddress && actualAddress) {
+        regAddress.addEventListener('input', function() {
+            if (addressSame && addressSame.checked) {
+                actualAddress.value = this.value;
+            }
+        });
+    }
+    
+    // Поле "Не работаю"
+    const notWorking = document.getElementById('notWorking');
+    const workplaceField = document.getElementById('workplaceField');
+    const positionField = document.getElementById('positionField');
+    
+    if (notWorking) {
+        notWorking.addEventListener('change', function() {
+            const hidden = this.checked;
+            if (workplaceField) workplaceField.style.display = hidden ? 'none' : 'block';
+            if (positionField) positionField.style.display = hidden ? 'none' : 'block';
+        });
+    }
+    
+    // Маска для телефона
+    const phoneFields = document.querySelectorAll('.phone-mask');
+    phoneFields.forEach(field => {
+        field.addEventListener('input', function(e) {
+            let value = this.value.replace(/\D/g, '');
+            if (value.startsWith('7') || value.startsWith('8')) {
+                value = value.substring(1);
+            }
+            if (value.length > 0) {
+                value = '+7 (' + value;
+                if (value.length > 7) {
+                    value = value.substring(0, 7) + ') ' + value.substring(7);
+                }
+                if (value.length > 12) {
+                    value = value.substring(0, 12) + '-' + value.substring(12);
+                }
+                if (value.length > 15) {
+                    value = value.substring(0, 15) + '-' + value.substring(15, 17);
+                }
+            }
+            this.value = value;
+        });
+    });
+});
+</script>
+{% endblock %}

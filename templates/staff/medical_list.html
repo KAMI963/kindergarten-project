@@ -1,0 +1,174 @@
+<!-- staff/templates/staff/medical_list.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Медицинские осмотры{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-file-medical"></i>
+                    Медицинские осмотры
+                </h1>
+                <p class="mb-0 opacity-75">{{ employee.full_name }} • {{ employee.position }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'staff:medical_examination_add' employee.id %}" class="btn btn-light staff-btn me-2">
+                    <i class="fas fa-plus"></i> Добавить осмотр
+                </a>
+                <a href="{% url 'staff:employee_detail' employee.id %}" class="btn btn-outline-light staff-btn">
+                    <i class="fas fa-arrow-left"></i> Назад
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <!-- Текущий статус -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-heartbeat"></i>
+                    Статус медосмотров
+                </div>
+                <div class="card-body">
+                    {% with last_med=examinations.first %}
+                    {% if last_med %}
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="staff-avatar staff-avatar-lg me-3 {% if last_med.is_valid %}bg-success{% else %}bg-danger{% endif %}">
+                                <i class="fas {% if last_med.is_valid %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %}"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">
+                                    {% if last_med.is_valid %}
+                                    <span class="text-success">Допущен к работе</span>
+                                    {% else %}
+                                    <span class="text-danger">Требуется медосмотр</span>
+                                    {% endif %}
+                                </h5>
+                                <p class="mb-0">
+                                    Последний осмотр: {{ last_med.examination_date|date:"d.m.Y" }}<br>
+                                    Действителен до: {{ last_med.valid_until|date:"d.m.Y" }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        {% if not last_med.is_valid %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Срок действия медосмотра истек! Необходимо пройти медицинский осмотр.
+                        </div>
+                        {% elif last_med.days_until_expiry <= 30 %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-clock me-2"></i>
+                            Срок действия медосмотра истекает через {{ last_med.days_until_expiry }} дней.
+                            Рекомендуется запланировать прохождение медосмотра.
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Медицинские осмотры не добавлены
+                        </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-info-circle"></i>
+                    Информация о медкнижке
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Номер медкнижки:</strong> {{ last_med.medical_book_number|default:"не указан" }}</p>
+                    <p class="mb-2"><strong>Периодичность осмотров:</strong></p>
+                    <ul class="mb-0">
+                        <li>Терапевт - 1 раз в год</li>
+                        <li>Психиатр - 1 раз в 2 года</li>
+                        <li>Нарколог - 1 раз в 2 года</li>
+                        <li>Флюорография - 1 раз в год</li>
+                        <li>Дерматовенеролог - 1 раз в год</li>
+                        <li>Лабораторные исследования - 1 раз в год</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- История медосмотров -->
+    <div class="staff-card">
+        <div class="card-header">
+            <i class="fas fa-history"></i>
+            История медицинских осмотров
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="staff-table table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Дата осмотра</th>
+                            <th>Тип осмотра</th>
+                            <th>Медкнижка</th>
+                            <th>Действителен до</th>
+                            <th>Статус</th>
+                            <th>Допуск</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exam in examinations %}
+                        <tr class="{% if not exam.is_valid %}table-danger{% elif exam.days_until_expiry <= 30 %}table-warning{% endif %}">
+                            <td>{{ exam.examination_date|date:"d.m.Y" }}</td>
+                            <td>{{ exam.get_examination_type_display }}</td>
+                            <td>{{ exam.medical_book_number }}</td>
+                            <td>{{ exam.valid_until|date:"d.m.Y" }}</td>
+                            <td>
+                                {% if exam.is_valid %}
+                                    {% if exam.days_until_expiry <= 30 %}
+                                    <span class="badge bg-warning">Скоро истекает</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Действует</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="badge bg-danger">Просрочен</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if exam.is_allowed %}
+                                <span class="badge bg-success">Допущен</span>
+                                {% else %}
+                                <span class="badge bg-danger">Не допущен</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'staff:medical_examination_edit' exam.id %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'staff:medical_examination_delete' exam.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <p class="text-muted">Нет записей о медосмотрах</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

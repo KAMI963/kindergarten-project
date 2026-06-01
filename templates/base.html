@@ -1,0 +1,991 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon/favicon111.ico' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Система детского сада{% endblock %}</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { 
+            font-size: 14px;
+            scroll-behavior: smooth; 
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-size: 0.9rem;
+        }
+
+        /* === САЙДБАР === */
+        .system-sidebar {
+            background: linear-gradient(180deg, #1a1f36 0%, #2d3748 100%);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            left: 0; top: 0;
+            width: 220px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 3px 0 15px rgba(0,0,0,0.1);
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            overflow: hidden;
+        }
+        
+        .sidebar-header {
+            padding: 20px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: #5a6fd8;
+        }
+        
+        .sidebar-title { 
+            font-size: 1.1rem; font-weight: 700; color: #fff; 
+            margin-bottom: 3px; text-align: center; letter-spacing: 0.5px;
+        }
+        .sidebar-subtitle { 
+            font-size: 0.62rem; color: rgba(255,255,255,0.85); 
+            text-align: center; letter-spacing: 1px;
+        }
+        
+        .nav-container { flex: 1; overflow: hidden; }
+        .nav-scroll { 
+            height: 100%; overflow-y: auto; padding: 8px 0; scroll-behavior: smooth;
+        }
+        
+        .nav { display: flex; flex-direction: column; gap: 2px; }
+        .nav-item { margin: 0 6px; }
+
+        .sidebar-nav-link {
+            color: #cbd5e0;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 7px;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            font-size: 0.8rem;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .sidebar-nav-link:hover {
+            color: white;
+            transform: translateX(3px);
+            background: rgba(255,255,255,0.08);
+        }
+        
+        .sidebar-nav-link.active {
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 3px 10px rgba(102,126,234,0.3);
+        }
+        
+        .sidebar-nav-link i {
+            width: 16px; text-align: center; font-size: 0.85rem; flex-shrink: 0;
+            transition: transform 0.25s ease;
+        }
+        
+        .sidebar-nav-link:hover i { transform: scale(1.1); }
+
+        .sidebar-nav-link.active::after {
+            content: '';
+            position: absolute;
+            right: 7px; top: 50%;
+            transform: translateY(-50%);
+            width: 5px; height: 5px;
+            background: white;
+            border-radius: 50%;
+            animation: gentlePulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes gentlePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* === УВЕДОМЛЕНИЯ === */
+        .notification-icon-invite { width: 28px; height: 28px; background: #d1fae5; color: #059669; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.75rem; }
+        .notification-icon-enrollment { width: 28px; height: 28px; background: #dbeafe; color: #2563eb; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.75rem; }
+        .notification-icon-info { width: 28px; height: 28px; background: #f3e8ff; color: #9333ea; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.75rem; }
+        .notification-item { cursor: pointer; transition: background 0.2s; }
+        .notification-item:hover { background: #f3f4f6 !important; }
+        .notifications-list { max-height: 300px; overflow-y: auto; }
+
+        .section-divider {
+            padding: 8px 12px 5px;
+            font-size: 0.6rem;
+            color: #9ba1b0;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin: 8px 6px 3px;
+            list-style: none;
+        }
+        
+        /* === ОСНОВНОЙ КОНТЕНТ === */
+        .system-main {
+            margin-left: 220px;
+            min-height: 100vh;
+            transition: margin-left 0.4s ease;
+        }
+        
+        .system-navbar {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            height: 52px;
+            position: fixed;
+            top: 0; left: 220px; right: 0;
+            z-index: 999;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+            transition: all 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+        }
+        
+        .content-wrapper {
+            margin-top: 52px;
+            padding: 18px;
+            min-height: calc(100vh - 52px);
+        }
+
+        /* === АНИМАЦИЯ КОНТЕНТА === */
+        .content-wrapper.pjax-fade-in {
+            animation: pjaxFadeIn 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+        }
+
+        .content-wrapper.pjax-fade-out {
+            animation: pjaxFadeOut 0.2s ease forwards;
+        }
+
+        @keyframes pjaxFadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pjaxFadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to   { opacity: 0; transform: translateY(-8px); }
+        }
+
+        /* === ЛОАДЕР === */
+        .pjax-loader {
+            position: fixed;
+            top: 0; left: 220px; right: 0;
+            height: 3px;
+            z-index: 9999;
+            background: transparent;
+            overflow: hidden;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .pjax-loader.active { opacity: 1; }
+
+        .pjax-loader::after {
+            content: '';
+            display: block;
+            width: 30%;
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+            animation: loaderSlide 1s ease-in-out infinite;
+            border-radius: 2px;
+        }
+
+        @keyframes loaderSlide {
+            0%   { transform: translateX(-100%); }
+            100% { transform: translateX(400%); }
+        }
+        
+        /* === КАРТОЧКИ === */
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            border-radius: 10px;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px) scale(1.005);
+            box-shadow: 0 16px 30px -8px rgba(0,0,0,0.15) !important;
+        }
+        
+        .btn {
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+            border-radius: 7px;
+            font-size: 0.8rem;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 14px rgba(0,0,0,0.1);
+        }
+        
+        .list-group-item {
+            transition: all 0.25s ease;
+            border-left: 3px solid transparent;
+            border-radius: 7px;
+            margin-bottom: 3px;
+            font-size: 0.83rem;
+        }
+        
+        .list-group-item:hover {
+            transform: translateX(5px);
+            background-color: #f8f9ff;
+            border-left-color: #667eea;
+        }
+        
+        .table { font-size: 0.83rem; }
+        .table th { font-size: 0.78rem; font-weight: 600; }
+        .table tbody tr { transition: background 0.2s; }
+        .table tbody tr:hover { background-color: rgba(102,126,234,0.05); }
+        
+        /* === НАВБАР ПОЛЬЗОВАТЕЛЬ === */
+        .user-info { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .user-name { color: #2d3748; font-weight: 600; font-size: 0.8rem; text-align: right; }
+        .user-role { color: #718096; font-size: 0.68rem; text-align: right; }
+        .user-avatar-link { text-decoration: none; display: inline-block; }
+        
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 600; font-size: 0.78rem;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        .user-avatar:hover { transform: scale(1.1); box-shadow: 0 3px 10px rgba(102,126,234,0.4); }
+        
+        .user-avatar-img {
+            width: 32px; height: 32px; border-radius: 50%;
+            object-fit: cover; border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        .user-avatar-img:hover { transform: scale(1.1); box-shadow: 0 3px 10px rgba(102,126,234,0.3); }
+        
+        .user-dropdown { position: relative; display: flex; align-items: center; gap: 8px; }
+        
+        .dropdown-menu {
+            border: none; box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            border-radius: 10px; margin-top: 8px; font-size: 0.8rem;
+        }
+        .dropdown-item { 
+            padding: 7px 13px; transition: all 0.2s; color: #2d3748; 
+            border-radius: 6px; margin: 2px 4px; font-size: 0.8rem;
+        }
+        .dropdown-item:hover { 
+            background: rgba(102,126,234,0.1); transform: translateX(4px); color: #5a6fd8;
+        }
+        
+        .navbar-toggler {
+            background: rgba(90,111,216,0.1); border: none; color: #5a6fd8;
+            border-radius: 7px; padding: 5px 9px; transition: all 0.25s;
+            margin-right: 10px; font-size: 0.85rem;
+        }
+        .navbar-toggler:hover { background: rgba(90,111,216,0.2); transform: scale(1.05); }
+        .navbar-left { display: flex; align-items: center; }
+        
+        .alert { border-radius: 9px; font-size: 0.83rem; }
+
+        /* === КНОПКА ВЫХОДА === */
+        .logout-btn {
+            border-radius: 7px; padding: 5px 12px; font-size: 0.76rem; font-weight: 500;
+            display: flex; align-items: center; gap: 5px;
+            border: 1.5px solid #667eea; color: #667eea; background: transparent;
+            cursor: pointer; transition: all 0.25s; white-space: nowrap;
+        }
+        .logout-btn:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important; transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102,126,234,0.35); border-color: transparent;
+        }
+        .logout-btn:active { transform: translateY(0); }
+        .logout-btn i { transition: transform 0.2s; font-size: 0.76rem; }
+        .logout-btn:hover i { transform: translateX(3px); }
+
+        .bell-nav-link { padding: 4px 7px !important; color: #5a6fd8 !important; }
+        .bell-nav-link .fa-bell { font-size: 0.95rem; }
+        
+        @media (max-width: 1200px) {
+            .system-sidebar { width: 200px; }
+            .system-main { margin-left: 200px; }
+            .system-navbar { left: 200px; }
+            .pjax-loader { left: 200px; }
+        }
+
+        @media (max-width: 768px) {
+            .system-sidebar { transform: translateX(-100%); width: 220px; }
+            .system-sidebar.mobile-open { transform: translateX(0); box-shadow: 8px 0 30px rgba(0,0,0,0.25); }
+            .system-main { margin-left: 0; }
+            .system-navbar { left: 0; padding: 0 10px; }
+            .pjax-loader { left: 0; }
+            .user-name, .user-role { display: none; }
+            .logout-text { display: none; }
+            .logout-btn { padding: 5px 8px; }
+            .sidebar-overlay {
+                display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(3px);
+                transition: opacity 0.3s; opacity: 0;
+            }
+        }
+        
+        .nav-scroll::-webkit-scrollbar { width: 4px; }
+        .nav-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 3px; }
+        .nav-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
+        .nav-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.55); }
+        
+        .user-display { display: flex; flex-direction: column; align-items: flex-end; }
+
+        h1 { font-size: 1.4rem !important; }
+        h2 { font-size: 1.2rem !important; }
+        h3 { font-size: 1.08rem !important; }
+        h4 { font-size: 0.98rem !important; }
+        h5 { font-size: 0.9rem !important; }
+        h6 { font-size: 0.82rem !important; }
+        .card-title { font-size: 0.92rem !important; }
+        .card-text { font-size: 0.8rem; }
+        .badge { font-size: 0.68rem; }
+        .small, small { font-size: 0.73rem !important; }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Лоадер сверху -->
+    <div class="pjax-loader" id="pjaxLoader"></div>
+
+    {% if user.is_authenticated %}
+    <div class="system-sidebar" id="systemSidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">ДЕТСКИЙ САД</div>
+            <div class="sidebar-subtitle">УПРАВЛЕНИЕ СИСТЕМОЙ</div>
+        </div>
+        <div class="nav-container">
+            <div class="nav-scroll">
+                {% include 'includes/sidebar.html' %}
+            </div>
+        </div>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    {% endif %}
+
+    <div class="system-main" id="systemMain">
+        <nav class="system-navbar">
+            <div class="navbar-left">
+                {% if user.is_authenticated %}
+                <button class="navbar-toggler" type="button" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                {% endif %}
+            </div>
+            
+            <div class="user-info">
+                {% if user.is_authenticated %}
+                <div class="user-display">
+                    <div class="user-name">
+                        {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}
+                    </div>
+                    <div class="user-role">
+                        {% if user.role == 'director' %}Заведующая
+                        {% elif user.role == 'teacher' %}Воспитатель
+                        {% elif user.role == 'parent' %}Родитель
+                        {% elif user.role %}{{ user.role|title }}
+                        {% else %}Неизвестная роль{% endif %}
+                    </div>
+                </div>
+                
+                <div class="user-dropdown">
+    <a href="{% url 'accounts:profile' %}" class="user-avatar-link pjax-link">
+        {% if user.photo and user.photo.url %}
+            <img src="{{ user.photo.url }}" class="user-avatar-img" alt="{{ user.get_full_name }}"
+                 onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\'user-avatar\'>{{ user.first_name|first|upper|default:user.username|first|upper }}</div>';">
+        {% elif user.parentprofile.photo and user.parentprofile.photo.url %}
+            <img src="{{ user.parentprofile.photo.url }}" class="user-avatar-img" alt="{{ user.get_full_name }}"
+                 onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\'user-avatar\'>{{ user.first_name|first|upper|default:user.username|first|upper }}</div>';">
+        {% else %}
+            <div class="user-avatar">
+                {{ user.first_name|first|upper|default:user.username|first|upper }}
+            </div>
+        {% endif %}
+                    </a>
+                    
+                    <div class="nav-item dropdown" style="list-style: none;">
+                        <a class="nav-link bell-nav-link position-relative" href="#" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false" data-no-pjax>
+                            <i class="fas fa-bell"></i>
+                            <span id="notificationBadge" 
+                                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                  style="display: none; font-size: 0.55rem;">0</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end p-0" style="width: 300px;">
+                            <div class="p-2 border-bottom bg-light d-flex align-items-center justify-content-between">
+                                <strong style="font-size: 0.8rem;">Уведомления</strong>
+                                <button class="btn btn-sm btn-link p-0 text-decoration-none" 
+                                        style="font-size: 0.72rem;"
+                                        onclick="markAllNotificationsRead()">Все прочитаны</button>
+                            </div>
+                            <div id="notificationsDropdownList" class="notifications-list">
+                                <div class="text-center p-3 text-muted" style="font-size: 0.78rem;">Загрузка...</div>
+                            </div>
+                            <div class="p-2 border-top text-center">
+                                <a href="/notifications/" class="text-decoration-none pjax-link" 
+                                   style="color: #5a6fd8; font-size: 0.75rem;">Все уведомления</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" action="{% url 'accounts:logout' %}" class="d-inline m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="logout-btn" title="Выйти из системы">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="logout-text">Выйти</span>
+                        </button>
+                    </form>
+                </div>
+
+                {% else %}
+                <a class="btn btn-outline-primary btn-sm" href="{% url 'accounts:login' %}">
+                    <i class="fas fa-sign-in-alt me-1"></i> Войти
+                </a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <div class="content-wrapper pjax-fade-in" id="contentWrapper">
+            {% if user.is_authenticated or not request.path == '/accounts/login/' %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i> {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+(function() {
+    'use strict';
+
+    // УЛУЧШЕННАЯ ФУНКЦИЯ ДЛЯ ПРОВЕРКИ - НУЖНО ЛИ СКАЧИВАНИЕ
+    function isDownloadLink(link) {
+        if (!link || !link.href) return false;
+        
+        // Если есть атрибут download - точно скачивание
+        if (link.hasAttribute('download')) return true;
+        
+        const href = link.href.toLowerCase();
+        
+        // Проверяем расширения файлов
+        const downloadExtensions = [
+            '.pdf', '.doc', '.docx', '.xls', '.xlsx', 
+            '.zip', '.rar', '.7z', '.jpg', '.jpeg', '.png', 
+            '.gif', '.txt', '.csv', '.xml', '.json',
+            '.ico', '.svg', '.webp', '.mp4', '.mp3'
+        ];
+        
+        for (const ext of downloadExtensions) {
+            if (href.endsWith(ext)) {
+                return true;
+            }
+        }
+        
+        // Проверяем URL на наличие ключевых слов
+        const downloadKeywords = [
+            '/download/', '/export/', '/receipt/', '/media/',
+            'upload-photo', 'upload-document', 'view-file', 'view-pdf',
+            'generate-pdf', 'generate-docx', '.pdf?', '.docx?'
+        ];
+        
+        for (const keyword of downloadKeywords) {
+            if (href.includes(keyword)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    // Функция для открытия файлов в новой вкладке (не через PJAX)
+    function openFileInNewTab(link) {
+        if (!link || !link.href) return false;
+        
+        // Медиа-файлы и документы открываем в новой вкладке
+        const href = link.href.toLowerCase();
+        const fileExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.doc', '.docx', '.xls', '.xlsx'];
+        
+        for (const ext of fileExtensions) {
+            if (href.endsWith(ext) || href.includes(ext + '?')) {
+                window.open(link.href, '_blank');
+                return true;
+            }
+        }
+        
+        // Ссылки на просмотр файлов
+        if (href.includes('/view-file/') || href.includes('/view-pdf/') || href.includes('/view-media/')) {
+            window.open(link.href, '_blank');
+            return true;
+        }
+        
+        return false;
+    }
+
+    const loader = document.getElementById('pjaxLoader');
+    const contentWrapper = document.getElementById('contentWrapper');
+    const navScroll = document.querySelector('.nav-scroll');
+    let currentRequest = null;
+
+    // Сохранение позиции сайдбара
+    function saveSidebarScroll() {
+        if (navScroll) {
+            sessionStorage.setItem('sidebarScrollPos', navScroll.scrollTop);
+        }
+    }
+
+    function restoreSidebarScroll() {
+        if (navScroll) {
+            const savedPos = sessionStorage.getItem('sidebarScrollPos');
+            if (savedPos !== null) {
+                requestAnimationFrame(() => {
+                    navScroll.scrollTop = parseInt(savedPos, 10);
+                });
+            } else {
+                scrollToActiveLink();
+            }
+            navScroll.addEventListener('scroll', saveSidebarScroll, { passive: true });
+        }
+    }
+
+    function scrollToActiveLink() {
+        const activeLink = document.querySelector('.sidebar-nav-link.active');
+        if (activeLink && navScroll) {
+            const linkRect = activeLink.getBoundingClientRect();
+            const containerRect = navScroll.getBoundingClientRect();
+            if (linkRect.top < containerRect.top || linkRect.bottom > containerRect.bottom) {
+                activeLink.scrollIntoView({ block: 'center', behavior: 'instant' });
+                saveSidebarScroll();
+            }
+        }
+    }
+
+    function shouldUsePjax(link) {
+        if (!link || !link.href) return false;
+        if (link.hasAttribute('data-no-pjax')) return false;
+        if (link.hasAttribute('data-bs-toggle')) return false;
+        if (link.target === '_blank') return false;
+        if (link.href.startsWith('javascript:')) return false;
+        
+        // Пропускаем ссылки на скачивание файлов
+        if (isDownloadLink(link)) return false;
+        
+        // Пропускаем якоря
+        if (link.href.includes('#') && link.href.split('#')[0] === location.href.split('#')[0]) return false;
+        
+        try {
+            const url = new URL(link.href);
+            if (url.origin !== location.origin) return false;
+        } catch(e) { 
+            return false; 
+        }
+
+        const pathname = link.pathname.toLowerCase();
+        // Исключаем API и статические файлы
+        if (pathname.startsWith('/api/')) return false;
+        if (pathname.startsWith('/static/')) return false;
+        if (pathname.startsWith('/media/')) return false;
+        
+        return true;
+    }
+
+    function showLoader() { 
+        if (loader) loader.classList.add('active'); 
+    }
+    
+    function hideLoader() { 
+        if (loader) loader.classList.remove('active'); 
+    }
+
+    function animateOut() {
+        return new Promise(resolve => {
+            if (!contentWrapper) {
+                resolve();
+                return;
+            }
+            contentWrapper.classList.remove('pjax-fade-in');
+            contentWrapper.classList.add('pjax-fade-out');
+            setTimeout(resolve, 150);
+        });
+    }
+
+    function animateIn() {
+        if (!contentWrapper) return;
+        contentWrapper.classList.remove('pjax-fade-out');
+        contentWrapper.classList.add('pjax-fade-in');
+    }
+
+    function updateActiveLink(url) {
+        document.querySelectorAll('.sidebar-nav-link').forEach(link => {
+            link.classList.remove('active');
+            try {
+                const linkUrl = new URL(link.href);
+                const currentUrl = new URL(url, location.origin);
+                if (linkUrl.pathname === currentUrl.pathname) {
+                    link.classList.add('active');
+                }
+            } catch(e) {}
+        });
+        scrollToActiveLink();
+    }
+
+    function executeScripts(element) {
+        const scripts = element.querySelectorAll('script');
+        scripts.forEach(oldScript => {
+            const newScript = document.createElement('script');
+            if (oldScript.src) {
+                newScript.src = oldScript.src;
+                newScript.async = false;
+            } else {
+                newScript.textContent = oldScript.textContent;
+            }
+            document.body.appendChild(newScript);
+            oldScript.remove();
+        });
+    }
+
+    async function loadPage(url, pushState) {
+        if (currentRequest) currentRequest.abort();
+
+        const controller = new AbortController();
+        currentRequest = controller;
+
+        showLoader();
+
+        try {
+            await animateOut();
+
+            const response = await fetch(url, {
+                headers: { 
+                    'X-PJAX': 'true',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                signal: controller.signal
+            });
+
+            if (!response.ok) { 
+                window.location.href = url; 
+                return; 
+            }
+
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newContent = doc.getElementById('contentWrapper');
+            
+            if (!newContent) { 
+                window.location.href = url; 
+                return; 
+            }
+
+            const scrollPosition = window.scrollY;
+            
+            if (contentWrapper) {
+                contentWrapper.innerHTML = newContent.innerHTML;
+            }
+
+            // Обновляем динамические стили
+            const extraStyles = doc.querySelectorAll('style');
+            extraStyles.forEach(style => {
+                if (style.textContent && !style.textContent.includes('base.html')) {
+                    const existingStyles = document.querySelectorAll('style[data-dynamic]');
+                    existingStyles.forEach(s => { 
+                        if (s.textContent === style.textContent) s.remove(); 
+                    });
+                    const newStyle = document.createElement('style');
+                    newStyle.textContent = style.textContent;
+                    newStyle.setAttribute('data-dynamic', 'true');
+                    document.head.appendChild(newStyle);
+                }
+            });
+            
+            if (contentWrapper) {
+                executeScripts(contentWrapper);
+            }
+
+            const newTitle = doc.querySelector('title');
+            if (newTitle) document.title = newTitle.textContent;
+
+            if (pushState !== false) {
+                history.pushState({ pjax: true, url: url }, '', url);
+            }
+
+            updateActiveLink(url);
+            window.scrollTo(0, scrollPosition);
+            
+            animateIn();
+            initScrollObserver();
+            initBootstrapComponents();
+            
+            document.dispatchEvent(new CustomEvent('pjax:complete'));
+
+        } catch(e) {
+            if (e.name === 'AbortError') return;
+            console.error('PJAX error:', e);
+            window.location.href = url;
+        } finally {
+            hideLoader();
+            currentRequest = null;
+        }
+    }
+
+    // ГЛАВНЫЙ ОБРАБОТЧИК КЛИКОВ - с поддержкой файлов
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (!link) return;
+        
+        // Сначала проверяем - нужно ли открыть файл в новой вкладке
+        if (openFileInNewTab(link)) {
+            e.preventDefault();
+            return;
+        }
+        
+        // Если это ссылка на скачивание - не перехватываем
+        if (isDownloadLink(link)) {
+            // Разрешаем браузеру обработать скачивание
+            return;
+        }
+        
+        if (!shouldUsePjax(link)) return;
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+
+        e.preventDefault();
+        if (link.href === location.href) return;
+        loadPage(link.href, true);
+    });
+
+    // Обработка popstate
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.pjax) {
+            loadPage(e.state.url, false);
+        } else if (!e.state) {
+            loadPage(location.href, false);
+        }
+    });
+
+    // Инициализация истории
+    if (history.state) {
+        history.replaceState({ pjax: true, url: location.href }, '', location.href);
+    } else {
+        history.replaceState({ pjax: true, url: location.href }, '', location.href);
+    }
+
+    // IntersectionObserver для анимации
+    function initScrollObserver() {
+        if (!contentWrapper) return;
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, idx) => {
+                if (entry.isIntersecting) {
+                    entry.target.style.transitionDelay = (idx * 0.03) + 's';
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+        
+        contentWrapper.querySelectorAll('.card, .list-group-item').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(12px)';
+            el.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+            observer.observe(el);
+        });
+    }
+
+    function initBootstrapComponents() {
+        if (!contentWrapper) return;
+        contentWrapper.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+            try {
+                const t = bootstrap.Tooltip.getInstance(el); 
+                if(t) t.dispose(); 
+                new bootstrap.Tooltip(el);
+            } catch(e) {}
+        });
+        contentWrapper.querySelectorAll('[data-bs-toggle="popover"]').forEach(el => {
+            try {
+                const p = bootstrap.Popover.getInstance(el); 
+                if(p) p.dispose(); 
+                new bootstrap.Popover(el);
+            } catch(e) {}
+        });
+    }
+
+    // Уведомления
+    function loadNotifications() {
+        fetch('/notifications/api/list/')
+            .then(r => r.json())
+            .then(data => {
+                const badge = document.getElementById('notificationBadge');
+                const list  = document.getElementById('notificationsDropdownList');
+                if (!badge || !list) return;
+                
+                if (data.unread_count > 0) {
+                    badge.style.display = 'inline-block';
+                    badge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+                } else {
+                    badge.style.display = 'none';
+                }
+                
+                if (data.notifications && data.notifications.length > 0) {
+                    list.innerHTML = data.notifications.slice(0, 5).map(n => `
+                        <div class="dropdown-item notification-item p-2 border-bottom ${!n.is_read ? 'bg-light' : ''}" 
+                             onclick="markNotificationRead(${n.id}, '${n.link || ''}')">
+                            <div class="d-flex gap-2 align-items-start">
+                                <div class="notification-icon-${n.notification_type}">
+                                    <i class="fas ${n.notification_type === 'invite' ? 'fa-envelope' : n.notification_type === 'enrollment' ? 'fa-graduation-cap' : 'fa-info-circle'}"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-semibold" style="font-size:0.76rem;">${escapeHtml(n.title)}</div>
+                                    <div class="text-muted" style="font-size:0.7rem;">${escapeHtml(n.message.substring(0, 70))}${n.message.length > 70 ? '...' : ''}</div>
+                                    <div class="text-muted mt-1" style="font-size:0.65rem;">${n.created_at}</div>
+                                </div>
+                                ${!n.is_read ? '<div class="bg-danger rounded-circle flex-shrink-0 mt-1" style="width:6px;height:6px;"></div>' : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = '<div class="text-center p-3 text-muted" style="font-size:0.78rem;">Нет уведомлений</div>';
+                }
+            })
+            .catch(() => {});
+    }
+
+    window.markNotificationRead = function(id, link) {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!token) return;
+        fetch('/notifications/api/mark-read/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': token.value, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notification_id: id })
+        }).then(() => {
+            if (link) {
+                if (openFileInNewTab({ href: link })) {
+                    // Файл открыт в новой вкладке
+                } else if (isDownloadLink({ href: link })) {
+                    window.location.href = link;
+                } else {
+                    loadPage(link, true);
+                }
+            } else {
+                loadNotifications();
+            }
+        });
+    };
+
+    window.markAllNotificationsRead = function() {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!token) return;
+        fetch('/notifications/api/mark-all-read/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': token.value }
+        }).then(() => loadNotifications());
+    };
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
+    }
+
+    // Сайдбар для мобильных
+    const sidebarToggle  = document.getElementById('sidebarToggle');
+    const sidebar        = document.getElementById('systemSidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            sidebar.classList.toggle('mobile-open');
+            if (sidebarOverlay) {
+                if (sidebar.classList.contains('mobile-open')) {
+                    sidebarOverlay.style.display = 'block';
+                    setTimeout(() => { sidebarOverlay.style.opacity = '1'; }, 10);
+                } else {
+                    sidebarOverlay.style.opacity = '0';
+                    setTimeout(() => { sidebarOverlay.style.display = 'none'; }, 300);
+                }
+            }
+        });
+    }
+    
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar?.classList.remove('mobile-open');
+            sidebarOverlay.style.opacity = '0';
+            setTimeout(() => { sidebarOverlay.style.display = 'none'; }, 300);
+        });
+    }
+    
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768 && sidebar?.classList.contains('mobile-open')) {
+            if (!sidebar.contains(e.target) && (!sidebarToggle || !sidebarToggle.contains(e.target))) {
+                sidebar.classList.remove('mobile-open');
+                if (sidebarOverlay) {
+                    sidebarOverlay.style.opacity = '0';
+                    setTimeout(() => { sidebarOverlay.style.display = 'none'; }, 300);
+                }
+            }
+        }
+    });
+    
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+            sidebar?.classList.remove('mobile-open');
+            if (sidebarOverlay) { sidebarOverlay.style.display = 'none'; sidebarOverlay.style.opacity = '0'; }
+        }
+    });
+
+    // Инициализация
+    restoreSidebarScroll();
+    
+    if (contentWrapper) {
+        initScrollObserver();
+    }
+    loadNotifications();
+    setInterval(loadNotifications, 30000);
+
+})();
+</script>
+
+    <style>
+        /* Дополнительные стили для корректной обработки ссылок */
+        a[download] {
+            cursor: pointer;
+        }
+        a[target="_blank"] {
+            cursor: pointer;
+        }
+    </style>
+
+    {% block extra_js %}{% endblock %}
+    {% block modals %}{% endblock %}
+</body>
+</html>

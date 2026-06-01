@@ -1,0 +1,496 @@
+<!-- lessons/templates/lessons/reminder_form.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - Детский сад{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reminder-form-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .form-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .form-card .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px 25px;
+        border-bottom: none;
+    }
+    
+    .form-card .card-header h4 {
+        color: white;
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+    
+    .form-card .card-header .btn-outline-secondary {
+        color: white;
+        border-color: rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.1);
+    }
+    
+    .form-card .card-header .btn-outline-secondary:hover {
+        background: rgba(255,255,255,0.2);
+        border-color: rgba(255,255,255,0.5);
+        color: white;
+    }
+    
+    .form-card .card-body {
+        padding: 30px;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .form-control, select, textarea {
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus, select:focus, textarea:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        outline: none;
+    }
+    
+    /* Стили для radio-кнопок приоритета */
+    .priority-radio-group {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+    
+    .priority-option {
+        flex: 1;
+        min-width: 100px;
+    }
+    
+    .priority-option input[type="radio"] {
+        display: none;
+    }
+    
+    .priority-option label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        background: #f8fafc;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 0;
+        font-weight: 500;
+    }
+    
+    .priority-option input[type="radio"]:checked + label {
+        background: #e0e7ff;
+        border-color: #667eea;
+        color: #4f46e5;
+    }
+    
+    .priority-option.high label {
+        color: #dc2626;
+    }
+    
+    .priority-option.high input[type="radio"]:checked + label {
+        background: #fee2e2;
+        border-color: #dc2626;
+        color: #dc2626;
+    }
+    
+    .priority-option.medium label {
+        color: #f59e0b;
+    }
+    
+    .priority-option.medium input[type="radio"]:checked + label {
+        background: #fef3c7;
+        border-color: #f59e0b;
+        color: #d97706;
+    }
+    
+    .priority-option.low label {
+        color: #10b981;
+    }
+    
+    .priority-option.low input[type="radio"]:checked + label {
+        background: #d1fae5;
+        border-color: #10b981;
+        color: #059669;
+    }
+    
+    .priority-icon {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+    }
+    
+    .priority-text {
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+    }
+    
+    .btn-outline-secondary {
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-weight: 500;
+    }
+    
+    .alert-info {
+        background: #e0e7ff;
+        border: none;
+        border-radius: 12px;
+        color: #4338ca;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+    }
+    
+    .form-text {
+        font-size: 0.7rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-card {
+        animation: fadeIn 0.4s ease-out;
+    }
+    
+    .alert-danger {
+        background: #fee2e2;
+        border: none;
+        border-radius: 12px;
+        color: #dc2626;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+    }
+    
+    .invalid-feedback {
+        color: #dc2626;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: #dc2626;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 reminder-form-container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h4>
+                            <i class="fas fa-bell me-2"></i>
+                            {{ title }}
+                        </h4>
+                        <a href="{% url 'lessons:reminders_list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i> Назад к списку
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if request.GET.lesson_plan %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Внимание:</strong> Это напоминание будет связано с выбранным занятием
+                    </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.title|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.reminder_type|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.group|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.lesson_plan|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                {{ form.description|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.due_date|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.due_time|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <!-- Поле приоритета - ИСПРАВЛЕННАЯ ВЕРСИЯ -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label fw-bold mb-2 required-field">
+                                        <i class="fas fa-flag me-1"></i> Приоритет
+                                    </label>
+                                    <div class="priority-radio-group">
+                                        <div class="priority-option high">
+                                            <input type="radio" 
+                                                   name="priority" 
+                                                   id="priority_1" 
+                                                   value="1"
+                                                   {% if form.priority.value|stringformat:"s" == "1" %}checked{% endif %}
+                                                   required>
+                                            <label for="priority_1">
+                                                <div class="priority-icon">🔴</div>
+                                                <div class="priority-text">Высокий (1)</div>
+                                                <small style="font-size: 0.65rem;">Срочные задачи</small>
+                                            </label>
+                                        </div>
+                                        <div class="priority-option medium">
+                                            <input type="radio" 
+                                                   name="priority" 
+                                                   id="priority_2" 
+                                                   value="2"
+                                                   {% if form.priority.value|stringformat:"s" == "2" %}checked{% endif %}
+                                                   required>
+                                            <label for="priority_2">
+                                                <div class="priority-icon">🟠</div>
+                                                <div class="priority-text">Средний (2)</div>
+                                                <small style="font-size: 0.65rem;">Важные задачи</small>
+                                            </label>
+                                        </div>
+                                        <div class="priority-option low">
+                                            <input type="radio" 
+                                                   name="priority" 
+                                                   id="priority_3" 
+                                                   value="3"
+                                                   {% if form.priority.value|stringformat:"s" == "3" %}checked{% endif %}
+                                                   required>
+                                            <label for="priority_3">
+                                                <div class="priority-icon">🟢</div>
+                                                <div class="priority-text">Низкий (3)</div>
+                                                <small style="font-size: 0.65rem;">Можно отложить</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Высокий приоритет - срочные задачи, низкий - задачи, которые можно отложить
+                                    </small>
+                                    {% if form.priority.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.priority.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <hr class="my-3">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> {{ submit_text }}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                                        <i class="fas fa-times me-1"></i> Отмена
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Автоматическая установка даты
+        const dateField = document.querySelector('input[name="due_date"]');
+        if (dateField && !dateField.value) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            dateField.value = `${year}-${month}-${day}`;
+        }
+
+        // Установка времени по умолчанию (09:00)
+        const timeField = document.querySelector('input[name="due_time"]');
+        if (timeField && !timeField.value) {
+            timeField.value = '09:00';
+        }
+
+        // Если передан lesson_plan в GET-параметрах, устанавливаем его в форме
+        const urlParams = new URLSearchParams(window.location.search);
+        const lessonPlanId = urlParams.get('lesson_plan');
+        if (lessonPlanId) {
+            const lessonPlanField = document.querySelector('select[name="lesson_plan"]');
+            if (lessonPlanField) {
+                lessonPlanField.value = lessonPlanId;
+                if (urlParams.get('lock') === 'true') {
+                    lessonPlanField.disabled = true;
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'lesson_plan';
+                    hiddenInput.value = lessonPlanId;
+                    lessonPlanField.form.appendChild(hiddenInput);
+                }
+            }
+        }
+        
+        // Валидация даты
+        if (dateField) {
+            dateField.addEventListener('change', function() {
+                const selectedDate = new Date(this.value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                if (selectedDate < today) {
+                    alert('Дата не может быть в прошлом!');
+                    this.value = today.toISOString().split('T')[0];
+                }
+            });
+        }
+        
+        // Установка приоритета по умолчанию (средний = 2)
+        const priorityRadios = document.querySelectorAll('input[name="priority"]');
+        let hasChecked = false;
+        priorityRadios.forEach(radio => {
+            if (radio.checked) {
+                hasChecked = true;
+            }
+        });
+        
+        if (!hasChecked && priorityRadios.length > 0) {
+            // Устанавливаем средний приоритет по умолчанию
+            const mediumRadio = document.querySelector('input[name="priority"][value="2"]');
+            if (mediumRadio) {
+                mediumRadio.checked = true;
+                // Добавляем визуальный эффект для выбранного
+                mediumRadio.dispatchEvent(new Event('change'));
+            }
+        }
+        
+        // Добавляем визуальный эффект при выборе приоритета
+        priorityRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Убираем выделение со всех
+                document.querySelectorAll('.priority-option label').forEach(label => {
+                    label.style.transform = 'scale(1)';
+                });
+                // Добавляем выделение выбранному
+                if (this.checked) {
+                    const label = this.nextElementSibling;
+                    label.style.transform = 'scale(1.02)';
+                    setTimeout(() => {
+                        label.style.transform = 'scale(1)';
+                    }, 200);
+                }
+            });
+        });
+        
+        // Визуальная подсветка полей при фокусе
+        const formControls = document.querySelectorAll('.form-control, select, textarea');
+        formControls.forEach(field => {
+            field.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            field.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+            });
+        });
+        
+        // Автоматическое изменение размера textarea
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        });
+        
+        // Валидация формы перед отправкой
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const prioritySelected = document.querySelector('input[name="priority"]:checked');
+                if (!prioritySelected) {
+                    e.preventDefault();
+                    alert('Пожалуйста, выберите приоритет напоминания');
+                    return false;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

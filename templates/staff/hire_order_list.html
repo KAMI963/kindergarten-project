@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Приказы о приеме на работу{% endblock %}
+
+{% block extra_css %}
+<style>
+    .order-card {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+    }
+    .order-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 2rem rgba(0,0,0,0.12);
+    }
+    .order-number {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #4a6fa5;
+    }
+    .order-date {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 text-gray-800">Приказы о приеме на работу</h1>
+        <a href="{% url 'staff:employee_list' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Создать приказ (из сотрудника)
+        </a>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="filter-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="year" class="form-label">Год</label>
+                <select name="year" id="year" class="form-select">
+                    <option value="">Все годы</option>
+                    {% for y in years %}
+                    <option value="{{ y.year }}" {% if y.year|stringformat:"s" == current_year %}selected{% endif %}>
+                        {{ y.year }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="month" class="form-label">Месяц</label>
+                <select name="month" id="month" class="form-select">
+                    <option value="">Все месяцы</option>
+                    <option value="1" {% if current_month == '1' %}selected{% endif %}>Январь</option>
+                    <option value="2" {% if current_month == '2' %}selected{% endif %}>Февраль</option>
+                    <option value="3" {% if current_month == '3' %}selected{% endif %}>Март</option>
+                    <option value="4" {% if current_month == '4' %}selected{% endif %}>Апрель</option>
+                    <option value="5" {% if current_month == '5' %}selected{% endif %}>Май</option>
+                    <option value="6" {% if current_month == '6' %}selected{% endif %}>Июнь</option>
+                    <option value="7" {% if current_month == '7' %}selected{% endif %}>Июль</option>
+                    <option value="8" {% if current_month == '8' %}selected{% endif %}>Август</option>
+                    <option value="9" {% if current_month == '9' %}selected{% endif %}>Сентябрь</option>
+                    <option value="10" {% if current_month == '10' %}selected{% endif %}>Октябрь</option>
+                    <option value="11" {% if current_month == '11' %}selected{% endif %}>Ноябрь</option>
+                    <option value="12" {% if current_month == '12' %}selected{% endif %}>Декабрь</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Применить
+                </button>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <a href="{% url 'staff:hire_order_list' %}" class="btn btn-secondary w-100">
+                    <i class="fas fa-times me-2"></i>Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Список приказов -->
+    <div class="row">
+        {% for order in orders %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card order-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="order-number">№{{ order.order_number }}</span>
+                            <div class="order-date">{{ order.order_date|date:"d.m.Y" }}</div>
+                        </div>
+                        <span class="badge {% if order.status == 'draft' %}bg-warning{% elif order.status == 'issued' %}bg-success{% else %}bg-secondary{% endif %} status-badge">
+                            {{ order.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <h6 class="card-subtitle mb-2 text-primary">{{ order.employee.full_name }}</h6>
+                    <p class="card-text mb-2">
+                        <i class="fas fa-briefcase me-2 text-muted"></i>{{ order.position }}
+                    </p>
+                    <p class="card-text mb-2">
+                        <i class="fas fa-calendar-alt me-2 text-muted"></i>Принят: {{ order.hire_date|date:"d.m.Y" }}
+                    </p>
+                    <p class="card-text mb-3">
+                        <i class="fas fa-ruble-sign me-2 text-muted"></i>{{ order.tariff_rate }} ₽
+                    </p>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>{{ order.created_by|default:"—" }}
+                        </small>
+                        <div>
+                            <a href="{% url 'staff:hire_order_detail' order.id %}" class="btn btn-sm btn-outline-info" title="Просмотр">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'staff:hire_order_generate_pdf' order.id %}" class="btn btn-sm btn-outline-danger" title="Скачать PDF">
+                                <i class="fas fa-file-pdf"></i>
+                            </a>
+                            <a href="{% url 'staff:hire_order_print' order.id %}" class="btn btn-sm btn-outline-secondary" title="Печать" target="_blank">
+                                <i class="fas fa-print"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-file-signature fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Нет приказов о приеме</h5>
+                <p class="text-muted mb-4">Создайте первый приказ из карточки сотрудника</p>
+                <a href="{% url 'staff:employee_list' %}" class="btn btn-primary">
+                    <i class="fas fa-users me-2"></i>Перейти к списку сотрудников
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

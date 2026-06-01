@@ -1,0 +1,53 @@
+{% extends 'payroll/base_payroll.html' %}
+{% load static %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'payroll:schedule_list' %}">Графики работы</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block page_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="payroll-card">
+            <div class="payroll-card-header">
+                <span><i class="fas fa-clock me-2"></i>{{ title }}</span>
+            </div>
+            <div class="payroll-card-body">
+                <form method="post" class="payroll-form">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                    <div class="form-group">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in field.errors %}
+                                <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if field.help_text %}
+                        <small class="text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            {% if form.instance.pk %}Сохранить изменения{% else %}Создать{% endif %}
+                        </button>
+                        <a href="{% url 'payroll:schedule_list' %}" class="btn btn-secondary ms-2">
+                            <i class="fas fa-times me-2"></i>Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

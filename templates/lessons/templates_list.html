@@ -1,0 +1,110 @@
+<!-- lessons/templates/lessons/templates_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Шаблоны занятий - Детский сад{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4>Шаблоны занятий</h4>
+                        <a href="{% url 'lessons:template_create' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i> Новый шаблон
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <!-- Фильтры -->
+                    <div class="card m-4">
+                        <div class="card-body">
+                            <form method="get" class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Возрастная группа</label>
+                                    <select name="age_group" class="form-select">
+                                        <option value="all">Все группы</option>
+                                        {% for age_code, age_name in age_groups %}
+                                            <option value="{{ age_code }}" {% if age_filter == age_code %}selected{% endif %}>
+                                                {{ age_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Тип занятия</label>
+                                    <select name="lesson_type" class="form-select">
+                                        <option value="all">Все типы</option>
+                                        {% for type_code, type_name in lesson_types %}
+                                            <option value="{{ type_code }}" {% if type_filter == type_code %}selected{% endif %}>
+                                                {{ type_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-outline-primary w-100">
+                                        <i class="fas fa-filter me-1"></i> Фильтровать
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Сетка шаблонов -->
+                    <div class="row m-2">
+                        {% for template in templates %}
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header position-relative">
+                                    <h5 class="card-title mb-0">{{ template.title }}</h5>
+                                    {% if template.is_public %}
+                                        <span class="position-absolute top-0 end-0 badge bg-info m-2">Общий</span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text text-muted">{{ template.description|truncatewords:15 }}</p>
+                                    
+                                    <div class="mb-2">
+                                        <span class="badge bg-primary">{{ template.get_age_group_display }}</span>
+                                        <span class="badge bg-secondary">{{ template.get_lesson_type_display }}</span>
+                                    </div>
+                                    
+                                    <div class="template-info">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>{{ template.duration }} мин
+                                        </small>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-user me-1"></i>{{ template.created_by.get_full_name }}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'lessons:template_use' template.id %}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-play me-1"></i> Использовать
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 text-center py-5">
+                            <i class="fas fa-copy fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Шаблоны не найдены</h5>
+                            <p class="text-muted mb-4">Создайте свой первый шаблон занятия</p>
+                            <a href="{% url 'lessons:template_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> Создать шаблон
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

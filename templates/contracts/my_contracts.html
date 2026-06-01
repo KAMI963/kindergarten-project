@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Мои договоры{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contract-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    
+    .contract-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    }
+    
+    .contract-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 16px 20px;
+        color: white;
+    }
+    
+    .contract-number {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .contract-date {
+        font-size: 0.7rem;
+        opacity: 0.8;
+    }
+    
+    .contract-body {
+        padding: 20px;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .status-draft { background: #fef3c7; color: #d97706; }
+    .status-signed { background: #d1fae5; color: #059669; }
+    .status-active { background: #dbeafe; color: #2563eb; }
+    .status-terminated { background: #fee2e2; color: #dc2626; }
+    
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .stats-number {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #667eea;
+    }
+    
+    .stats-label {
+        font-size: 0.7rem;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold">
+                <i class="fas fa-file-contract me-2" style="color: #667eea;"></i>
+                {% if user.role == 'director' %}Договоры об образовании{% else %}Мои договоры{% endif %}
+            </h1>
+            <p class="text-muted">Управление договорами и электронная подпись</p>
+        </div>
+    </div>
+    
+    <!-- Статистика -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ stats.total }}</div>
+                <div class="stats-label">Всего договоров</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ stats.active }}</div>
+                <div class="stats-label">Действующих</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ stats.signed }}</div>
+                <div class="stats-label">Подписано</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ stats.draft }}</div>
+                <div class="stats-label">В работе</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Список договоров -->
+    {% if contracts %}
+        <div class="row">
+            {% for contract in contracts %}
+            <div class="col-md-6 col-lg-4">
+                <div class="contract-card">
+                    <div class="contract-header">
+                        <div class="contract-number">Договор №{{ contract.contract_number }}</div>
+                        <div class="contract-date">от {{ contract.registration_date|date:"d.m.Y" }}</div>
+                    </div>
+                    <div class="contract-body">
+                        <h5 class="fw-bold mb-2">{{ contract.child_full_name }}</h5>
+                        <p class="text-muted small mb-3">{{ contract.group_name }}</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="status-badge status-{{ contract.status }}">
+                                {% if contract.status == 'draft' %}Черновик
+                                {% elif contract.status == 'signed_director' %}Подписан заведующей
+                                {% elif contract.status == 'signed_parent' %}Подписан родителем
+                                {% elif contract.status == 'active' %}Действует
+                                {% else %}{{ contract.get_status_display }}{% endif %}
+                            </span>
+                            <span class="fw-bold text-primary">{{ contract.parent_fee|floatformat:2 }} ₽/мес</span>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'contracts:contract_detail' contract.pk %}" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                <i class="fas fa-eye me-1"></i> Подробнее
+                            </a>
+                            <a href="{% url 'contracts:download_contract' contract.pk %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-file-contract fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">Нет договоров</h4>
+            <p class="text-muted">Договор будет создан автоматически после одобрения заявления</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

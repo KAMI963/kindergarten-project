@@ -1,0 +1,148 @@
+<!-- staff/templates/staff/salary_dashboard.html -->
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Расчет заработной платы{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-calculator"></i>
+                    Расчет заработной платы
+                </h1>
+                <p class="mb-0 opacity-75">{{ month_name }} {{ current_year }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'staff:salary_calculate' %}" class="btn btn-light staff-btn me-2">
+                    <i class="fas fa-sync"></i> Пересчитать
+                </a>
+                <a href="{% url 'staff:export_salary_payroll_excel' %}?month={{ current_month }}&year={{ current_year }}" class="btn btn-outline-light staff-btn">
+                    <i class="fas fa-file-excel"></i> Excel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <!-- Статистика -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="staff-stat-card position-relative">
+                <i class="fas fa-users"></i>
+                <p class="stat-value">{{ employees_count }}</p>
+                <p class="stat-label">Сотрудников</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="staff-stat-card position-relative" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <i class="fas fa-money-bill-wave"></i>
+                <p class="stat-value">{{ total_payroll|floatformat:0 }} ₽</p>
+                <p class="stat-label">ФОТ к выплате</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="staff-stat-card position-relative" style="background: linear-gradient(135deg, #fad961 0%, #f76b1c 100%);">
+                <i class="fas fa-chart-line"></i>
+                <p class="stat-value">{{ total_payroll|add:total_payroll|floatformat:0 }} ₽</p>
+                <p class="stat-label">Начислено всего</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация по месяцам -->
+    <div class="d-flex justify-content-center mb-4">
+        <div class="btn-group" role="group">
+            {% for calc in previous_months %}
+            <a href="?month={{ calc.month }}&year={{ calc.year }}" class="btn btn-outline-primary">
+                {{ calc.month_name }} {{ calc.year }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Таблица расчетов -->
+    <div class="staff-card">
+        <div class="card-header">
+            <i class="fas fa-list"></i>
+            Расчет заработной платы за {{ month_name }} {{ current_year }}
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="staff-table table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Сотрудник</th>
+                            <th>Должность</th>
+                            <th>Оклад</th>
+                            <th>Отработано</th>
+                            <th>Начислено</th>
+                            <th>НДФЛ</th>
+                            <th>К выплате</th>
+                            <th>Статус</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for calc in current_calculations %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="staff-avatar staff-avatar-sm me-2">
+                                        {{ calc.employee.full_name|first|upper }}
+                                    </div>
+                                    {{ calc.employee.full_name }}
+                                </div>
+                            </td>
+                            <td>{{ calc.employee.position }}</td>
+                            <td>{{ calc.base_salary|floatformat:0 }} ₽</td>
+                            <td>{{ calc.worked_hours|floatformat:1 }} / {{ calc.standard_hours|floatformat:1 }} ч</td>
+                            <td><strong>{{ calc.total_accrued|floatformat:0 }} ₽</strong></td>
+                            <td>{{ calc.income_tax|floatformat:0 }} ₽</td>
+                            <td class="text-success fw-bold">{{ calc.total_payable|floatformat:0 }} ₽</td>
+                            <td>
+                                {% if calc.status == 'calculated' %}
+                                <span class="badge bg-warning">Рассчитано</span>
+                                {% elif calc.status == 'approved' %}
+                                <span class="badge bg-success">Утверждено</span>
+                                {% elif calc.status == 'paid' %}
+                                <span class="badge bg-info">Выплачено</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'staff:salary_detail' calc.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                <i class="fas fa-calculator fa-3x text-muted mb-3"></i>
+                                <p>Нет расчетов за этот период</p>
+                                <a href="{% url 'staff:salary_calculate' %}" class="btn staff-btn-primary btn-sm">
+                                    Выполнить расчет
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% if current_calculations %}
+                    <tfoot class="table-light">
+    <tr>
+        <td colspan="4" class="text-end fw-bold">ИТОГО:</td>
+        <td class="fw-bold">{{ total_accrued|floatformat:0 }} ₽</td>
+        <td class="fw-bold">{{ total_tax|floatformat:0 }} ₽</td>
+        <td class="fw-bold text-success">{{ total_payable|floatformat:0 }} ₽</td>
+        <td colspan="2"></td>
+    </tr>
+</tfoot>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

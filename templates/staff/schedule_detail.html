@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ schedule.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+    .info-row {
+        display: flex;
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    .info-label {
+        font-weight: 600;
+        width: 200px;
+        color: #495057;
+    }
+    .info-value {
+        flex: 1;
+        color: #212529;
+    }
+    .badge-type {
+        font-size: 0.9rem;
+        padding: 5px 15px;
+        border-radius: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 text-gray-800">{{ schedule.name }}</h1>
+            <p class="text-muted mb-0">
+                <a href="{% url 'staff:schedule_list' %}" class="text-decoration-none">
+                    <i class="fas fa-arrow-left me-2"></i>Назад к списку
+                </a>
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'staff:schedule_edit' schedule.id %}" class="btn btn-warning me-2">
+                <i class="fas fa-edit me-2"></i>Редактировать
+            </a>
+        </div>
+    </div>
+
+    <!-- Основная информация -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card detail-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Детальная информация</h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-row">
+                        <div class="info-label">Название графика:</div>
+                        <div class="info-value">{{ schedule.name }}</div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Тип графика:</div>
+                        <div class="info-value">
+                            <span class="badge bg-info badge-type">{{ schedule.get_schedule_type_display }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Норма часов в неделю:</div>
+                        <div class="info-value">{{ schedule.weekly_hours }} ч.</div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Норма часов в день:</div>
+                        <div class="info-value">{{ schedule.daily_hours }} ч.</div>
+                    </div>
+                    
+                    {% if schedule.employee_types %}
+                    <div class="info-row">
+                        <div class="info-label">Категории сотрудников:</div>
+                        <div class="info-value">{{ schedule.employee_types }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if schedule.description %}
+                    <div class="info-row">
+                        <div class="info-label">Описание:</div>
+                        <div class="info-value">{{ schedule.description|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="info-row">
+                        <div class="info-label">Статус:</div>
+                        <div class="info-value">
+                            {% if schedule.is_active %}
+                            <span class="badge bg-success">Активен</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Неактивен</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Дата создания:</div>
+                        <div class="info-value">{{ schedule.created_at|date:"d.m.Y H:i" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Статистика использования -->
+            <div class="card detail-card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Использование</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-center text-muted mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Информация о сотрудниках, работающих по этому графику
+                    </p>
+                    <!-- Здесь можно добавить список сотрудников с этим графиком -->
+                </div>
+            </div>
+            
+            <!-- Действия -->
+            <div class="card detail-card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Опасная зона</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">
+                        Удаление графика может повлиять на учет рабочего времени сотрудников.
+                    </p>
+                    <button class="btn btn-outline-danger w-100" disabled>
+                        <i class="fas fa-trash me-2"></i>Удалить (в разработке)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Детали графика по дням (если есть) -->
+    {% if details %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card detail-card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-week me-2"></i>Расписание по дням</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>День недели</th>
+                                    <th>Начало работы</th>
+                                    <th>Окончание работы</th>
+                                    <th>Перерыв</th>
+                                    <th>Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detail in details %}
+                                <tr>
+                                    <td>{{ detail.get_day_of_week_display }}</td>
+                                    <td>{{ detail.start_time|time:"H:i" }}</td>
+                                    <td>{{ detail.end_time|time:"H:i" }}</td>
+                                    <td>
+                                        {% if detail.break_start and detail.break_end %}
+                                            {{ detail.break_start|time:"H:i" }} - {{ detail.break_end|time:"H:i" }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if detail.is_working_day %}
+                                        <span class="badge bg-success">Рабочий день</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Выходной</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

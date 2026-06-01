@@ -1,0 +1,26 @@
+<!-- templates/personalfiles/partials/stats.html -->
+{% load static %}
+<div class="col-md-3">
+    <div class="stats-card text-center">
+        <div class="stats-number">{{ total_children }}</div>
+        <div class="text-muted">Всего детей</div>
+    </div>
+</div>
+<div class="col-md-3">
+    <div class="stats-card text-center">
+        <div class="stats-number text-success">{{ complete_count }}</div>
+        <div class="text-muted">Полностью укомплектовано</div>
+    </div>
+</div>
+<div class="col-md-3">
+    <div class="stats-card text-center">
+        <div class="stats-number text-warning">{{ expired_count }}</div>
+        <div class="text-muted">Просроченные документы</div>
+    </div>
+</div>
+<div class="col-md-3">
+    <div class="stats-card text-center">
+        <div class="stats-number text-info">{{ near_expiry_count }}</div>
+        <div class="text-muted">Скоро истекают</div>
+    </div>
+</div>

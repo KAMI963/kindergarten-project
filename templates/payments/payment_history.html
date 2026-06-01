@@ -1,0 +1,375 @@
+{% extends 'payments/base_payments.html' %}
+
+{% block title %}История оплат{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-credit-card text-primary me-2"></i>
+            {% if user.role == 'parent' %}
+                Мои оплаты
+            {% else %}
+                История оплат
+            {% endif %}
+        </h1>
+        {% if user.role == 'parent' %}
+        <div class="btn-group">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                <i class="fas fa-plus me-2"></i>Новый платеж
+            </button>
+        </div>
+        {% elif user.role == 'director' %}
+        <div class="btn-group">
+            <a href="{% url 'payments:tariff_management' %}" class="btn btn-outline-primary">
+                <i class="fas fa-money-bill-wave me-2"></i>Управление тарифами
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Статистика -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Оплачено
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ completed_count }} платежей
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                К оплате
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ pending_count }} платежей
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Общая сумма
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ total_amount|floatformat:2 }} ₽
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-ruble-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Экономия
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ total_discount|floatformat:2 }} ₽
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Таблица платежей -->
+    <div class="payment-card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>
+                {% if user.role == 'parent' %}
+                    История моих платежей
+                {% else %}
+                    Все платежи
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if payment_groups %}
+                {% for period, payments_in_period in payment_groups.items %}
+                <div class="mb-4">
+                    <h5 class="text-primary mb-3">
+                        <i class="fas fa-calendar me-2"></i>
+                        {% with month=period|slice:"5:7" year=period|slice:":4" %}
+                            {% if month == "01" %}Январь
+                            {% elif month == "02" %}Февраль
+                            {% elif month == "03" %}Март
+                            {% elif month == "04" %}Апрель
+                            {% elif month == "05" %}Май
+                            {% elif month == "06" %}Июнь
+                            {% elif month == "07" %}Июль
+                            {% elif month == "08" %}Август
+                            {% elif month == "09" %}Сентябрь
+                            {% elif month == "10" %}Октябрь
+                            {% elif month == "11" %}Ноябрь
+                            {% elif month == "12" %}Декабрь
+                            {% endif %} {{ year }}
+                        {% endwith %}
+                    </h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover payment-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Дата</th>
+                                    {% if user.role != 'parent' %}
+                                    <th>Родитель</th>
+                                    {% endif %}
+                                    <th>Ребенок</th>
+                                    <th>Период</th>
+                                    <th>Посещение</th>
+                                    <th>Сумма</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments_in_period %}
+                                <tr>
+                                    <td>
+                                        {% if payment.paid_at %}
+                                            {{ payment.paid_at|date:"d.m.Y" }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    {% if user.role != 'parent' %}
+                                    <td>
+                                        {% with parents=payment.child.childparent_set.all %}
+                                            {% for parent_relation in parents %}
+                                                {% if parent_relation.is_primary %}
+                                                    {{ parent_relation.parent.user.get_full_name }}
+                                                {% endif %}
+                                            {% empty %}
+                                                <span class="text-muted">Не указан</span>
+                                            {% endfor %}
+                                        {% endwith %}
+                                    </td>
+                                    {% endif %}
+                                    <td>
+                                        <strong>{{ payment.child.full_name }}</strong>
+                                    </td>
+                                    <td>
+                                        {{ payment.month }}.{{ payment.year }}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ payment.attendance_days }}/{{ payment.total_days }} дней
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <strong>{{ payment.amount|floatformat:2 }} ₽</strong>
+                                        {% if payment.discount > 0 %}
+                                        <br>
+                                        <small class="text-success">-{{ payment.discount|floatformat:2 }} ₽ скидка</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge payment-badge
+                                            {% if payment.status == 'completed' %}bg-success
+                                            {% elif payment.status == 'pending' %}bg-warning
+                                            {% elif payment.status == 'failed' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ payment.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+    <div class="btn-group btn-group-sm">
+        {% if payment.status == 'pending' and user.role == 'parent' %}
+        <a href="{% url 'payments:payment_page' payment.child.id %}" class="btn btn-primary">
+            <i class="fas fa-credit-card me-1"></i>Оплатить
+        </a>
+        {% endif %}
+        <a href="{% url 'payments:payment_calculation_detail' payment.child.id payment.month payment.year %}" 
+           class="btn btn-outline-info">
+            <i class="fas fa-calculator me-1"></i>Расчет
+        </a>
+        <!-- Новая кнопка для скачивания квитанции -->
+        <a href="{% url 'payments:generate_receipt' payment.id %}" 
+           class="btn btn-outline-success"
+           target="_blank">
+            <i class="fas fa-file-word me-1"></i>Квитанция
+        </a>
+    </div>
+</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-credit-card fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">
+                    {% if user.role == 'parent' %}
+                        У вас пока нет платежей
+                    {% else %}
+                        Платежи не найдены
+                    {% endif %}
+                </h4>
+                <p class="text-muted mb-4">
+                    {% if user.role == 'parent' %}
+                        Здесь будет отображаться история ваших платежей за детский сад
+                    {% else %}
+                        В системе пока нет зарегистрированных платежей
+                    {% endif %}
+                </p>
+                {% if user.role == 'parent' %}
+                <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                    <i class="fas fa-plus me-2"></i>Создать первый платеж
+                </button>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Модальные окна -->
+{% if user.role == 'parent' %}
+<!-- Модальное окно для нового платежа -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-credit-card me-2"></i>Новый платеж
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Платежи автоматически создаются в конце каждого месяца
+                </div>
+                <p>Для создания платежа выберите ребенка:</p>
+                {% if user.parentprofile.child_set.all %}
+                    <div class="list-group">
+                        {% for child in user.parentprofile.child_set.all %}
+                        <a href="{% url 'payments:payment_calculation' child.id %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-child me-2"></i>{{ child.full_name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        У вас нет детей в системе
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Модальные окна для квитанций -->
+{% for payment in payments %}
+<div class="modal fade" id="receiptModal{{ payment.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-receipt me-2"></i>Квитанция об оплате
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Содержимое квитанции -->
+                <div class="text-center mb-4">
+                    <h4>Детский сад "Солнышко"</h4>
+                    <p class="text-muted">Квитанция об оплате</p>
+                </div>
+                
+                <table class="table table-bordered">
+                    <tr>
+                        <td style="width: 30%"><strong>Номер квитанции:</strong></td>
+                        <td>R-{{ payment.id }}-{{ payment.created_at|date:"Ymd" }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Дата оплаты:</strong></td>
+                        <td>
+                            {% if payment.paid_at %}
+                                {{ payment.paid_at|date:"d.m.Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">Не оплачено</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Плательщик:</strong></td>
+                        <td>{{ user.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ребенок:</strong></td>
+                        <td>{{ payment.child.full_name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Период:</strong></td>
+                        <td>{{ payment.month }}.{{ payment.year }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Сумма:</strong></td>
+                        <td><strong>{{ payment.amount|floatformat:2 }} ₽</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Статус:</strong></td>
+                        <td>
+                            <span class="badge 
+                                {% if payment.status == 'completed' %}bg-success
+                                {% elif payment.status == 'pending' %}bg-warning
+                                {% elif payment.status == 'failed' %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ payment.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

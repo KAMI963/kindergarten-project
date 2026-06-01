@@ -1,0 +1,906 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Статистика посещаемости{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-dark: rgb(26,31,54);
+        --primary-blue: rgb(82,164,250);
+        --primary-purple: rgb(93,115,220);
+        --gradient-primary: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-blue) 100%);
+        --gradient-success: linear-gradient(135deg, #28a745 0%, #69db7e 100%);
+        --gradient-warning: linear-gradient(135deg, #ffc107 0%, #ffe08c 100%);
+        --gradient-danger: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%);
+        --shadow-soft: 0 4px 20px rgba(26, 31, 54, 0.08);
+        --shadow-hover: 0 8px 30px rgba(26, 31, 54, 0.15);
+        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .statistics-page {
+        background: #f8f9fe;
+        min-height: 100vh;
+        padding: 20px;
+        animation: pageEnter 0.6s ease-out;
+    }
+
+    @keyframes pageEnter {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Статистические карточки */
+    .stat-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-soft);
+        border: none;
+        transition: var(--transition-smooth);
+        position: relative;
+        overflow: hidden;
+        min-height: 150px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        animation: cardSlideIn 0.6s ease-out forwards;
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+    @keyframes cardSlideIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient-primary);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.6s ease;
+    }
+
+    .stat-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--primary-dark);
+        margin: 0.3rem 0;
+        line-height: 1.2;
+        position: relative;
+        z-index: 2;
+    }
+
+    .stat-text {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .stat-icon {
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        font-size: 3rem;
+        opacity: 0.08;
+        transition: var(--transition-smooth);
+        z-index: 1;
+    }
+
+    .stat-card:hover .stat-icon {
+        transform: scale(1.1);
+        opacity: 0.12;
+    }
+
+    /* Общие контейнеры */
+    .filter-card, .chart-container, .table-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-soft);
+        border: none;
+        transition: var(--transition-smooth);
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .filter-card:hover, .chart-container:hover, .table-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Прогресс бары */
+    .progress {
+        height: 8px;
+        border-radius: 10px;
+        background-color: #f0f2f8;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        border-radius: 10px;
+        transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        background: var(--gradient-primary);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Заголовки */
+    .card-title {
+        font-weight: 700;
+        color: var(--primary-dark);
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.2rem;
+        font-size: 1.1rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .card-title i {
+        margin-right: 0.75rem;
+        font-size: 1.2rem;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .page-title {
+        color: var(--primary-dark);
+        font-weight: 700;
+        font-size: 1.75rem;
+        margin-bottom: 0;
+        animation: titleSlideIn 0.8s ease-out;
+    }
+
+    @keyframes titleSlideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Таблицы */
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: #f8f9fc;
+        border: none;
+        font-weight: 700;
+        color: var(--primary-dark);
+        padding: 1rem 0.75rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .table tbody td {
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid #f1f3f9;
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+
+    .table tbody tr {
+        transition: var(--transition-smooth);
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fe;
+        transform: translateX(5px);
+    }
+
+    /* Бэйджы */
+    .badge {
+        border-radius: 10px;
+        padding: 0.4rem 0.8rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+        transition: var(--transition-smooth);
+    }
+
+    .badge-success {
+        background: var(--gradient-success);
+        color: white;
+    }
+
+    .badge-danger {
+        background: var(--gradient-danger);
+        color: white;
+    }
+
+    .badge-primary {
+        background: var(--gradient-primary);
+        color: white;
+    }
+
+    /* Кнопки */
+    .btn {
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 0.6rem 1.5rem;
+        transition: var(--transition-smooth);
+        border: none;
+        font-size: 0.9rem;
+    }
+
+    .btn-primary {
+        background: var(--gradient-primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(93, 115, 220, 0.3);
+        color: white;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid var(--primary-purple);
+        color: var(--primary-purple);
+    }
+
+    .btn-outline-primary:hover {
+        background: var(--gradient-primary);
+        border-color: transparent;
+        transform: translateY(-2px);
+    }
+
+    /* Формы */
+    .form-control, .form-select {
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        padding: 0.6rem 1rem;
+        transition: var(--transition-smooth);
+        font-size: 0.9rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-purple);
+        box-shadow: 0 0 0 0.2rem rgba(93, 115, 220, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .form-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        color: var(--primary-dark);
+    }
+
+    /* Контейнеры для графиков */
+    .chart-wrapper {
+        position: relative;
+        height: 350px;
+        width: 100%;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .statistics-page {
+            padding: 15px;
+        }
+        
+        .stat-card {
+            padding: 1.2rem;
+            min-height: 120px;
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+        }
+        
+        .stat-text {
+            font-size: 0.75rem;
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+        }
+        
+        .chart-wrapper {
+            height: 250px;
+        }
+        
+        .page-title {
+            font-size: 1.3rem;
+        }
+        
+        .filter-card, .chart-container, .table-card {
+            padding: 1rem;
+        }
+    }
+
+    /* Полоса прокрутки для таблиц */
+    .table-responsive {
+        border-radius: 12px;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .table-responsive::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: var(--primary-purple);
+        border-radius: 3px;
+    }
+
+    /* Анимация для важных чисел */
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .highlight-number {
+        animation: pulse 2s infinite;
+        display: inline-block;
+    }
+
+    /* Кастомный скролл */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--primary-purple);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-blue);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="statistics-page">
+    <!-- Заголовок и кнопки действий -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <h1 class="page-title">
+            <i class="fas fa-chart-bar me-2"></i>
+            Статистика посещаемости
+        </h1>
+        <div class="d-flex gap-2">
+            <a href="{% url 'attendance:generate_attendance_report' %}?{{ request.GET.urlencode }}" 
+               class="btn btn-primary">
+                <i class="fas fa-download me-1"></i>Экспорт
+            </a>
+                   </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="filter-card">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label">Период</label>
+                <select name="period" class="form-select">
+                    <option value="week" {% if period == 'week' %}selected{% endif %}>Неделя</option>
+                    <option value="month" {% if period == 'month' %}selected{% endif %}>Месяц</option>
+                    <option value="quarter" {% if period == 'quarter' %}selected{% endif %}>Квартал</option>
+                    <option value="year" {% if period == 'year' %}selected{% endif %}>Год</option>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label">Группа</label>
+                <select name="group" class="form-select">
+                    <option value="">Все группы</option>
+                    {% for group in groups %}
+                    <option value="{{ group.id }}" {% if selected_group_id|stringformat:"s" == group.id|stringformat:"s" %}selected{% endif %}>
+                        {{ group.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 col-sm-6">
+                <label class="form-label">Дата с</label>
+                <input type="date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-2 col-sm-6">
+                <label class="form-label">Дата по</label>
+                <input type="date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-2 col-12">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-1"></i>Применить
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Основные статистические карточки -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-text">Общая посещаемость</div>
+                <div class="stat-number {% if overall_percentage > 80 %}highlight-number{% endif %}">
+                    {{ overall_percentage|floatformat:1 }}%
+                </div>
+                <div class="progress mt-2">
+                    <div class="progress-bar" style="width: {{ overall_percentage }}%"></div>
+                </div>
+                <small class="text-muted mt-2">
+                    {{ actual_attendance|default:0 }} из {{ total_possible_attendance|default:0 }}
+                </small>
+                <i class="fas fa-calendar-check stat-icon"></i>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-text">Всего детей</div>
+                <div class="stat-number">{{ total_children|default:0 }}</div>
+                <small class="text-muted mt-2">Активных в группах</small>
+                <i class="fas fa-child stat-icon"></i>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-text">Период анализа</div>
+                <div class="stat-number">{{ total_days|default:0 }}</div>
+                <small class="text-muted mt-2">дней</small>
+                <i class="fas fa-clock stat-icon"></i>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-text">Средняя посещаемость</div>
+                <div class="stat-number">{{ overall_percentage|floatformat:1 }}%</div>
+                <small class="text-muted mt-2">за период</small>
+                <i class="fas fa-chart-line stat-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Графики -->
+    <div class="row g-3 mb-4">
+        <!-- Круговая диаграмма -->
+        <div class="col-lg-5">
+            <div class="chart-container h-100">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Распределение посещаемости
+                </h5>
+                <div class="chart-wrapper">
+                    <canvas id="attendancePieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Линейный график -->
+        <div class="col-lg-7">
+            <div class="chart-container h-100">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-line"></i>
+                    Динамика посещаемости
+                </h5>
+                <div class="chart-wrapper">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика по группам -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="table-card">
+                <h5 class="card-title">
+                    <i class="fas fa-users"></i>
+                    Посещаемость по группам
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Группа</th>
+                                <th>Дети</th>
+                                <th>Посещаемость</th>
+                                <th>Присутствуют</th>
+                                <th>Отсутствуют</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in group_stats %}
+                            <tr>
+                                <td>
+                                    <a href="?group={{ stat.group.id }}&period={{ period }}" 
+                                       class="text-decoration-none fw-bold">
+                                        {{ stat.group.name }}
+                                    </a>
+                                </td>
+                                <td><strong>{{ stat.children_count }}</strong></td>
+                                <td style="min-width: 150px;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress flex-grow-1">
+                                            <div class="progress-bar" style="width: {{ stat.percentage }}%"></div>
+                                        </div>
+                                        <span class="badge badge-primary">{{ stat.percentage }}%</span>
+                                    </div>
+                                </td>
+                                <td class="text-success fw-bold">{{ stat.present_count }}</td>
+                                <td class="text-danger">{{ stat.absent_count }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="fas fa-info-circle me-2"></i>Нет данных для отображения
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Детальная статистика по детям -->
+    <div class="row g-3">
+        <!-- Топ детей -->
+        <div class="col-lg-6">
+            <div class="table-card h-100">
+                <h5 class="card-title">
+                    <i class="fas fa-trophy me-2"></i>
+                    Лучшая посещаемость
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ребенок</th>
+                                <th>Группа</th>
+                                <th>Посещаемость</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in top_children %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'children:child_detail' stat.child.id %}" 
+                                       class="text-decoration-none fw-bold">
+                                        {{ stat.child.full_name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if stat.child.group %}
+                                    <span class="badge badge-primary">{{ stat.child.group.name }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Не распределен</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ stat.present_count }}/{{ total_days }}</td>
+                                <td>
+                                    <span class="badge badge-success">{{ stat.percentage }}%</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">
+                                    <i class="fas fa-info-circle me-1"></i>Нет данных
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Худшие дети -->
+        <div class="col-lg-6">
+            <div class="table-card h-100">
+                <h5 class="card-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Низкая посещаемость
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ребенок</th>
+                                <th>Группа</th>
+                                <th>Посещаемость</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in worst_children %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'children:child_detail' stat.child.id %}" 
+                                       class="text-decoration-none fw-bold">
+                                        {{ stat.child.full_name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if stat.child.group %}
+                                    <span class="badge badge-primary">{{ stat.child.group.name }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Не распределен</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ stat.present_count }}/{{ total_days }}</td>
+                                <td>
+                                    <span class="badge badge-danger">{{ stat.percentage }}%</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">
+                                    <i class="fas fa-info-circle me-1"></i>Нет данных
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Цветовая схема
+    const chartColors = {
+        primary: 'rgb(93, 115, 220)',
+        primaryLight: 'rgba(93, 115, 220, 0.7)',
+        blue: 'rgb(82, 164, 250)',
+        success: 'rgb(40, 167, 69)',
+        warning: 'rgb(255, 193, 7)',
+        danger: 'rgb(220, 53, 69)',
+        background: 'rgba(93, 115, 220, 0.1)'
+    };
+
+    // Данные для круговой диаграммы (можно передать из контекста)
+    const pieData = {{ pie_chart_data|default:'{"labels": ["Присутствуют", "Отсутствуют"], "data": [75, 25]}'|safe }};
+    
+    // Круговая диаграмма
+    const pieCtx = document.getElementById('attendancePieChart');
+    if (pieCtx) {
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: pieData.labels || ['Присутствуют', 'Отсутствуют', 'Болеют', 'В отпуске'],
+                datasets: [{
+                    data: pieData.data || [65, 20, 10, 5],
+                    backgroundColor: [
+                        chartColors.primary,
+                        chartColors.blue,
+                        chartColors.warning,
+                        chartColors.danger
+                    ],
+                    borderColor: 'white',
+                    borderWidth: 3,
+                    hoverBorderWidth: 4,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true,
+                            font: { size: 12, weight: '500' },
+                            boxWidth: 10
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: chartColors.primary,
+                        bodyColor: '#666',
+                        borderColor: '#e9ecef',
+                        borderWidth: 1,
+                        cornerRadius: 10,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.parsed}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Линейный график посещаемости
+    const chartCtx = document.getElementById('attendanceChart');
+    if (chartCtx) {
+        new Chart(chartCtx, {
+            type: 'line',
+            data: {
+                labels: {{ daily_labels|safe|default:'[]' }},
+                datasets: [{
+                    label: 'Посещаемость (%)',
+                    data: {{ daily_percentages|safe|default:'[]' }},
+                    borderColor: chartColors.primary,
+                    backgroundColor: chartColors.background,
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: chartColors.primary,
+                    pointBorderColor: 'white',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointStyle: 'circle'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: { size: 12, weight: '600' },
+                            usePointStyle: true,
+                            boxWidth: 8
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: chartColors.primary,
+                        bodyColor: '#666',
+                        borderColor: '#e9ecef',
+                        borderWidth: 1,
+                        cornerRadius: 10,
+                        callbacks: {
+                            label: function(context) {
+                                return `Посещаемость: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            stepSize: 20,
+                            font: { size: 11 }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Процент посещаемости',
+                            font: { size: 11, weight: '500' }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 11 },
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Анимация прогресс-баров
+    const animateProgressBars = () => {
+        const progressBars = document.querySelectorAll('.progress-bar');
+        progressBars.forEach(bar => {
+            const width = bar.style.width;
+            if (width && width !== '0%') {
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 100);
+            }
+        });
+    };
+
+    // Запуск анимации с задержкой
+    setTimeout(animateProgressBars, 500);
+
+    // Адаптация графиков при изменении размера окна
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            Chart.instances.forEach(chart => {
+                if (chart && typeof chart.resize === 'function') {
+                    chart.resize();
+                }
+            });
+        }, 250);
+    });
+});
+</script>
+{% endblock %}

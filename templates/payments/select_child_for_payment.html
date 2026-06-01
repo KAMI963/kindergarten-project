@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Выбор ребенка для оплаты{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-child me-2"></i>
+                        Выберите ребенка для оплаты
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="list-group">
+                            {% for item in children_with_payments %}
+                            <label class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <input type="radio" name="child_id" value="{{ item.child.id }}" class="me-3">
+                                        <strong>{{ item.child.full_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ item.child.birth_date|date:"d.m.Y" }} ({{ item.child.get_age }} лет)
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-warning text-dark">К оплате</span>
+                                        <div class="fw-bold text-primary">{{ item.payment.amount|floatformat:2 }} ₽</div>
+                                    </div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <button type="submit" class="btn btn-success btn-lg w-100 mt-4">
+                            <i class="fas fa-credit-card me-2"></i>
+                            Продолжить оплату
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Выбор заявления для договора{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Выберите заявление для создания договора</h1>
+        <a href="{% url 'contracts:contract_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> К списку договоров
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>№ заявления</th>
+                            <th>Дата подачи</th>
+                            <th>Ребенок</th>
+                            <th>Дата рождения</th>
+                            <th>Родитель</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr>
+                            <td>{{ app.application_number|truncatechars:8 }}</td>
+                            <td>{{ app.created_at|date:"d.m.Y" }}</td>
+                            <td>{{ app.child_full_name }}</td>
+                            <td>{{ app.child_birth_date|date:"d.m.Y" }}</td>
+                            <td>{{ app.parent.user.get_full_name }}</td>
+                            <td>
+                                <a href="{% url 'contracts:create_from_application' app.id %}" class="btn btn-sm btn-success">
+                                    <i class="bi bi-file-text"></i> Создать договор
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-2">Нет одобренных заявлений для создания договора</p>
+                                <a href="{% url 'applications:applications_list' %}" class="btn btn-primary">
+                                    Перейти к заявлениям
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

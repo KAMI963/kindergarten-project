@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Мои платежи{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-credit-card me-2"></i>
+            Мои платежи
+        </h1>
+        <div>
+            <span class="text-muted me-3">
+                <i class="fas fa-info-circle me-1"></i>
+                Оплата до 15 числа текущего месяца
+            </span>
+            <div class="small text-muted">
+                Реквизиты: Счет № 40701810792053000013, ЛБГ 13800095
+            </div>
+        </div>
+    </div>
+
+    {% for child_data in payments_by_child %}
+    <div class="card mb-4">
+        <div class="card-header {% if child_data.has_overdue %}bg-danger text-white{% else %}bg-primary text-white{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-child me-2"></i>
+                    {{ child_data.child.full_name }}
+                </h5>
+                <div>
+                    {% if child_data.has_overdue %}
+                    <span class="badge bg-warning text-dark me-2">Есть задолженность</span>
+                    {% endif %}
+                    <small>
+                        Лицевой счет: {{ child_data.child.account.account_number|default:"Счет не создан" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Сводка -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="border rounded p-2 text-center">
+                        <small class="text-muted">Оплачено всего</small>
+                        <h5 class="text-success mb-0">{{ child_data.total_paid|floatformat:2 }} ₽</h5>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-2 text-center">
+                        <small class="text-muted">К оплате</small>
+                        <h5 class="text-warning mb-0">{{ child_data.total_due|floatformat:2 }} ₽</h5>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-2 text-center">
+                        <small class="text-muted">Следующий платеж</small>
+                        <h5 class="text-primary mb-0">
+                            {% with next_payment=child_data.payments|first %}
+                                {% if next_payment and next_payment.status != 'completed' %}
+                                    {{ next_payment.amount|floatformat:2 }} ₽
+                                {% else %}
+                                    —
+                                {% endif %}
+                            {% endwith %}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Таблица платежей -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Период</th>
+                            <th>Дни посещения</th>
+                            <th>Основная сумма</th>
+                            <th>Льгота</th>
+                            <th>Доп. услуги</th>
+                            <th>Итого</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in child_data.payments %}
+                        <tr class="{% if payment.is_overdue and payment.status != 'completed' %}table-danger{% endif %}">
+                            <td>{{ payment.get_month_name }} {{ payment.year }}</td>
+                            <td>{{ payment.attendance_days }}/{{ payment.total_days }}</td>
+                            <td>{{ payment.base_amount|floatformat:2 }} ₽</td>
+                            <td class="text-success">-{{ payment.discount_amount|floatformat:2 }} ₽</td>
+                            <td>
+                                {% if payment.additional_services_amount > 0 %}
+                                {{ payment.additional_services_amount|floatformat:2 }} ₽
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ payment.amount|floatformat:2 }} ₽</strong>
+                            </td>
+                            <td>
+                                {% if payment.status == 'completed' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i> Оплачено
+                                </span>
+                                {% elif payment.is_overdue %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-exclamation-triangle me-1"></i> Просрочено
+                                </span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-clock me-1"></i> Ожидает оплаты
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.status != 'completed' %}
+                                <div class="btn-group btn-group-sm">
+                                    <!-- Кнопка - квитанция с реквизитами для оплаты -->
+                                    <button type="button" class="btn btn-outline-primary" 
+                                            data-bs-toggle="modal" data-bs-target="#paymentModal{{ payment.id }}">
+                                        <i class="fas fa-file-invoice me-1"></i> Реквизиты
+                                    </button>
+                                    <a href="{% url 'payments:generate_receipt' payment.id %}" 
+                                       class="btn btn-outline-secondary">
+                                        <i class="fas fa-download me-1"></i> Квитанция
+                                    </a>
+                                </div>
+
+                                <!-- Модальное окно с реквизитами -->
+                                <div class="modal fade" id="paymentModal{{ payment.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-primary text-white">
+                                                <h5 class="modal-title">Реквизиты для оплаты</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p><strong>Платеж за:</strong> {{ payment.get_month_name }} {{ payment.year }}</p>
+                                                <p><strong>Сумма:</strong> <span class="h5 text-primary">{{ payment.amount|floatformat:2 }} ₽</span></p>
+                                                <hr>
+                                                <p><strong>Получатель:</strong> МБДОУ "Детский сад"</p>
+                                                <p><strong>Расчетный счет:</strong> <code>40701810792053000013</code></p>
+                                                <p><strong>ЛБГ:</strong> <code>13800095</code></p>
+                                                <p><strong>Лицевой счет ребенка:</strong> <code>{{ payment.child.account.account_number|default:"Не указан" }}</code></p>
+                                                <hr>
+                                                <div class="alert alert-info small mb-0">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Оплатите до 15 числа {{ payment.get_month_name }} {{ payment.year }}.
+                                                    В назначении платежа обязательно укажите ФИО ребенка и лицевой счет.
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                                <button type="button" class="btn btn-primary" onclick="copyRequisites('{{ payment.id }}')">
+                                                    <i class="fas fa-copy me-1"></i> Копировать реквизиты
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <a href="{% url 'payments:generate_receipt' payment.id %}" 
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-download me-1"></i> Квитанция
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">Нет данных о платежах</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle me-2"></i>
+        У вас нет детей или данные о платежах отсутствуют.
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+function copyRequisites(paymentId) {
+    // Находим модальное окно
+    const modal = document.getElementById(`paymentModal${paymentId}`);
+    const amount = modal.querySelector('.h5.text-primary').innerText;
+    const childName = modal.querySelector('p:first-child').innerText;
+    
+    const requisites = `Получатель: МБДОУ "Детский сад"\n` +
+                      `Расчетный счет: 40701810792053000013\n` +
+                      `ЛБГ: 13800095\n` +
+                      `Лицевой счет ребенка: ${modal.querySelector('code:last-of-type')?.innerText || 'Не указан'}\n` +
+                      `Сумма: ${amount}\n` +
+                      childName;
+    
+    navigator.clipboard.writeText(requisites).then(() => {
+        // Показываем уведомление
+        const btn = modal.querySelector('.btn-primary');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-1"></i> Скопировано!';
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+        }, 2000);
+    });
+}
+</script>
+
+<style>
+.card-header.bg-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+}
+.table-danger {
+    background-color: #fff5f5;
+}
+code {
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}

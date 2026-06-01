@@ -1,0 +1,90 @@
+{% extends 'payroll/base_payroll.html' %}
+{% load static %}
+
+{% block page_title %}Графики работы{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item active">Графики работы</li>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'payroll:schedule_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Новый график
+</a>
+{% endblock %}
+
+{% block page_content %}
+<div class="row">
+    {% for schedule in schedules %}
+    <div class="col-md-4 mb-4">
+        <div class="payroll-card h-100">
+            <div class="payroll-card-header">
+                <span><i class="fas fa-clock me-2"></i>{{ schedule.name }}</span>
+                <span class="badge bg-info">{{ schedule.get_schedule_type_display }}</span>
+            </div>
+            <div class="payroll-card-body">
+                <div class="mb-3">
+                    <strong>Часов в неделю:</strong>
+                    <span class="float-end">{{ schedule.hours_per_week }} ч.</span>
+                </div>
+                
+                {% if schedule.use_production_calendar %}
+                <div class="mb-3">
+                    <span class="badge bg-success">
+                        <i class="fas fa-calendar-alt me-1"></i>Использует производственный календарь
+                    </span>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <strong>Расписание:</strong>
+                    <div class="mt-2 small">
+                        {% for day in schedule.schedule_data %}
+                        <div class="mb-1">
+                            {% if day.day == 0 %}Пн
+                            {% elif day.day == 1 %}Вт
+                            {% elif day.day == 2 %}Ср
+                            {% elif day.day == 3 %}Чт
+                            {% elif day.day == 4 %}Пт
+                            {% elif day.day == 5 %}Сб
+                            {% elif day.day == 6 %}Вс
+                            {% endif %}:
+                            {{ day.start }} - {{ day.end }}
+                            {% if day.break %}(перерыв {{ day.break }}){% endif %}
+                        </div>
+                        {% empty %}
+                        <span class="text-muted">Нет данных</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% if schedule.description %}
+                <div class="mb-3">
+                    <small class="text-muted">{{ schedule.description }}</small>
+                </div>
+                {% endif %}
+
+                <div class="mt-3">
+                    <span class="badge {% if schedule.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                        {{ schedule.is_active|yesno:"Активен,Неактивен" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="payroll-card">
+            <div class="payroll-card-body text-center py-5">
+                <i class="fas fa-clock fa-4x mb-3" style="color: #bdc3c7;"></i>
+                <h5 style="color: #7f8c8d;">Нет графиков работы</h5>
+                <p class="text-muted">Создайте первый график, нажав кнопку "Новый график"</p>
+                <a href="{% url 'payroll:schedule_create' %}" class="btn btn-primary mt-2">
+                    <i class="fas fa-plus me-2"></i>Создать график
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

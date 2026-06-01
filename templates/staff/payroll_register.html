@@ -1,0 +1,162 @@
+<!-- staff/templates/staff/payroll_register.html -->
+{% extends 'staff/base_staff.html' %}
+{% load staff_extras %}
+
+{% block title %}Ведомость на выплату зарплаты{% endblock %}
+
+{% block staff_content %}
+<div class="staff-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-file-invoice"></i>
+                    Ведомость на выплату зарплаты
+                </h1>
+                <p class="mb-0 opacity-75">{{ month_name }} {{ year }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success staff-btn me-2">
+                        <i class="fas fa-check-circle"></i> Отметить выплату
+                    </button>
+                </form>
+                <a href="{% url 'staff:export_salary_payroll_excel' %}?month={{ month }}&year={{ year }}" class="btn btn-outline-light staff-btn">
+                    <i class="fas fa-file-excel"></i> Excel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <!-- Информация о выплате -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="staff-stat-card position-relative">
+                <i class="fas fa-users"></i>
+                <p class="stat-value">{{ calculations.count }}</p>
+                <p class="stat-label">Сотрудников</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="staff-stat-card position-relative" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <i class="fas fa-money-bill-wave"></i>
+                <p class="stat-value">{{ total_amount|floatformat:0 }} ₽</p>
+                <p class="stat-label">Общая сумма к выплате</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="staff-stat-card position-relative" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="fas fa-percent"></i>
+                <p class="stat-value">{{ calculations|dictsort:"status"|length }}</p>
+                <p class="stat-label">Статус выплаты</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ведомость -->
+    <div class="staff-card">
+        <div class="card-header">
+            <i class="fas fa-list"></i>
+            Расчетно-платежная ведомость
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="staff-table table mb-0">
+                    <thead>
+                        <tr>
+                            <th>№ п/п</th>
+                            <th>Табельный номер</th>
+                            <th>ФИО</th>
+                            <th>Должность</th>
+                            <th>Оклад</th>
+                            <th>Отработано часов</th>
+                            <th>Начислено</th>
+                            <th>Удержано (НДФЛ)</th>
+                            <th>К выплате</th>
+                            <th>Подпись</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for calc in calculations %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ calc.employee.id|stringformat:"04d" }}</td>
+                            <td>{{ calc.employee.full_name }}</td>
+                            <td>{{ calc.employee.position }}</td>
+                            <td>{{ calc.base_salary|floatformat:0 }} ₽</td>
+                            <td>{{ calc.worked_hours|floatformat:1 }}</td>
+                            <td>{{ calc.total_accrued|floatformat:0 }} ₽</td>
+                            <td>{{ calc.income_tax|floatformat:0 }} ₽</td>
+                            <td class="fw-bold text-success">{{ calc.total_payable|floatformat:0 }} ₽</td>
+                            <td>__________________</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center py-4">
+                                <p class="text-muted">Нет данных для отображения</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="6" class="text-end fw-bold">ИТОГО:</td>
+                            <td class="fw-bold">{{ calculations|sum:'total_accrued'|floatformat:0 }} ₽</td>
+                            <td class="fw-bold">{{ calculations|sum:'income_tax'|floatformat:0 }} ₽</td>
+                            <td class="fw-bold text-success">{{ calculations|sum:'total_payable'|floatformat:0 }} ₽</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Подписи -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-signature"></i>
+                    Главный бухгалтер
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="mb-0">____________________</p>
+                            <small class="text-muted">подпись</small>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-0">____________________</p>
+                            <small class="text-muted">ФИО</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="staff-card">
+                <div class="card-header">
+                    <i class="fas fa-signature"></i>
+                    Заведующая МБДОУ
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="mb-0">____________________</p>
+                            <small class="text-muted">подпись</small>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-0">____________________</p>
+                            <small class="text-muted">Н.В. Михайлова</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

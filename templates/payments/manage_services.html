@@ -1,0 +1,543 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Управление кружками и секциями{% endblock %}
+
+{% block extra_css %}
+<style>
+    .service-card {
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .service-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    .service-header {
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .service-header.inactive {
+        background: linear-gradient(135deg, #868f96 0%, #596164 100%);
+    }
+    .price-badge {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+    .stats-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 10px;
+        text-align: center;
+    }
+    .filter-bar {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 46px;
+        height: 22px;
+    }
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 22px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider {
+        background-color: #28a745;
+    }
+    input:checked + .slider:before {
+        transform: translateX(24px);
+    }
+    
+    /* Уменьшенное модальное окно */
+    .modal-dialog.modal-compact {
+        max-width: 550px;
+        margin: 1.75rem auto;
+    }
+    
+    .modal-compact .modal-body {
+        padding: 1rem 1.25rem;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+    
+    .modal-compact .form-label {
+        font-size: 0.75rem;
+        margin-bottom: 0.2rem;
+        font-weight: 600;
+    }
+    
+    .modal-compact .form-control,
+    .modal-compact .form-select {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.6rem;
+        border-radius: 8px;
+    }
+    
+    .modal-compact .form-check {
+        margin-top: 0.5rem;
+    }
+    
+    .modal-compact .btn {
+        font-size: 0.8rem;
+        padding: 0.35rem 1rem;
+    }
+    
+    .modal-compact .modal-header {
+        padding: 0.75rem 1.25rem;
+    }
+    
+    .modal-compact .modal-footer {
+        padding: 0.75rem 1.25rem;
+    }
+    
+    .modal-compact textarea {
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-palette me-2"></i>
+                Управление кружками и секциями
+            </h1>
+            <p class="text-muted small">Добавление, редактирование и управление дополнительными услугами</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" onclick="openCreateModal()">
+            <i class="fas fa-plus me-1"></i> Создать кружок
+        </button>
+    </div>
+
+    <!-- Фильтры и статистика -->
+    <div class="filter-bar">
+        <div class="row align-items-center g-2">
+            <div class="col-md-3 col-6">
+                <div class="stats-card">
+                    <i class="fas fa-circle-check text-success"></i>
+                    <h5 class="mb-0 mt-1">{{ services|length }}</h5>
+                    <small class="text-muted">Всего кружков</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stats-card">
+                    <i class="fas fa-play-circle text-primary"></i>
+                    <h5 class="mb-0 mt-1">{{ services|length }}</h5>
+                    <small class="text-muted">Активных</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stats-card">
+                    <i class="fas fa-users text-info"></i>
+                    <h5 class="mb-0 mt-1">—</h5>
+                    <small class="text-muted">Всего детей</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stats-card">
+                    <i class="fas fa-chalkboard-user text-warning"></i>
+                    <h5 class="mb-0 mt-1">{{ teachers|length|default:"0" }}</h5>
+                    <small class="text-muted">Преподавателей</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Список кружков -->
+    <div class="row">
+        {% for service in services %}
+        <div class="col-md-6 col-xl-4">
+            <div class="card service-card shadow-sm">
+                <div class="service-header {% if not service.is_active %}inactive{% endif %}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">{{ service.name }}</h6>
+                            <small>
+                                <i class="fas fa-tag me-1"></i>
+                                {{ service.get_service_type_display }}
+                            </small>
+                        </div>
+                        <div class="form-check form-switch">
+                            <label class="switch">
+                                <input type="checkbox" class="toggle-service" data-id="{{ service.id }}" 
+                                       {% if service.is_active %}checked{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-3">
+                    <div class="row mb-2 g-2">
+                        <div class="col-6">
+                            <div class="text-center border rounded p-1">
+                                <small class="text-muted">Стоимость/мес</small>
+                                <div class="price-badge small">{{ service.price_per_month }} ₽</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center border rounded p-1">
+                                <small class="text-muted">Стоимость/занятие</small>
+                                <div class="price-badge small">{{ service.price_per_lesson }} ₽</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <p class="small mb-1">
+                            <i class="fas fa-child me-1"></i>
+                            <strong>Возраст:</strong> {{ service.age_min }}-{{ service.age_max }} лет
+                        </p>
+                        <p class="small mb-1">
+                            <i class="fas fa-chalkboard-teacher me-1"></i>
+                            <strong>Преподаватель:</strong> 
+                            {% if service.teacher_user %}
+                                {{ service.teacher_user.get_full_name|default:service.teacher_user.username }}
+                            {% else %}
+                                <span class="text-warning">Не назначен</span>
+                            {% endif %}
+                        </p>
+                        <p class="small mb-1">
+                            <i class="fas fa-clock me-1"></i>
+                            <strong>Расписание:</strong> {{ service.schedule|default:"Не указано"|truncatechars:25 }}
+                        </p>
+                        <p class="small mb-1">
+                            <i class="fas fa-users me-1"></i>
+                            <strong>Максимум мест:</strong> {{ service.max_students }}
+                        </p>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm flex-grow-1" onclick="editService({{ service.id }})">
+                            <i class="fas fa-edit me-1"></i> Редактировать
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete({{ service.id }}, '{{ service.name|escapejs }}')">
+                            <i class="fas fa-trash me-1"></i> Удалить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center py-5">
+                <i class="fas fa-info-circle fa-3x mb-3 d-block"></i>
+                <h5>Нет добавленных кружков</h5>
+                <p>Нажмите кнопку "Создать кружок", чтобы добавить первый кружок или секцию.</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- УМЕНЬШЕННОЕ МОДАЛЬНОЕ ОКНО СОЗДАНИЯ/РЕДАКТИРОВАНИЯ -->
+<div class="modal fade" id="serviceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-compact">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    <span id="modalTitle">Создание кружка</span>
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="serviceForm">
+                {% csrf_token %}
+                <input type="hidden" id="serviceId" name="service_id" value="">
+                <div class="modal-body">
+                    <div class="row g-2">
+                        <div class="col-8 mb-2">
+                            <label class="form-label">Название кружка *</label>
+                            <input type="text" name="name" id="serviceName" class="form-control" required>
+                        </div>
+                        <div class="col-4 mb-2">
+                            <label class="form-label">Тип услуги *</label>
+                            <select name="service_type" id="serviceType" class="form-select" required>
+                                <option value="circle">Кружок</option>
+                                <option value="section">Секция</option>
+                                <option value="studio">Студия</option>
+                                <option value="course">Курс</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <label class="form-label">Описание</label>
+                        <textarea name="description" id="serviceDesc" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="row g-2">
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Стоимость/мес (₽)</label>
+                            <input type="number" name="price_per_month" id="servicePriceMonth" class="form-control" step="0.01" value="0">
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Стоимость/занятие (₽) *</label>
+                            <input type="number" name="price_per_lesson" id="servicePriceLesson" class="form-control" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-2">
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Максимум мест</label>
+                            <input type="number" name="max_students" id="serviceMaxStudents" class="form-control" value="10">
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Преподаватель</label>
+                            <select name="teacher_user_id" id="serviceTeacher" class="form-select">
+                                <option value="">-- Выберите --</option>
+                                {% for teacher in teachers %}
+                                <option value="{{ teacher.id }}">{{ teacher.get_full_name|default:teacher.username|truncatechars:20 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-2">
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Мин. возраст</label>
+                            <input type="number" name="age_min" id="serviceAgeMin" class="form-control" value="3">
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Макс. возраст</label>
+                            <input type="number" name="age_max" id="serviceAgeMax" class="form-control" value="7">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <label class="form-label">Расписание</label>
+                        <input type="text" name="schedule" id="serviceSchedule" class="form-control" placeholder="Пн, Ср 15:00-16:00">
+                    </div>
+                    
+                    <div class="mb-2">
+                        <label class="form-label">Программа занятий</label>
+                        <textarea name="program" id="serviceProgram" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input type="checkbox" name="is_active" id="serviceActive" class="form-check-input" value="true" checked>
+                        <label class="form-check-label small">Кружок активен</label>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="submitBtn">Создать кружок</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white py-2">
+                <h6 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Подтверждение удаления</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="mb-1 small">Удалить кружок <strong id="deleteServiceName"></strong>?</p>
+                <p class="text-danger small mb-0">Это действие нельзя отменить!</p>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger btn-sm" id="confirmDeleteBtn">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ✅ Безопасный fetch — проверяет тип ответа перед парсингом JSON
+function safeFetch(url, options) {
+    return fetch(url, options).then(response => {
+        const ct = response.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) {
+            return response.text().then(text => {
+                console.error(`Server returned HTML (${response.status}):`, text.substring(0, 300));
+                throw new Error(`Сервер вернул ошибку HTTP ${response.status}. Проверьте консоль.`);
+            });
+        }
+        return response.json();
+    });
+}
+
+let currentDeleteId = null;
+let currentModal = null;
+
+// === URL из Django ===
+const URL_CREATE = "{% url 'payments:service_create_ajax' %}";
+
+// Генераторы URL (подставляют ID)
+function getEditUrl(id) { return "{% url 'payments:service_edit_ajax' pk=99999 %}".replace('99999', id); }
+function getDeleteUrl(id) { return "{% url 'payments:service_delete_ajax' pk=99999 %}".replace('99999', id); }
+function getToggleUrl(id) { return "{% url 'payments:service_toggle_active' pk=99999 %}".replace('99999', id); }
+function getApiDetailUrl(id) { return "{% url 'payments:api_service_detail' pk=99999 %}".replace('99999', id); }
+
+// Открыть модальное окно создания
+function openCreateModal() {
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle me-2"></i> Создание кружка';
+    document.getElementById('submitBtn').textContent = 'Создать кружок';
+    document.getElementById('serviceForm').reset();
+    document.getElementById('serviceId').value = '';
+    document.getElementById('serviceActive').checked = true;
+    document.getElementById('serviceMaxStudents').value = 10;
+    document.getElementById('serviceAgeMin').value = 3;
+    document.getElementById('serviceAgeMax').value = 7;
+    document.getElementById('servicePriceMonth').value = 0;
+    document.getElementById('servicePriceLesson').value = 0;
+    
+    currentModal = new bootstrap.Modal(document.getElementById('serviceModal'));
+    currentModal.show();
+}
+
+// Редактирование кружка
+function editService(id) {
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit me-2"></i> Редактирование кружка';
+    document.getElementById('submitBtn').textContent = 'Сохранить изменения';
+    document.getElementById('serviceId').value = id;
+    
+    safeFetch(getApiDetailUrl(id))
+        .then(data => {
+            document.getElementById('serviceName').value = data.name || '';
+            document.getElementById('serviceType').value = data.service_type || 'circle';
+            document.getElementById('serviceDesc').value = data.description || '';
+            document.getElementById('servicePriceMonth').value = data.price_per_month || 0;
+            document.getElementById('servicePriceLesson').value = data.price_per_lesson || 0;
+            document.getElementById('serviceMaxStudents').value = data.max_students || 10;
+            document.getElementById('serviceAgeMin').value = data.age_min || 3;
+            document.getElementById('serviceAgeMax').value = data.age_max || 7;
+            document.getElementById('serviceTeacher').value = data.teacher_user_id || '';
+            document.getElementById('serviceSchedule').value = data.schedule || '';
+            document.getElementById('serviceProgram').value = data.program || '';
+            document.getElementById('serviceActive').checked = !!data.is_active;
+            
+            currentModal = new bootstrap.Modal(document.getElementById('serviceModal'));
+            currentModal.show();
+        })
+        .catch(error => alert('Ошибка загрузки данных: ' + error.message));
+}
+
+// Сохранение формы
+document.getElementById('serviceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const serviceId = document.getElementById('serviceId').value;
+    const url = serviceId ? getEditUrl(serviceId) : URL_CREATE;
+    const formData = new FormData(this);
+    
+    if (!document.getElementById('serviceActive').checked) {
+        formData.set('is_active', 'false');
+    }
+    
+    safeFetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+        body: formData
+    })
+    .then(data => {
+        if (data.success) {
+            if (currentModal) currentModal.hide();
+            location.reload();
+        } else {
+            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    })
+    .catch(error => alert('Ошибка сохранения: ' + error.message));
+});
+
+// Подтверждение удаления
+function confirmDelete(id, name) {
+    currentDeleteId = id;
+    document.getElementById('deleteServiceName').textContent = name;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (!currentDeleteId) return;
+    
+    safeFetch(getDeleteUrl(currentDeleteId), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(data => {
+        if (data.success) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+            if (modal) modal.hide();
+            location.reload();
+        } else {
+            alert('Ошибка: ' + (data.error || 'Не удалось удалить'));
+        }
+    })
+    .catch(error => alert('Ошибка удаления: ' + error.message));
+});
+
+// Переключение активности
+document.querySelectorAll('.toggle-service').forEach(toggle => {
+    toggle.addEventListener('change', function() {
+        const serviceId = this.dataset.id;
+        const isActive = this.checked;
+        
+        safeFetch(getToggleUrl(serviceId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(data => {
+            if (!data.success && !data.message) {
+                alert(data.error || 'Ошибка переключения');
+                this.checked = !isActive;
+            }
+        })
+        .catch(error => {
+            alert('Ошибка: ' + error.message);
+            this.checked = !isActive;
+        });
+    });
+});
+</script>
+{% endblock %}

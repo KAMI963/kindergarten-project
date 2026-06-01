@@ -1,0 +1,1250 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Заявления{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================
+   ПРЕФИКС app для изоляции стилей
+   Гарантированное применение без задержек
+   ============================================ */
+
+/* --- CSS ПЕРЕМЕННЫЕ --- */
+:root {
+    --primary-deep: #1a1f36;
+    --primary-purple: #5a67d8;
+    --gradient-start: #667eea;
+    --gradient-end: #764ba2;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 16px rgba(102, 126, 234, 0.12);
+    --shadow-lg: 0 8px 24px rgba(102, 126, 234, 0.15);
+}
+
+/* --- АНИМАЦИИ --- */
+@keyframes app-fadeSlideUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes app-shine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(200%) rotate(45deg); }
+}
+
+/* --- ШАПКА (HERO) --- */
+.app-hero {
+    background: linear-gradient(135deg, #1a1f36 0%, #1e2740 50%, #2d2852 100%);
+    border-radius: 16px;
+    padding: 18px 24px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.app-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.15), transparent 60%);
+    pointer-events: none;
+}
+
+.app-hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.app-hero-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.app-hero-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    box-shadow: 0 6px 14px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.app-hero-icon::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: app-shine 3s infinite;
+}
+
+.app-hero-title {
+    color: white;
+    margin: 0 !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+}
+
+.app-hero-subtitle {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.7rem;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.app-hero-subtitle i {
+    font-size: 0.6rem;
+    color: #7f9cf5;
+}
+
+.app-create-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    padding: 8px 20px;
+    border-radius: 30px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.app-create-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+/* --- СТАТИСТИКА --- */
+.app-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.app-stat {
+    background: white;
+    border-radius: 14px;
+    padding: 14px 16px;
+    position: relative;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid rgba(102, 126, 234, 0.08);
+    box-shadow: var(--shadow-sm);
+}
+
+.app-stat:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.app-stat-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+    background-size: 200% 100%;
+    border-radius: 14px 14px 0 0;
+}
+
+.app-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+.app-stat-icon.purple { background: rgba(102, 126, 234, 0.1); color: #667eea; }
+.app-stat-icon.green { background: rgba(72, 187, 120, 0.1); color: #48bb78; }
+.app-stat-icon.red { background: rgba(245, 101, 101, 0.1); color: #f56565; }
+.app-stat-icon.orange { background: rgba(246, 173, 85, 0.1); color: #ed8936; }
+.app-stat-icon.blue { background: rgba(79, 172, 254, 0.1); color: #4facfe; }
+
+.app-stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #1a1f36;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.app-stat-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #a0aec0;
+    margin-bottom: 4px;
+}
+
+/* --- ФИЛЬТРЫ И ПОИСК --- */
+.app-filters {
+    background: white;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(102, 126, 234, 0.08);
+    box-shadow: var(--shadow-sm);
+}
+
+.app-filters-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.app-search-wrapper {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+}
+
+.app-search-input {
+    width: 100%;
+    padding: 9px 14px 9px 36px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    color: #1a1f36;
+    background: #f8fafc;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.app-search-input:focus {
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.app-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.75rem;
+    pointer-events: none;
+    transition: color 0.3s ease;
+}
+
+.app-search-input:focus ~ .app-search-icon {
+    color: #667eea;
+}
+
+.app-sort-select {
+    padding: 9px 32px 9px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #4a5568;
+    background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 12px center;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease;
+    min-width: 160px;
+}
+
+.app-sort-select:focus {
+    border-color: #667eea;
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.app-filter-count {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 0 4px;
+}
+
+/* Кнопки фильтров по статусу */
+.app-status-filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.app-status-btn {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1.5px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.app-status-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+    background: #f8faff;
+}
+
+.app-status-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+}
+
+.app-status-btn .status-count {
+    background: rgba(0,0,0,0.08);
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 0.6rem;
+    font-weight: 700;
+}
+
+.app-status-btn.active .status-count {
+    background: rgba(255,255,255,0.25);
+}
+
+/* Карточки */
+.app-card {
+    background: white;
+    border-radius: 14px;
+    transition: all 0.3s ease;
+    position: relative;
+    animation: app-fadeSlideUp 0.3s ease-out;
+    border: 1px solid rgba(102, 126, 234, 0.06);
+    margin-bottom: 10px;
+}
+
+.app-card.app-hidden {
+    display: none !important;
+}
+
+.app-card:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-md);
+}
+
+.app-card-accent {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #667eea, #764ba2);
+    border-radius: 14px 0 0 14px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.app-card:hover .app-card-accent {
+    opacity: 1;
+}
+
+.app-card-inner {
+    padding: 14px 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+/* Аватар */
+.app-child-avatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #667eea15, #764ba215);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: #667eea;
+    flex-shrink: 0;
+}
+
+/* Информация */
+.app-card-info {
+    flex: 1;
+    min-width: 180px;
+}
+
+.app-card-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.app-card-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1f36;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.app-card-name i {
+    color: #667eea;
+    font-size: 0.7rem;
+}
+
+/* Приоритет */
+.app-priority {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.app-priority-benefit {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.app-priority-district {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.app-priority-staff {
+    background: #e0e7ff;
+    color: #4c51bf;
+}
+
+/* Мета данные */
+.app-meta-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.app-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.68rem;
+    color: #64748b;
+}
+
+.app-meta-item i {
+    width: 14px;
+    font-size: 0.55rem;
+    color: #94a3b8;
+}
+
+/* Заметка */
+.app-note {
+    background: #f5f3ff;
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin-top: 6px;
+    font-size: 0.65rem;
+    color: #5b21b6;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Правая часть */
+.app-card-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Статус */
+.app-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.app-status i {
+    font-size: 0.6rem;
+}
+
+.app-status-pending { background: #fef3c7; color: #d97706; }
+.app-status-approved { background: #d1fae5; color: #059669; }
+.app-status-rejected { background: #fee2e2; color: #dc2626; }
+.app-status-correction { background: #f1f5f9; color: #475569; }
+.app-status-enrolled { background: #dbeafe; color: #2563eb; }
+
+/* Кнопки действий */
+.app-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.app-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.app-btn-view {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+}
+
+.app-btn-approve {
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+}
+
+.app-btn-correction {
+    background: linear-gradient(135deg, #f6ad55, #ed8936);
+    color: white;
+}
+
+.app-btn-reject {
+    background: linear-gradient(135deg, #f56565, #e53e3e);
+    color: white;
+}
+
+.app-btn-edit {
+    background: linear-gradient(135deg, #a0aec0, #718096);
+    color: white;
+}
+
+.app-btn-icon {
+    padding: 6px 10px;
+}
+
+.app-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+}
+
+/* Пустое состояние */
+.app-empty {
+    background: white;
+    border-radius: 16px;
+    padding: 40px 20px;
+    text-align: center;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.app-empty-graphic {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #667eea10, #764ba210);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 2rem;
+    color: #667eea;
+}
+
+.app-empty h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1f36;
+    margin-bottom: 6px;
+}
+
+.app-empty p {
+    color: #64748b;
+    font-size: 0.75rem;
+    max-width: 350px;
+    margin: 0 auto 16px;
+}
+
+.app-no-results {
+    text-align: center;
+    padding: 40px 20px;
+    background: white;
+    border-radius: 14px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    display: none;
+}
+
+.app-no-results.visible {
+    display: block;
+    animation: app-fadeSlideUp 0.3s ease-out;
+}
+
+/* АДАПТИВНОСТЬ */
+@media (max-width: 992px) {
+    .app-card-inner {
+        flex-direction: column;
+    }
+    
+    .app-card-right {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-hero {
+        padding: 14px 18px;
+    }
+    
+    .app-hero-title {
+        font-size: 1rem !important;
+    }
+    
+    .app-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .app-stat-value {
+        font-size: 1.3rem;
+    }
+    
+    .app-card-inner {
+        padding: 12px 14px;
+    }
+    
+    .app-child-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .app-meta-grid {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .app-actions {
+        flex-wrap: wrap;
+    }
+    
+    .app-filters-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .app-sort-select {
+        width: 100%;
+    }
+    
+    .app-filter-count {
+        text-align: center;
+    }
+    
+    .app-status-filters {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .app-status-filters::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .app-hero-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .app-hero-left {
+        justify-content: center;
+    }
+    
+    .app-create-btn {
+        justify-content: center;
+    }
+    
+    .app-card-right {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .app-status {
+        align-self: flex-start;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ШАПКА -->
+<div class="app-hero">
+    <div class="app-hero-content">
+        <div class="app-hero-left">
+            <div class="app-hero-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div>
+                <h1 class="app-hero-title">
+                    {% if user.role == 'parent' %}
+                        Мои заявления
+                    {% else %}
+                        Все заявления
+                    {% endif %}
+                </h1>
+                <div class="app-hero-subtitle">
+                    <i class="fas fa-arrow-right"></i>
+                    {% if user.role == 'parent' %}
+                        Управление заявлениями на зачисление
+                    {% else %}
+                        Просмотр и обработка заявлений
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% if user.role == 'parent' %}
+        <a href="{% url 'applications:application_create' %}" class="app-create-btn">
+            <i class="fas fa-plus"></i>
+            Новое заявление
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- СТАТИСТИКА -->
+{% if user.role == 'director' and stats %}
+<div class="app-stats-grid">
+    <div class="app-stat" data-stat-filter="pending">
+        <div class="app-stat-glow"></div>
+        <div class="app-stat-icon purple">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="app-stat-value">{{ stats.pending|default:0 }}</div>
+        <div class="app-stat-label">На рассмотрении</div>
+    </div>
+    
+    <div class="app-stat" data-stat-filter="approved">
+        <div class="app-stat-glow"></div>
+        <div class="app-stat-icon green">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="app-stat-value">{{ stats.approved|default:0 }}</div>
+        <div class="app-stat-label">Одобрено</div>
+    </div>
+    
+    <div class="app-stat" data-stat-filter="rejected">
+        <div class="app-stat-glow"></div>
+        <div class="app-stat-icon red">
+            <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="app-stat-value">{{ stats.rejected|default:0 }}</div>
+        <div class="app-stat-label">Отклонено</div>
+    </div>
+    
+    <div class="app-stat" data-stat-filter="needs_correction">
+        <div class="app-stat-glow"></div>
+        <div class="app-stat-icon orange">
+            <i class="fas fa-edit"></i>
+        </div>
+        <div class="app-stat-value">{{ stats.needs_correction|default:0 }}</div>
+        <div class="app-stat-label">Требует корректировки</div>
+    </div>
+    
+    <div class="app-stat" data-stat-filter="enrolled">
+        <div class="app-stat-glow"></div>
+        <div class="app-stat-icon blue">
+            <i class="fas fa-graduation-cap"></i>
+        </div>
+        <div class="app-stat-value">{{ stats.enrolled|default:0 }}</div>
+        <div class="app-stat-label">Зачислено</div>
+    </div>
+    
+    <div class="app-stat" data-stat-filter="all">
+        <div class="app-stat-glow"></div>
+        <div class="app-stat-icon">
+            <i class="fas fa-list"></i>
+        </div>
+        <div class="app-stat-value">{{ stats.total|default:0 }}</div>
+        <div class="app-stat-label">Всего</div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 🔍 ПАНЕЛЬ ПОИСКА И ФИЛЬТРАЦИИ -->
+<div class="app-filters">
+    <div class="app-filters-row">
+        <div class="app-search-wrapper">
+            <input type="text"
+                   class="app-search-input"
+                   id="appSearchInput"
+                   placeholder="Поиск по ФИО ребёнка, номеру... (Ctrl+K)"
+                   autocomplete="off">
+            <i class="fas fa-search app-search-icon"></i>
+        </div>
+        
+        <select class="app-sort-select" id="appSortSelect">
+            <option value="date-desc">Сначала новые</option>
+            <option value="date-asc">Сначала старые</option>
+            <option value="name-asc">ФИО ребёнка (А-Я)</option>
+            <option value="name-desc">ФИО ребёнка (Я-А)</option>
+            <option value="status">По статусу</option>
+        </select>
+        
+        <span class="app-filter-count" id="appFilterCount"></span>
+    </div>
+    
+    <div class="app-status-filters" id="appStatusFilters">
+        <button class="app-status-btn active" data-status="all">
+            <i class="fas fa-layer-group"></i> Все
+            <span class="status-count">{{ applications|length }}</span>
+        </button>
+        <button class="app-status-btn" data-status="pending">
+            <i class="fas fa-clock"></i> На рассмотрении
+            <span class="status-count">{{ stats.pending|default:0 }}</span>
+        </button>
+        <button class="app-status-btn" data-status="approved">
+            <i class="fas fa-check-circle"></i> Одобрено
+            <span class="status-count">{{ stats.approved|default:0 }}</span>
+        </button>
+        <button class="app-status-btn" data-status="rejected">
+            <i class="fas fa-times-circle"></i> Отклонено
+            <span class="status-count">{{ stats.rejected|default:0 }}</span>
+        </button>
+        <button class="app-status-btn" data-status="needs_correction">
+            <i class="fas fa-edit"></i> Требует корректировки
+            <span class="status-count">{{ stats.needs_correction|default:0 }}</span>
+        </button>
+        <button class="app-status-btn" data-status="enrolled">
+            <i class="fas fa-graduation-cap"></i> Зачислено
+            <span class="status-count">{{ stats.enrolled|default:0 }}</span>
+        </button>
+    </div>
+</div>
+
+<!-- СПИСОК ЗАЯВЛЕНИЙ -->
+<div id="appList">
+    {% for application in applications %}
+    <div class="app-card"
+         data-id="{{ application.id }}"
+         data-name="{{ application.child_full_name|lower }}"
+         data-number="{{ application.application_number|lower }}"
+         data-date="{{ application.created_at|date:'Y-m-d' }}"
+         data-status="{{ application.status }}">
+        <div class="app-card-accent"></div>
+        <div class="app-card-inner">
+            <div class="app-child-avatar">
+                <i class="fas fa-child"></i>
+            </div>
+            
+            <div class="app-card-info">
+                <div class="app-card-header">
+                    <h3 class="app-card-name">
+                        <i class="fas fa-star-of-life"></i>
+                        {{ application.child_full_name }}
+                    </h3>
+                    {% if user.role == 'director' %}
+                        {% if application.priority == 'benefit' %}
+                            <span class="app-priority app-priority-benefit">
+                                <i class="fas fa-star"></i> Льготный
+                            </span>
+                        {% elif application.priority == 'district' %}
+                            <span class="app-priority app-priority-district">
+                                <i class="fas fa-map-marker-alt"></i> Районный
+                            </span>
+                        {% elif application.priority == 'staff' %}
+                            <span class="app-priority app-priority-staff">
+                                <i class="fas fa-id-badge"></i> Сотрудник
+                            </span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                
+                <div class="app-meta-grid">
+                    <div class="app-meta-item">
+                        <i class="fas fa-hashtag"></i>
+                        <span>№ {{ application.application_number|truncatechars:12 }}</span>
+                    </div>
+                    <div class="app-meta-item">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span>{{ application.created_at|date:"d.m.Y" }}</span>
+                    </div>
+                    <div class="app-meta-item">
+                        <i class="fas fa-birthday-cake"></i>
+                        <span>{{ application.child_birth_date|date:"d.m.Y" }} ({{ application.child_age }} лет)</span>
+                    </div>
+                </div>
+                
+                {% if application.director_notes and user.role == 'director' %}
+                <div class="app-note">
+                    <i class="fas fa-sticky-note"></i>
+                    {{ application.director_notes|truncatechars:70 }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="app-card-right">
+                <div class="app-status app-status-{{ application.status }}">
+                    <i class="fas 
+                        {% if application.status == 'pending' %}fa-clock
+                        {% elif application.status == 'approved' %}fa-check-circle
+                        {% elif application.status == 'rejected' %}fa-times-circle
+                        {% elif application.status == 'needs_correction' %}fa-edit
+                        {% elif application.status == 'enrolled' %}fa-graduation-cap
+                        {% endif %}"></i>
+                    {{ application.get_status_display }}
+                </div>
+                
+                <div class="app-actions">
+                    <a href="{% url 'applications:application_detail' application.id %}"
+                       class="app-btn app-btn-view" title="Подробнее">
+                        <i class="fas fa-eye"></i> Подробнее
+                    </a>
+                    
+                    {% if user.role == 'director' and application.status == 'pending' %}
+                    <a href="{% url 'applications:application_approve' application.id %}"
+                       class="app-btn app-btn-approve app-btn-icon"
+                       title="Одобрить"
+                       onclick="return confirm('Одобрить заявление?')">
+                        <i class="fas fa-check"></i>
+                    </a>
+                    <a href="{% url 'applications:application_need_correction' application.id %}"
+                       class="app-btn app-btn-correction app-btn-icon"
+                       title="На доработку">
+                        <i class="fas fa-pen"></i>
+                    </a>
+                    <a href="{% url 'applications:application_reject' application.id %}"
+                       class="app-btn app-btn-reject app-btn-icon"
+                       title="Отклонить"
+                       onclick="return confirm('Отклонить заявление?')">
+                        <i class="fas fa-times"></i>
+                    </a>
+                    {% endif %}
+                    
+                    {% if user.role == 'parent' and application.status == 'needs_correction' %}
+                    <a href="{% url 'applications:application_edit' application.id %}"
+                       class="app-btn app-btn-edit">
+                        <i class="fas fa-pen"></i> Правка
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% empty %}
+    <div class="app-empty">
+        <div class="app-empty-graphic">
+            <i class="fas fa-clipboard-list"></i>
+        </div>
+        <h3>
+            {% if user.role == 'parent' %}
+                У вас пока нет заявлений
+            {% else %}
+                Заявления не найдены
+            {% endif %}
+        </h3>
+        <p>
+            {% if user.role == 'parent' %}
+                Подайте первое заявление на приём ребёнка в детский сад
+            {% else %}
+                В системе пока нет заявлений от родителей
+            {% endif %}
+        </p>
+        {% if user.role == 'parent' %}
+        <a href="{% url 'applications:application_create' %}" class="app-create-btn" style="display: inline-flex;">
+            <i class="fas fa-plus"></i> Подать заявление
+        </a>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Сообщение при отсутствии результатов -->
+<div class="app-no-results" id="appNoResults">
+    <i class="fas fa-search" style="font-size: 1.5rem; margin-bottom: 8px; opacity: 0.5;"></i><br>
+    Ничего не найдено по выбранным фильтрам
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    // DOM элементы
+    const searchInput = document.getElementById('appSearchInput');
+    const sortSelect = document.getElementById('appSortSelect');
+    const listContainer = document.getElementById('appList');
+    const countEl = document.getElementById('appFilterCount');
+    const noResults = document.getElementById('appNoResults');
+    const statusFilters = document.getElementById('appStatusFilters');
+    const statCards = document.querySelectorAll('.app-stat[data-stat-filter]');
+
+    if (!listContainer) return;
+
+    // Получаем карточки (только .app-card, не включая .app-empty)
+    let cards = Array.from(listContainer.querySelectorAll('.app-card'));
+    const totalCards = cards.length;
+    
+    // Текущие фильтры
+    let currentStatus = 'all';
+    let currentSearch = '';
+    let currentSort = 'date-desc';
+
+    // Приоритет статусов для сортировки
+    const statusPriority = {
+        'pending': 1,
+        'needs_correction': 2,
+        'approved': 3,
+        'enrolled': 4,
+        'rejected': 5
+    };
+
+    // Функция фильтрации
+    function filterCards() {
+        const searchLower = currentSearch.toLowerCase().trim();
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const name = card.dataset.name || '';
+            const number = card.dataset.number || '';
+            const status = card.dataset.status || '';
+            
+            // Проверка поиска
+            let matchesSearch = true;
+            if (searchLower) {
+                matchesSearch = name.includes(searchLower) || number.includes(searchLower);
+            }
+            
+            // Проверка статуса
+            const matchesStatus = currentStatus === 'all' || status === currentStatus;
+            
+            const isVisible = matchesSearch && matchesStatus;
+            card.classList.toggle('app-hidden', !isVisible);
+            if (isVisible) visibleCount++;
+        });
+
+        return visibleCount;
+    }
+
+    // Функция сортировки
+    function sortCards() {
+        const visibleCards = cards.filter(card => !card.classList.contains('app-hidden'));
+        
+        visibleCards.sort((a, b) => {
+            switch (currentSort) {
+                case 'date-desc':
+                    return (b.dataset.date || '').localeCompare(a.dataset.date || '');
+                case 'date-asc':
+                    return (a.dataset.date || '').localeCompare(b.dataset.date || '');
+                case 'name-asc':
+                    return (a.dataset.name || '').localeCompare(b.dataset.name || '', 'ru');
+                case 'name-desc':
+                    return (b.dataset.name || '').localeCompare(a.dataset.name || '', 'ru');
+                case 'status':
+                    const priorityA = statusPriority[a.dataset.status] || 99;
+                    const priorityB = statusPriority[b.dataset.status] || 99;
+                    if (priorityA !== priorityB) return priorityA - priorityB;
+                    // при равном статусе - по дате (новые сверху)
+                    return (b.dataset.date || '').localeCompare(a.dataset.date || '');
+                default:
+                    return 0;
+            }
+        });
+        
+        // Перемещаем отсортированные карточки в контейнер
+        visibleCards.forEach(card => listContainer.appendChild(card));
+    }
+
+    // Функция обновления UI
+    function updateUI() {
+        const visibleCount = filterCards();
+        sortCards();
+        
+        // Обновляем счётчик
+        if (countEl) {
+            const hasFilters = currentSearch || currentStatus !== 'all';
+            if (hasFilters) {
+                countEl.textContent = `Найдено: ${visibleCount} из ${totalCards}`;
+            } else {
+                countEl.textContent = `Всего: ${totalCards}`;
+            }
+        }
+        
+        // Показываем/скрываем сообщение "ничего не найдено"
+        if (noResults) {
+            const isEmpty = visibleCount === 0 && (currentSearch || currentStatus !== 'all');
+            noResults.classList.toggle('visible', isEmpty);
+        }
+    }
+
+    // Debounce функция
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Обработчики событий
+    if (searchInput) {
+        const debouncedUpdate = debounce(() => {
+            currentSearch = searchInput.value;
+            updateUI();
+        }, 200);
+        
+        searchInput.addEventListener('input', debouncedUpdate);
+    }
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', (e) => {
+            currentSort = e.target.value;
+            updateUI();
+        });
+    }
+
+    // Фильтры по статусу (кнопки)
+    if (statusFilters) {
+        statusFilters.addEventListener('click', (e) => {
+            const btn = e.target.closest('.app-status-btn');
+            if (!btn) return;
+            
+            const status = btn.dataset.status;
+            if (!status) return;
+            
+            // Обновляем активную кнопку
+            statusFilters.querySelectorAll('.app-status-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            btn.classList.add('active');
+            
+            currentStatus = status;
+            updateUI();
+        });
+    }
+
+    // Фильтры по статистике (клик на карточку статистики)
+    if (statCards.length) {
+        statCards.forEach(stat => {
+            stat.addEventListener('click', () => {
+                const filterStatus = stat.dataset.statFilter;
+                if (filterStatus) {
+                    // Находим соответствующую кнопку статуса
+                    const targetBtn = statusFilters ? 
+                        statusFilters.querySelector(`.app-status-btn[data-status="${filterStatus}"]`) : null;
+                    
+                    if (targetBtn) {
+                        targetBtn.click();
+                    } else if (filterStatus === 'all') {
+                        // Сброс фильтра
+                        currentStatus = 'all';
+                        if (statusFilters) {
+                            statusFilters.querySelectorAll('.app-status-btn').forEach(b => {
+                                b.classList.remove('active');
+                                if (b.dataset.status === 'all') {
+                                    b.classList.add('active');
+                                }
+                            });
+                        }
+                        updateUI();
+                    }
+                }
+            });
+        });
+    }
+
+    // Горячие клавиши
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + K - фокус на поиск
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+        // Escape - сброс поиска
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            e.preventDefault();
+            if (searchInput) {
+                searchInput.value = '';
+                currentSearch = '';
+                updateUI();
+                searchInput.blur();
+            }
+        }
+    });
+
+    // Инициализация
+    updateUI();
+})();
+</script>
+{% endblock %}

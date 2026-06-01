@@ -1,0 +1,172 @@
+<!-- lessons/templates/lessons/lesson_plan_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}{{ lesson_plan.title }} - Детский сад{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4>{{ lesson_plan.title }}</h4>
+                            <p class="text-sm mb-0">
+                                <i class="fas fa-users me-1"></i>{{ lesson_plan.group.name }} • 
+                                <i class="fas fa-clock me-1"></i>{{ lesson_plan.duration }} мин • 
+                                <span class="badge bg-{% if lesson_plan.difficulty == 'easy' %}success{% elif lesson_plan.difficulty == 'medium' %}warning{% else %}danger{% endif %}">
+                                    {{ lesson_plan.get_difficulty_display }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="btn-group">
+                            <a href="{% url 'lessons:lesson_plan_edit' lesson_plan.id %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-edit me-1"></i> Редактировать
+                            </a>
+                            {% if not lesson_plan.completed %}
+                                <a href="{% url 'lessons:lesson_plan_complete' lesson_plan.id %}" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-check me-1"></i> Провести
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'lessons:lesson_plan_list' %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-arrow-left me-1"></i> Назад
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Основная информация -->
+                        <div class="col-lg-8">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Информация о занятии</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong><i class="fas fa-calendar me-2"></i>Дата и время:</strong><br>
+                                            {{ lesson_plan.planned_date|date:"d.m.Y" }} в {{ lesson_plan.planned_time|time:"H:i" }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong><i class="fas fa-tag me-2"></i>Тип занятия:</strong><br>
+                                            <span class="badge bg-info">{{ lesson_plan.get_lesson_type_display }}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <strong><i class="fas fa-align-left me-2"></i>Описание:</strong>
+                                        <p class="mt-2">{{ lesson_plan.description|linebreaks }}</p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <strong><i class="fas fa-bullseye me-2"></i>Цели и задачи:</strong>
+                                        <p class="mt-2">{{ lesson_plan.objectives|linebreaks }}</p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <strong><i class="fas fa-tools me-2"></i>Необходимые материалы:</strong>
+                                        <p class="mt-2">{{ lesson_plan.materials|linebreaksbr|default:"Не указаны" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Боковая панель -->
+                        <div class="col-lg-4">
+                            <!-- Статус -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Статус занятия</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    {% if lesson_plan.completed %}
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                            <h5>Проведено</h5>
+                                            {% if lesson_plan.actual_date %}
+                                                <p class="mb-1">
+                                                    {{ lesson_plan.actual_date|date:"d.m.Y" }}
+                                                    {% if lesson_plan.actual_time %}
+                                                        в {{ lesson_plan.actual_time|time:"H:i" }}
+                                                    {% endif %}
+                                                </p>
+                                            {% endif %}
+                                            {% if lesson_plan.success_rate %}
+                                                <div class="mt-2">
+                                                    <strong>Оценка:</strong><br>
+                                                    {% for i in "12345" %}
+                                                        <i class="fas fa-star{% if forloop.counter > lesson_plan.success_rate %} text-muted{% else %} text-warning{% endif %} fa-lg"></i>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-{% if lesson_plan.planned_date < today %}danger{% else %}warning{% endif %}">
+                                            <i class="fas fa-clock fa-2x mb-2"></i>
+                                            <h5>Запланировано</h5>
+                                            <p class="mb-0">
+                                                {% if lesson_plan.planned_date < today %}
+                                                    Просрочено
+                                                {% else %}
+                                                    Ожидает проведения
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="mt-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   {% if lesson_plan.age_appropriate %}checked{% endif %} disabled>
+                                            <label class="form-check-label">Соответствует возрасту</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Действия -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Действия</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        {% if not lesson_plan.completed %}
+                                            <a href="{% url 'lessons:lesson_plan_complete' lesson_plan.id %}" 
+                                               class="btn btn-success">
+                                                <i class="fas fa-check me-1"></i> Отметить проведенным
+                                            </a>
+                                        {% endif %}
+                                        <a href="{% url 'lessons:lesson_plan_edit' lesson_plan.id %}" 
+                                           class="btn btn-outline-primary">
+                                            <i class="fas fa-edit me-1"></i> Редактировать
+                                        </a>
+                                        <a href="{% url 'lessons:reminder_create' %}?lesson_plan={{ lesson_plan.id }}" 
+                                           class="btn btn-outline-warning">
+                                            <i class="fas fa-bell me-1"></i> Создать напоминание
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Заметки о проведении -->
+                            {% if lesson_plan.completed and lesson_plan.notes %}
+                            <div class="card mt-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Заметки о проведении</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-0">{{ lesson_plan.notes|linebreaks }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

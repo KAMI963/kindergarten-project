@@ -1,0 +1,685 @@
+<!-- staff/templates/staff/employee_list.html -->
+{% extends 'staff/base_staff_neumorph.html' %}
+
+{% block title %}Сотрудники{% endblock %}
+
+{% block staff_content %}
+<style>
+    /* === CLEAN CORPORATE STYLE === */
+    :root {
+        --bg-page: #f8fafc;
+        --bg-card: #ffffff;
+        --border-color: #e2e8f0;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --accent: #3b82f6;
+        --accent-hover: #2563eb;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --radius: 12px;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    }
+
+    .page-wrapper {
+        background: var(--bg-page);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        color: var(--text-primary);
+    }
+
+    /* Page Header */
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .page-subtitle {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        margin: 0.25rem 0 0;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .stat-badge strong {
+        color: var(--accent);
+        font-size: 1.1rem;
+    }
+
+    /* Buttons */
+    .btn-clean {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: var(--radius);
+        font-weight: 500;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .btn-clean:hover {
+        background: var(--accent-hover);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+        color: white;
+    }
+
+    .btn-clean:active {
+        transform: translateY(0);
+    }
+
+    .btn-clean-outline {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+    }
+
+    .btn-clean-outline:hover {
+        background: var(--bg-card);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    /* Filters */
+    .filters-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.75rem;
+        align-items: end;
+    }
+
+    .filter-group label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-secondary);
+        margin-bottom: 0.375rem;
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: var(--bg-page);
+        color: var(--text-primary);
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .filter-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    select.filter-input {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        padding-right: 2rem;
+    }
+
+    /* Section */
+    .section {
+        margin-bottom: 2.5rem;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .section-count {
+        background: var(--bg-page);
+        color: var(--text-secondary);
+        padding: 0.25rem 0.625rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    /* Employee Card */
+    .employee-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .employee-card:hover {
+        border-color: var(--accent);
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+    .employee-status {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+
+    .status-dot {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.25rem 0.625rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .status-dot.active {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .status-dot.inactive {
+        background: rgba(148, 163, 184, 0.15);
+        color: var(--text-muted);
+    }
+
+    .status-dot::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    /* Avatar */
+    .employee-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.25rem;
+        margin-right: 1rem;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .employee-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .employee-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .employee-info {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .employee-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 0.125rem;
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .employee-position {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .stat-item {
+        background: var(--bg-page);
+        padding: 0.625rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+
+    /* Medical Status */
+    .medical-status {
+        margin-top: auto;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .medical-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .medical-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .medical-label i {
+        color: var(--danger);
+    }
+
+    .medical-badge {
+        padding: 0.25rem 0.625rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .medical-badge.valid {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .medical-badge.invalid {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .medical-progress {
+        height: 6px;
+        background: var(--bg-page);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 0.375rem;
+    }
+
+    .medical-progress-bar {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .medical-progress-bar.green { background: var(--success); }
+    .medical-progress-bar.yellow { background: var(--warning); }
+    .medical-progress-bar.red { background: var(--danger); }
+
+    .medical-days {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-align: right;
+    }
+
+    .medical-missing {
+        background: var(--bg-page);
+        padding: 0.5rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        color: var(--danger);
+        text-align: center;
+    }
+
+    /* Card Footer */
+    .employee-footer {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-view-profile {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.5rem;
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--accent);
+        font-weight: 500;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .btn-view-profile:hover {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: var(--bg-card);
+        border: 1px dashed var(--border-color);
+        border-radius: var(--radius);
+        color: var(--text-secondary);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    }
+
+    .empty-state h4 {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Animations */
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-card {
+        animation: slideUp 0.4s ease forwards;
+        opacity: 0;
+    }
+
+    .animate-card:nth-child(1) { animation-delay: 0.05s; }
+    .animate-card:nth-child(2) { animation-delay: 0.1s; }
+    .animate-card:nth-child(3) { animation-delay: 0.15s; }
+    .animate-card:nth-child(4) { animation-delay: 0.2s; }
+    .animate-card:nth-child(n+5) { animation-delay: 0.25s; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header { flex-direction: column; align-items: flex-start; }
+        .filter-row { grid-template-columns: 1fr; }
+        .stats-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="container">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Сотрудники</h1>
+                <p class="page-subtitle">Управление командой и документами</p>
+            </div>
+            <div class="header-actions">
+                <div class="stat-badge">
+                    Всего: <strong>{{ total_employees }}</strong>
+                </div>
+                <a href="{% url 'staff:employee_create' %}" class="btn-clean">
+                    <i class="fas fa-plus"></i> Добавить
+                </a>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-card">
+            <form method="get" class="filter-row">
+                <div class="filter-group">
+                    <label>Поиск</label>
+                    <input type="text" name="search" class="filter-input" 
+                           placeholder="Имя или фамилия..." value="{{ filters.search }}">
+                </div>
+                <div class="filter-group">
+                    <label>Отдел</label>
+                    <select name="type" class="filter-input">
+                        <option value="">Все отделы</option>
+                        {% for code, name in employee_types %}
+                        <option value="{{ code }}" {% if filters.type == code %}selected{% endif %}>
+                            {{ name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Статус</label>
+                    <select name="is_active" class="filter-input">
+                        <option value="">Любой</option>
+                        <option value="active" {% if filters.is_active == 'active' %}selected{% endif %}>
+                            Активные
+                        </option>
+                        <option value="inactive" {% if filters.is_active == 'inactive' %}selected{% endif %}>
+                            Архив
+                        </option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn-clean btn-clean-outline w-100">
+                        <i class="fas fa-filter"></i> Применить
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Employee List -->
+        {% for category_name, employees in grouped_employees.items %}
+        <div class="section">
+            <div class="section-header">
+                <h3 class="section-title">{{ category_name }}</h3>
+                <span class="section-count">{{ employees|length }}</span>
+            </div>
+
+            <div class="row g-4">
+                {% for employee in employees %}
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3 animate-card">
+                    <div class="employee-card">
+                        
+                        <!-- Status Badge -->
+                        <div class="employee-status">
+                            <span class="status-dot {% if employee.is_active %}active{% else %}inactive{% endif %}">
+                                {% if employee.is_active %}Активен{% else %}Архив{% endif %}
+                            </span>
+                        </div>
+
+                        <!-- Header: Avatar + Name -->
+                        <div class="employee-header">
+                            <div class="employee-avatar">
+                                {% if employee.photo %}
+                                    <img src="{{ employee.photo.url }}" alt="{{ employee.full_name }}">
+                                {% else %}
+                                    {{ employee.full_name|first|upper }}
+                                {% endif %}
+                            </div>
+                            <div class="employee-info">
+                                <h4 class="employee-name" title="{{ employee.full_name }}">
+                                    {{ employee.full_name }}
+                                </h4>
+                                <p class="employee-position">{{ employee.position }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Stats -->
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-label">Стаж</div>
+                                <div class="stat-value">{{ employee.experience }} лет</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">ID</div>
+                                <div class="stat-value">#{{ employee.id }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Medical Status -->
+                        <div class="medical-status">
+                            <div class="medical-header">
+                                <span class="medical-label">
+                                    <i class="fas fa-heartbeat"></i> Медосмотр
+                                </span>
+                                {% with latest_med=employee.medicalexamination_set.first %}
+                                    {% if latest_med and latest_med.is_valid %}
+                                        <span class="medical-badge valid">В норме</span>
+                                    {% else %}
+                                        <span class="medical-badge invalid">Требуется</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                            
+                            {% with latest_med=employee.medicalexamination_set.first %}
+                                {% if latest_med and latest_med.is_valid %}
+                                    {% with days=latest_med.days_until_expiry %}
+                                        {% if days %}
+                                            {% widthratio days 365 100 as width_percent %}
+                                            <div class="medical-progress">
+                                                <div class="medical-progress-bar {% if days < 30 %}red{% elif days < 90 %}yellow{% else %}green{% endif %}" 
+                                                     style="width: {{ width_percent }}%;"></div>
+                                            </div>
+                                            <div class="medical-days">
+                                                {% if days < 30 %}⚠{% elif days < 90 %}◉{% else %}✓{% endif %} 
+                                                {{ days }} дн. осталось
+                                            </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                    <div class="medical-missing">
+                                        <i class="fas fa-exclamation-circle me-1"></i>Нет документа
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+
+                        <!-- Action -->
+                        <div class="employee-footer">
+                            <a href="{% url 'staff:employee_detail' employee.id %}" class="btn-view-profile">
+                                <i class="fas fa-arrow-right"></i> Открыть профиль
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <h4>Список сотрудников пуст</h4>
+            <p class="mb-3">Измените параметры фильтра или добавьте нового сотрудника</p>
+            <a href="{% url 'staff:employee_create' %}" class="btn-clean">
+                <i class="fas fa-plus"></i> Добавить сотрудника
+            </a>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+
+<script>
+    // Плавное появление карточек
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.animate-card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '1';
+            }, 50 + index * 50);
+        });
+    });
+</script>
+{% endblock %}

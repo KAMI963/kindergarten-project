@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Виды начислений и удержаний{% endblock %}
+
+{% block extra_css %}
+<style>
+    .badge-accrual { background-color: #d4edda; color: #155724; }
+    .badge-deduction { background-color: #f8d7da; color: #721c24; }
+    .table-payroll th { background-color: #f8f9fa; }
+    .card-payroll { border: none; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 text-gray-800">Конструктор зарплаты: Виды начислений и удержаний</h1>
+        <a href="{% url 'staff:payroll_type_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Создать новый вид
+        </a>
+    </div>
+
+    <!-- Карточки с типами -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-payroll">
+                <div class="card-body">
+                    
+                    <!-- Фильтры -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="btn-group" role="group">
+                                <a href="?type=all" class="btn btn-outline-secondary {% if request.GET.type == 'all' or not request.GET.type %}active{% endif %}">Все</a>
+                                <a href="?type=accrual" class="btn btn-outline-success {% if request.GET.type == 'accrual' %}active{% endif %}">Начисления</a>
+                                <a href="?type=deduction" class="btn btn-outline-danger {% if request.GET.type == 'deduction' %}active{% endif %}">Удержания</a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <form method="get" class="d-flex">
+                                <input type="text" name="search" class="form-control me-2" placeholder="Поиск по названию или коду" value="{{ request.GET.search }}">
+                                <button type="submit" class="btn btn-outline-primary"><i class="fas fa-search"></i></button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Таблица -->
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-payroll">
+                                <tr>
+                                    <th>Код</th>
+                                    <th>Наименование</th>
+                                    <th>Тип</th>
+                                    <th>Способ расчета</th>
+                                    <th>Значение</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in payroll_types %}
+                                <tr>
+                                    <td><code>{{ item.code }}</code></td>
+                                    <td>
+                                        <strong>{{ item.name }}</strong>
+                                        {% if item.description %}
+                                        <br><small class="text-muted">{{ item.description|truncatechars:50 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.is_accrual %}
+                                        <span class="badge badge-accrual">Начисление</span>
+                                        {% else %}
+                                        <span class="badge badge-deduction">Удержание</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.get_calculation_type_display }}</td>
+                                    <td>
+                                        {% if item.calculation_type == 'fixed' and item.base_value %}
+                                            {{ item.base_value }} ₽
+                                        {% elif item.calculation_type == 'percent' and item.base_value %}
+                                            {{ item.base_value }} %
+                                        {% elif item.calculation_type == 'formula' %}
+                                            <i class="fas fa-cog text-muted" title="Сложная формула"></i>
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.is_active %}
+                                        <span class="badge bg-success">Активно</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Не активно</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'staff:payroll_type_edit' item.id %}" class="btn btn-sm btn-outline-warning" title="Редактировать">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'staff:payroll_type_delete' item.id %}" class="btn btn-sm btn-outline-danger" title="Удалить">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">Нет созданных видов начислений.</p>
+                                        <a href="{% url 'staff:payroll_type_create' %}" class="btn btn-primary btn-sm">
+                                            Создать первый вид
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
