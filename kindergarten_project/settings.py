@@ -15,21 +15,24 @@ if IS_RAILWAY:
     if not SECRET_KEY:
         raise ValueError("DJANGO_SECRET_KEY must be set on Railway")
     
-    DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-    ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '.railway.app,localhost,127.0.0.1').split(',')
-    BASE_URL = os.environ.get('BASE_URL', 'https://your-project.up.railway.app')
+    # Временно включаем DEBUG для диагностики
+    DEBUG = True
     
-    # Database - PostgreSQL
+    ALLOWED_HOSTS = ['*']  # Временно разрешаем все хосты
+    
+    # Принудительные настройки базы данных
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('PGDATABASE'),
-            'USER': os.environ.get('PGUSER'),
-            'PASSWORD': os.environ.get('PGPASSWORD'),
-            'HOST': os.environ.get('PGHOST'),
-            'PORT': os.environ.get('PGPORT', '5432'),
+            'NAME': 'railway',
+            'USER': 'postgres',
+            'PASSWORD': 'yYxXxHxlxymARJQvKsJkblBWWWNmWLwS',
+            'HOST': 'postgres.railway.internal',
+            'PORT': '5432',
         }
     }
+    
+    # ... остальные настройки (email, celery) оставьте как есть
     
     # Email settings
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -244,3 +247,19 @@ CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_TRUSTED_ORIGINS = ['https://kindergarten-project-production.up.railway.app']
 
 print("=== CSRF ПОЛНОСТЬЮ ОТКЛЮЧЕН (временно) ===")
+
+
+# Диагностика ошибок
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}
