@@ -8,26 +8,21 @@ ENV DJANGO_SETTINGS_MODULE=kindergarten_project.settings
 
 # Устанавливаем системные зависимости
 RUN apt-get update && apt-get install -y \
-    # Для WeasyPrint и PDF генерации
     gcc \
     python3-dev \
     libcairo2 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
-    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf-2.0-0 \
     libffi-dev \
     shared-mime-info \
-    # Для PostgreSQL
     libpq-dev \
-    # Для работы с изображениями
     libjpeg-dev \
     libpng-dev \
-    # Шрифты для PDF
     fonts-dejavu \
     fonts-dejavu-core \
     fonts-freefont-ttf \
     fonts-liberation \
-    # Утилиты
     curl \
     wget \
     && fc-cache -fv \
