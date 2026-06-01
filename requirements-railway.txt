@@ -13,6 +13,8 @@ whitenoise==6.5.0
 # Работа с переменными окружения
 python-decouple==3.8
 
+cairocffi==1.6.1 
+
 # Django компоненты
 asgiref==3.10.0
 sqlparse==0.5.3
