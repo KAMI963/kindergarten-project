@@ -15,10 +15,9 @@ if IS_RAILWAY:
     if not SECRET_KEY:
         raise ValueError("DJANGO_SECRET_KEY must be set on Railway")
     
-    # Временно включаем DEBUG для диагностики
+    # ВРЕМЕННО ВКЛЮЧАЕМ ДЛЯ ДИАГНОСТИКИ
     DEBUG = True
-    
-    ALLOWED_HOSTS = ['*']  # Временно разрешаем все хосты
+    ALLOWED_HOSTS = ['*']  # временно разрешаем все хосты
     
     # Принудительные настройки базы данных
     DATABASES = {
@@ -263,3 +262,34 @@ LOGGING = {
         'level': 'DEBUG',
     },
 }
+
+
+# ПРИНУДИТЕЛЬНЫЙ ВЫВОД ОШИБОК
+import sys
+if DEBUG:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'stream': sys.stdout,
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': 'DEBUG',
+                'propagate': True,
+            },
+            'django.request': {
+                'handlers': ['console'],
+                'level': 'DEBUG',
+                'propagate': False,
+            },
+        },
+    }
